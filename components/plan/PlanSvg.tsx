@@ -44,30 +44,38 @@ function Window({ o }: { o: Opening }) {
   );
 }
 
-function Room({ s, units }: { s: Space; units: "imperial" | "metric" }) {
+function Room({ s }: { s: Space }) {
   const { x, y, w, h } = s.rect;
-  const area = w * h;
-  const circulation = s.zone === "circulation";
-  const size = Math.min(0.5, Math.max(0.28, Math.min(w, h) / 6));
   return (
     <g>
-      <rect x={x} y={y} width={w} height={h} className={circulation ? "fill-line/40" : "fill-paper-raised"} />
-      {!circulation || s.kind === "stairs" ? (
-        <>
-          <text x={x + w / 2} y={y + h / 2} textAnchor="middle" fontSize={size} className="fill-ink">
-            {s.name}
-          </text>
-          {!circulation && (
-            <text x={x + w / 2} y={y + h / 2 + size * 1.3} textAnchor="middle" fontSize={size * 0.8} className="fill-ink-soft">
-              {units === "imperial" ? `${sqft(area)} sq ft` : `${area.toFixed(1)} mÂ²`}
-            </text>
-          )}
-        </>
-      ) : null}
+      <rect x={x} y={y} width={w} height={h} className={s.zone === "circulation" ? "fill-line/40" : "fill-paper-raised"} />
       {s.kind === "stairs" &&
-        Array.from({ length: Math.floor(w / 0.28) }, (_, i) => (
-          <line key={i} x1={x + i * 0.28} y1={y} x2={x + i * 0.28} y2={y + h} className="stroke-ink-soft" strokeWidth={0.02} />
-        ))}
+        Array.from({ length: Math.floor((w > h ? w : h) / 0.28) }, (_, i) =>
+          w > h ? (
+            <line key={i} x1={x + i * 0.28} y1={y} x2={x + i * 0.28} y2={y + h} className="stroke-ink-soft" strokeWidth={0.02} />
+          ) : (
+            <line key={i} x1={x} y1={y + i * 0.28} x2={x + w} y2={y + i * 0.28} className="stroke-ink-soft" strokeWidth={0.02} />
+          ),
+        )}
+    </g>
+  );
+}
+
+// Room name and area, sized to fit the room and drawn above walls and doors.
+function Label({ s, units }: { s: Space; units: "imperial" | "metric" }) {
+  if (s.zone === "circulation") return null;
+  const { x, y, w, h } = s.rect;
+  const area = w * h;
+  const fit = (w * 0.86) / (s.name.length * 0.56); // width an average character needs at size 1
+  const size = Math.max(0.2, Math.min(0.5, fit, h / 4));
+  return (
+    <g>
+      <text x={x + w / 2} y={y + h / 2} textAnchor="middle" fontSize={size} className="fill-ink">
+        {s.name}
+      </text>
+      <text x={x + w / 2} y={y + h / 2 + size * 1.3} textAnchor="middle" fontSize={size * 0.8} className="fill-ink-soft">
+        {units === "imperial" ? `${sqft(area)} sq ft` : `${area.toFixed(1)} m²`}
+      </text>
     </g>
   );
 }
@@ -78,7 +86,7 @@ export function PlanSvg({ layout, level = 0, units = "imperial", className = "" 
   return (
     <svg viewBox={`${-PAD} ${-PAD} ${W + PAD * 2} ${D + PAD * 2}`} className={className} role="img" aria-label={`Floor plan, floor ${level + 1}`}>
       {floor.spaces.map((s) => (
-        <Room key={s.id} s={s} units={units} />
+        <Room key={s.id} s={s} />
       ))}
       {/* interior walls: every room outline */}
       {floor.spaces.map((s) => (
@@ -101,6 +109,9 @@ export function PlanSvg({ layout, level = 0, units = "imperial", className = "" 
           <Window key={o.id} o={o} />
         ),
       )}
+      {floor.spaces.map((s) => (
+        <Label key={`l-${s.id}`} s={s} units={units} />
+      ))}
     </svg>
   );
 }
