@@ -42,7 +42,8 @@ export function WalkthroughStep({ layout, palette, title }: { layout: Layout; pa
         </div>
       </div>
 
-      <div className="relative mt-5 h-[68vh] min-h-[420px] overflow-hidden rounded-2xl border border-line bg-paper-raised">
+      {/* Sized to end above the sticky Next bar, so the 3D controls are never hidden under it. */}
+      <div className="relative mt-5 h-[calc(100svh-340px)] min-h-[380px] overflow-hidden rounded-2xl border border-line bg-paper-raised">
         <HouseScene
           layout={layout}
           palette={palette}
@@ -88,11 +89,11 @@ export function WalkthroughStep({ layout, palette, title }: { layout: Layout; pa
         {mode === "orbit" && (
           <>
             {finished && (
-              <p className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-btn px-4 py-1.5 text-sm text-btn-ink">
+              <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-btn px-4 py-1.5 text-sm text-btn-ink">
                 Walk finished. Now look around from any angle.
               </p>
             )}
-            <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center gap-2">
+            <div className="absolute left-4 right-4 top-4 flex flex-wrap items-center gap-2">
               <button onClick={() => setCutaway((c) => !c)} aria-pressed={cutaway} className={`rounded-full px-4 py-1.5 text-sm ${cutaway ? "bg-btn text-btn-ink" : "bg-paper/85 text-ink backdrop-blur"}`}>
                 {cutaway ? "Showing inside" : "Show inside"}
               </button>
