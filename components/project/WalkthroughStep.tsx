@@ -74,7 +74,7 @@ export function WalkthroughStep({ layout, brief, taste, title }: { layout: Layou
         Furnished in a <span className="font-medium text-ink">{STYLE_NAME[style.style]}</span> style
         {style.because.length > 0 && <> because you love {style.because.join(", ")}</>}.
       </p>
-      <div ref={box} className={`relative mt-4 overflow-hidden border-line bg-paper-raised ${full ? "h-screen" : "h-[calc(100svh-330px)] min-h-[420px] rounded-2xl border"}`}>
+      <div ref={box} className={`relative mt-4 overflow-hidden border-line bg-paper-raised ${full ? "h-screen" : "h-[calc(100svh-330px)] min-h-[300px] rounded-2xl border"}`}>
         <HouseScene
           layout={layout}
           brief={brief}
@@ -195,36 +195,60 @@ export function WalkthroughStep({ layout, brief, taste, title }: { layout: Layou
 
 // How to move around the 3D model with a mouse, trackpad or touch screen.
 function MouseGuide({ finished, onClose }: { finished: boolean; onClose: () => void }) {
+  // Escape or a click outside the card closes it too.
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [onClose]);
   const rows = [
     { icon: "M8 4h8a4 4 0 0 1 4 4v8a8 8 0 0 1-16 0V8a4 4 0 0 1 4-4zM12 4v6", what: "Turn around", how: "Drag with the left mouse button, or one finger" },
     { icon: "M12 3v18M3 12h18M7 7l-4 5 4 5M17 7l4 5-4 5", what: "Move sideways", how: "Drag with the right button, or two fingers" },
     { icon: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-5-5M8 11h6M11 8v6", what: "Zoom in and out", how: "Scroll the wheel, or pinch" },
-    { icon: "M3 9l9-6 9 6v11H3zM9 20v-6h6v6", what: "See inside", how: "Show inside lifts the roof; pick a floor to see its rooms" },
+    { icon: "M3 9l9-6 9 6v11H3zM9 20v-6h6v6", what: "See inside", how: "Show inside cuts the walls so every room shows; pick a floor" },
     { icon: "M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z", what: "Visit a room", how: "Click a room's name to fly in; Whole house steps back out" },
+    { icon: "M13 4a1.5 1.5 0 1 0 0 .01M10 21l2-6 3 3v3M9 12l3-4 3 3 3 1M12 8l-2 5", what: "Walk inside", how: "Explore inside: W A S D or arrows, or click the floor" },
   ];
   return (
-    <div className="absolute inset-0 z-40 grid place-items-center bg-ink/30 p-4 backdrop-blur-[2px]">
-      <div role="dialog" aria-label="How to explore" className="w-full max-w-md rounded-2xl border border-line bg-paper-raised p-6 shadow-xl">
-        <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink-soft">{finished ? "Walk finished" : "Look around"}</p>
-        <h2 className="mt-2 font-serif text-3xl">Explore it your way</h2>
-        <ul className="mt-5 space-y-4">
+    <div onClick={onClose} className="absolute inset-0 z-40 flex items-center justify-center bg-ink/30 p-3 backdrop-blur-[2px]">
+      <div
+        role="dialog"
+        aria-label="How to explore"
+        onClick={(e) => e.stopPropagation()}
+        className="flex max-h-full w-full max-w-2xl flex-col rounded-2xl border border-line bg-paper-raised shadow-xl"
+      >
+        <div className="flex items-start justify-between gap-4 px-5 pt-4">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink-soft">{finished ? "Walk finished" : "Look around"}</p>
+            <h2 className="mt-1 font-serif text-2xl">Explore it your way</h2>
+          </div>
+          <button onClick={onClose} aria-label="Close" className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-paper hover:text-ink">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
+        {/* Scrolls inside the card when the 3D box is short, so nothing gets cut off. */}
+        <ul className="mt-3 grid min-h-0 gap-x-5 gap-y-3 overflow-y-auto px-5 sm:grid-cols-2">
           {rows.map((r) => (
             <li key={r.what} className="flex items-start gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-paper text-accent">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-paper text-accent">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <path d={r.icon} />
                 </svg>
               </span>
               <span>
-                <span className="block font-medium">{r.what}</span>
+                <span className="block text-sm font-medium">{r.what}</span>
                 <span className="block text-sm text-ink-soft">{r.how}</span>
               </span>
             </li>
           ))}
         </ul>
-        <button onClick={onClose} className="mt-6 w-full rounded-full bg-btn py-3 text-btn-ink">
-          Got it
-        </button>
+        <div className="px-5 pb-4 pt-3">
+          <button onClick={onClose} className="w-full rounded-full bg-btn py-2.5 text-btn-ink">
+            Got it
+          </button>
+        </div>
       </div>
     </div>
   );
