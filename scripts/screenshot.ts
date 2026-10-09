@@ -5,7 +5,7 @@ import { GUEST_COOKIE, signGuest } from "../lib/auth/guest.ts";
 
 const [url, out, guestId, width = "1280", height = "900", waitMs = "1500"] = process.argv.slice(2);
 const chrome = ["C:/Program Files/Google/Chrome/Application/chrome.exe", "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe"];
-const browser = await puppeteer.launch({ executablePath: chrome[0], headless: true, args: ["--force-color-profile=srgb"] });
+const browser = await puppeteer.launch({ executablePath: chrome[0], headless: true, args: ["--force-color-profile=srgb", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 const page = await browser.newPage();
 const errors: string[] = [];
 page.on("pageerror", (e) => errors.push(String(e)));
@@ -21,9 +21,11 @@ await new Promise((r) => setTimeout(r, Number(waitMs)));
 // CLICKS="selector||selector" clicks each in turn before the shot, e.g. to open a menu.
 for (const sel of (process.env.CLICKS ?? "").split("||").filter(Boolean)) {
   await page.click(sel);
-  await new Promise((r) => setTimeout(r, 400));
+  await new Promise((r) => setTimeout(r, 600));
 }
-await page.screenshot({ path: out, fullPage: true });
+// AFTER_MS waits after the clicks, e.g. for a 3D scene to draw.
+await new Promise((r) => setTimeout(r, Number(process.env.AFTER_MS ?? 0)));
+await page.screenshot({ path: out, fullPage: !process.env.VIEWPORT_ONLY });
 await browser.close();
 console.log("saved", out);
 console.log(errors.length ? ["page errors:", ...errors].join("\n") : "no page errors");
