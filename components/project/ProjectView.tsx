@@ -112,6 +112,21 @@ export function ProjectView({ id }: { id: string }) {
   return (
     <div className="flex flex-1 flex-col">
       <Progress step={step} onJump={(s) => STEPS.findIndex((x) => x.id === s) <= STEPS.findIndex((x) => x.id === step) && setStep(s)} />
+      {/* Next sits top right on every step (the walkthrough puts it in its own top row), and stays in reach while scrolling. */}
+      {next && step !== "walkthrough" && (
+        <div className="sticky top-0 z-20 bg-paper/90 backdrop-blur">
+          <div className="mx-auto flex w-full max-w-6xl items-center justify-end gap-4 px-4 py-2">
+            {step === "plans" && p.chosen_option === null && <p className="text-sm text-ink-soft">Choose a plan to continue</p>}
+            <button
+              onClick={() => setStep(next)}
+              disabled={!canLeave(step, p)}
+              className="rounded-full bg-btn px-6 py-2.5 text-btn-ink transition hover:opacity-90 disabled:opacity-30"
+            >
+              Next: {STEPS.find((s) => s.id === next)?.label}
+            </button>
+          </div>
+        </div>
+      )}
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
@@ -137,21 +152,6 @@ export function ProjectView({ id }: { id: string }) {
           {step === "workspace" && <Coming title="Make it yours" text="Ask for any change and watch the plan, 3D model and budget update." />}
         </motion.div>
       </AnimatePresence>
-      {/* The walkthrough carries its own Next button in its top row, so the 3D view gets the full height. */}
-      {next && step !== "walkthrough" && (
-        <div className="sticky bottom-0 border-t border-line bg-paper/90 px-4 py-4 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
-            <p className="text-sm text-ink-soft">{step === "plans" && p.chosen_option === null ? "Choose a plan to continue" : " "}</p>
-            <button
-              onClick={() => setStep(next)}
-              disabled={!canLeave(step, p)}
-              className="rounded-full bg-btn px-8 py-3 text-lg text-btn-ink transition disabled:opacity-30"
-            >
-              Next: {STEPS.find((s) => s.id === next)?.label}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -215,7 +215,7 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
   const still = useReducedMotion();
   const stagger = (delay: number) => ({ initial: still ? false : "hidden", animate: "show", variants: rise, transition: { duration: 0.6, delay } }) as const;
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10">
+    <main className="mx-auto w-full max-w-6xl px-4 pb-10 pt-2">
       <motion.p {...stagger(0)} className="text-sm uppercase tracking-widest text-ink-soft">
         {p.title} · your style
       </motion.p>
@@ -291,7 +291,7 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
 function PlansStep({ p, options, choosing, choose }: { p: View; options: Layout[]; choosing: number | null; choose: (i: number) => void }) {
   const units = p.site.units ?? "imperial";
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10">
+    <main className="mx-auto w-full max-w-6xl px-4 pb-10 pt-2">
       <h1 className="font-serif text-5xl">
         <Decode text="Three ways to lay it out" />
       </h1>

@@ -68,8 +68,12 @@ const STYLES: [Style, RegExp][] = [
 const LUSH = /green|botanical|garden|lush|natural|plant|tropical|outdoor/;
 const COZY = /cozy|cosy|warm|intimate|homey|comfort|snug|moody/;
 
-/** Scores each furniture style from the Qloo taste tags (by weight), brand aesthetics and the brief's words. */
-export function styleOf(taste: Taste | null | undefined, words: string) {
+/**
+ * Scores each furniture style from the Qloo taste tags (by weight), brand aesthetics and the brief's words.
+ * The brief's style name (itself written from those tags and the interview) counts most, so the 3D model
+ * always matches the style the client was shown.
+ */
+export function styleOf(taste: Taste | null | undefined, words: string, name = "") {
   const score = new Map<Style, number>();
   const credit = new Map<Style, Map<string, number>>();
   const add = (text: string, w: number, from: string[]) => {
@@ -84,6 +88,7 @@ export function styleOf(taste: Taste | null | undefined, words: string) {
   for (const t of taste?.tags ?? []) add(t.value.replaceAll("_", " ").toLowerCase(), t.weight, t.sources.map((s) => s.name));
   for (const b of taste?.brands ?? []) for (const a of b.aesthetic) add(a.replaceAll("_", " ").toLowerCase(), 0.5, [b.name]);
   add(words, 1, []);
+  add(name.toLowerCase(), 8, []);
   const style = [...score].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "modern";
   const because = [...(credit.get(style) ?? [])].sort((a, b) => b[1] - a[1]).map(([n]) => n).slice(0, 3);
   const all = [words, ...(taste?.tags ?? []).map((t) => t.value.replaceAll("_", " "))].join(" ").toLowerCase();
@@ -109,5 +114,5 @@ export function look(brief: BriefWords | null | undefined, taste?: Taste | null)
     finish === "panel" ? k.wood : finish === "brick" ? "#9a5a43" : mix(brief?.palette?.find((c) => c.role === "green")?.hex ?? k.accent, k.wall, 0.3);
   const frame = has(/brass|gold|bronze/) ? "#b08d57" : luminance(k.wood) < 0.25 ? k.wood : "#232323";
   const art = [...new Set([k.accent, k.plant, k.textile, k.wood, k.metal])];
-  return { finish, feature, tile, tileKind, curtain: mix(k.textile, "#ffffff", 0.35), frame, art, ...styleOf(taste, words) };
+  return { finish, feature, tile, tileKind, curtain: mix(k.textile, "#ffffff", 0.35), frame, art, ...styleOf(taste, words, brief?.name) };
 }

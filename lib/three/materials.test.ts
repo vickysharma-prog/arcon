@@ -62,3 +62,10 @@ test("Qloo taste tags choose the furniture style and say which loves chose it", 
   assert.equal(styleOf(null, "lush botanical rattan").lush, true);
   assert.equal(look(null, taste).style, "midcentury");
 });
+
+test("the brief's style name leads, so the 3D matches the style page", () => {
+  const calm = { tags: [{ value: "minimalist", weight: 4, sources: [{ name: "Hotel A" }] }, { value: "calm", weight: 3, sources: [{ name: "Spa B" }] }], brands: [] };
+  assert.equal(styleOf(calm, "").style, "scandi");
+  assert.equal(styleOf(calm, "", "Industrial Bohemian").style, "industrial");
+  assert.equal(look({ name: "Warm Bohemian", palette }, calm).style, "boho");
+});
