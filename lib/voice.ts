@@ -22,6 +22,7 @@ const BANNED_WORDS = [
   "facilitate", "utilize", "utilise", "seamless", "elevate", "curate", "journey",
 ];
 const OPENERS = [/^\s*(great|good|excellent|what a (great|thoughtful|wonderful)) (question|point|choice|answer)/i, /^\s*(certainly|absolutely|of course)[!,.]/i, /^\s*i'?d be (happy|glad) to/i];
+const PRAISE = /\b(wonderful|amazing|fantastic|lovely|great|beautiful|exciting) (project|idea|choice|footprint|space|plan|start)\b|\bsounds (like (a |an )?)?(wonderful|lovely|amazing|great|exciting|fantastic)\b|\bi love (that|this)\b|^\s*love (that|this)\b/i;
 const CLOSERS = [/i hope (this|that) helps/i, /let me know if you have any questions/i, /feel free to (ask|reach out)/i, /in conclusion/i];
 
 // Problems in one reply, as short labels. Empty means the reply reads clean.
@@ -30,8 +31,12 @@ export function voiceProblems(text: string): string[] {
   for (const w of BANNED_WORDS) if (new RegExp(`\\b${w}(s|d|ing|ed)?\\b`, "i").test(text)) problems.push(`banned word: ${w}`);
   if (OPENERS.some((r) => r.test(text))) problems.push("preamble opener");
   if (CLOSERS.some((r) => r.test(text))) problems.push("stock closer");
+  if (PRAISE.test(text)) problems.push("praise");
   const dashes = (text.match(/—/g) ?? []).length;
   const words = text.split(/\s+/).filter(Boolean).length;
   if (dashes > Math.max(1, Math.floor(words / 200))) problems.push(`too many em-dashes: ${dashes}`);
   return problems;
 }
+
+// How many questions a reply asks. Interviewer replies should ask exactly one.
+export const questionCount = (text: string) => (text.match(/\?/g) ?? []).length;

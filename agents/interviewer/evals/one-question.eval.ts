@@ -1,4 +1,6 @@
 import { defineEval } from "eve/evals";
+import { satisfies } from "eve/evals/expect";
+import { questionCount } from "../../../lib/voice.ts";
 import { quietTools } from "./fixtures.ts";
 
 export default defineEval({
