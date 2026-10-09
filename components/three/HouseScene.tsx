@@ -1,24 +1,38 @@
 "use client";
 
-import { OrbitControls } from "@react-three/drei";
+import { Bounds, Environment, Html, Lightformer, OrbitControls, useBounds } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
-import { CatmullRomCurve3, Vector3 } from "three";
+import { EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
+import { ToneMappingMode } from "postprocessing";
+import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { Box3, CatmullRomCurve3, Plane, Raycaster, Vector2, Vector3 } from "three";
 import type { Layout } from "@/lib/layout/schema";
-import { furnish, type Item } from "@/lib/three/furniture";
-import { buildSlabs, buildWalls, STOREY, walkPlan, WALL_H, type Glass, type WallBox } from "@/lib/three/geometry";
-import { scheme, type Scheme } from "@/lib/three/materials";
-import { roomBell, step } from "@/components/fx/sfx";
+import { decorate } from "@/lib/three/decor";
+import { furnish } from "@/lib/three/furniture";
+import { blockers, step } from "@/lib/three/explore";
+import { buildSlabs, buildWalls, EYE, onTour, STOREY, walkPlan, WALL_H, type Glass, type Slab, type WallBox } from "@/lib/three/geometry";
+import { look as lookOf, luminance, mix, scheme, type Look, type Scheme } from "@/lib/three/materials";
+import { LookCtx, Model } from "./models";
+import { planks, tiled, tiles } from "./textures";
+import { roomBell, step as playStep } from "@/components/fx/sfx";
 
-export type Mode = "walk" | "orbit";
+export type Mode = "walk" | "explore" | "orbit";
 
 type Props = {
   layout: Layout;
   /** Look-around only: lift the roof off, and show floors up to this level ("all" keeps every floor). */
   cutaway?: boolean;
   upTo?: number | "all";
-  palette?: { hex: string; role: string }[];
+  /** The design brief and Qloo taste profile: colours, wall finish and furniture style come from these. */
+  brief?: Parameters<typeof lookOf>[0];
+  taste?: Parameters<typeof lookOf>[1];
   mode: Mode;
+  /** Bump to frame the whole building again after flying into a room. */
+  fitKey?: number;
+  /** Explore mode: the floor you're on, a point to jump to, and where you are now. */
+  level?: number;
+  go?: { x: number; z: number; key: number };
+  onPose?: (p: Pose) => void;
   playing: boolean;
   onRoom?: (name: string) => void;
   onProgress?: (p: number) => void;
@@ -26,7 +40,6 @@ type Props = {
   restartKey?: number;
 };
 
-const BATH = new Set(["bath", "laundry"]);
 
 function wallGeom(w: WallBox | Glass, thick: number) {
   const len = w.to - w.from;
@@ -38,30 +51,42 @@ function wallGeom(w: WallBox | Glass, thick: number) {
     : { position: [w.at, y, mid] as const, size: [thick, h, len] as const };
 }
 
-function Building({ layout, colors, cutaway = false, upTo = "all" }: { layout: Layout; colors: Scheme; cutaway?: boolean; upTo?: number | "all" }) {
+function Building({ layout, colors, look, cutaway = false, upTo = "all" }: { layout: Layout; colors: Scheme; look: Look; cutaway?: boolean; upTo?: number | "all" }) {
   const shown = (level: number) => upTo === "all" || level <= upTo;
+  // Show inside cuts the top floor's walls at 1.4 m, like an architect's section, so every room reads from above.
+  const topShown = upTo === "all" ? (layout.floors.at(-1)?.level ?? 0) : upTo;
+  const cutAt = (level: number) => (cutaway && level === topShown ? level * STOREY + CUT : Infinity);
   const built = useMemo(() => buildWalls(layout), [layout]);
-  const walls = built.walls.filter((w) => shown(w.level));
-  const glass = built.glass.filter((g) => shown(g.level));
+  const walls = built.walls
+    .filter((w) => shown(w.level) && w.y0 < cutAt(w.level))
+    .map((w) => ({ ...w, y1: Math.min(w.y1, cutAt(w.level)), cut: w.y1 > cutAt(w.level) }));
+  const glass = built.glass.filter((g) => shown(g.level) && g.y0 < cutAt(g.level)).map((g) => ({ ...g, y1: Math.min(g.y1, cutAt(g.level)) }));
   const allSlabs = useMemo(() => buildSlabs(layout), [layout]);
   const slabs = allSlabs.filter((s) => shown(s.level));
-  const allItems = useMemo(() => furnish(layout), [layout]);
-  const items = allItems.filter((i) => shown(i.level));
+  const allItems = useMemo(() => [...furnish(layout, { lush: look.lush }), ...decorate(layout)], [layout, look.lush]);
+  const items = allItems
+    .filter((i) => shown(i.level))
+    .flatMap((it) => {
+      const c = cutAt(it.level);
+      if (!WALL_DRESSING.has(it.name) || it.y + it.h <= c) return [it];
+      if (it.name === "art" || it.y >= c) return [];
+      return [{ ...it, h: c - it.y }];
+    });
   const { width: W, depth: D } = layout.shell;
   const top = (layout.floors.length - 1) * STOREY + WALL_H;
+  const skirting = mix(colors.wall, "#000000", 0.1);
+  const frame = luminance(colors.exterior) > 0.6 ? "#2b2d31" : "#f1efea";
   return (
     <group>
-      {/* site */}
-      <mesh rotation-x={-Math.PI / 2} position={[W / 2, -0.02, D / 2]} receiveShadow>
-        <planeGeometry args={[W + 30, D + 30]} />
-        <meshStandardMaterial color={colors.ground} roughness={1} />
-      </mesh>
-      {/* floors, and the slab above each lower storey */}
+      {/* floors: wood planks, tile in wet rooms, on a slab */}
       {slabs.map((s) => (
-        <mesh key={`f-${s.level}-${s.id}`} position={[s.x + s.w / 2, s.y - 0.06, s.z + s.d / 2]} receiveShadow>
-          <boxGeometry args={[s.w, 0.12, s.d]} />
-          <meshStandardMaterial color={BATH.has(s.kind) ? colors.bathFloor : s.zone === "circulation" ? colors.base : colors.floor} roughness={0.7} />
-        </mesh>
+        <group key={`f-${s.level}-${s.id}`}>
+          <mesh position={[s.x + s.w / 2, s.y - 0.06, s.z + s.d / 2]} receiveShadow>
+            <boxGeometry args={[s.w, 0.12, s.d]} />
+            <meshStandardMaterial color={mix(colors.floor, "#000000", 0.2)} roughness={0.8} />
+          </mesh>
+          <Floor s={s} colors={colors} look={look} />
+        </group>
       ))}
       {layout.floors
         .filter((f) => f.level > 0 && !cutaway && shown(f.level))
@@ -71,23 +96,58 @@ function Building({ layout, colors, cutaway = false, upTo = "all" }: { layout: L
             <meshStandardMaterial color={colors.wall} />
           </mesh>
         ))}
-      {/* walls and glass */}
+      {/* walls, with a skirting board along the foot of each */}
       {walls.map((w, i) => {
         const g = wallGeom(w, w.thick);
+        const foot = Math.abs(w.y0 - w.level * STOREY) < 1e-6;
+        const k = wallGeom({ ...w, y1: w.y0 + 0.09 }, w.thick + 0.025);
         return (
-          <mesh key={`w-${i}`} position={g.position} castShadow receiveShadow>
-            <boxGeometry args={g.size} />
-            <meshStandardMaterial color={w.exterior ? colors.exterior : colors.wall} roughness={0.9} />
-          </mesh>
+          <group key={`w-${i}`}>
+            <mesh position={g.position} castShadow receiveShadow>
+              <boxGeometry args={g.size} />
+              <meshStandardMaterial color={w.exterior ? colors.exterior : colors.wall} roughness={0.92} />
+            </mesh>
+            {w.cut && (
+              <mesh position={[g.position[0], w.y1 + 0.01, g.position[2]]}>
+                <boxGeometry args={[g.size[0] + 0.001, 0.02, g.size[2] + 0.001]} />
+                <meshStandardMaterial color="#2b2f36" roughness={0.8} />
+              </mesh>
+            )}
+            {foot && (
+              <mesh position={k.position}>
+                <boxGeometry args={k.size} />
+                <meshStandardMaterial color={skirting} roughness={0.6} />
+              </mesh>
+            )}
+          </group>
         );
       })}
+      {/* windows: glass in a slim frame, with a centre bar on wide ones */}
       {glass.map((gl, i) => {
         const g = wallGeom(gl, 0.03);
+        const bars: Glass[] = [
+          { ...gl, to: gl.from + 0.05 },
+          { ...gl, from: gl.to - 0.05 },
+          { ...gl, y1: gl.y0 + 0.05 },
+          { ...gl, y0: gl.y1 - 0.05 },
+          ...(gl.to - gl.from > 1.2 ? [{ ...gl, from: (gl.from + gl.to) / 2 - 0.025, to: (gl.from + gl.to) / 2 + 0.025 }] : []),
+        ];
         return (
-          <mesh key={`g-${i}`} position={g.position}>
-            <boxGeometry args={g.size} />
-            <meshPhysicalMaterial color="#cfe3f5" transparent opacity={0.28} roughness={0.05} metalness={0.1} />
-          </mesh>
+          <group key={`g-${i}`}>
+            <mesh position={g.position}>
+              <boxGeometry args={g.size} />
+              <meshPhysicalMaterial color="#cfe3f5" transparent opacity={0.22} roughness={0.03} metalness={0.1} />
+            </mesh>
+            {bars.map((b, j) => {
+              const f = wallGeom(b, 0.08);
+              return (
+                <mesh key={j} position={f.position} castShadow>
+                  <boxGeometry args={f.size} />
+                  <meshStandardMaterial color={frame} roughness={0.5} metalness={0.3} />
+                </mesh>
+              );
+            })}
+          </group>
         );
       })}
       {/* stairs */}
@@ -106,9 +166,9 @@ function Building({ layout, colors, cutaway = false, upTo = "all" }: { layout: L
                 ? [s.rect.w / steps, ((i + 1) * STOREY) / steps, s.rect.h * 0.9]
                 : [s.rect.w * 0.9, ((i + 1) * STOREY) / steps, s.rect.h / steps];
               return (
-                <mesh key={`st-${s.id}-${i}`} position={pos} castShadow>
+                <mesh key={`st-${s.id}-${i}`} position={pos} castShadow receiveShadow>
                   <boxGeometry args={size} />
-                  <meshStandardMaterial color={colors.wood} />
+                  <meshStandardMaterial color={colors.wood} roughness={0.6} />
                 </mesh>
               );
             });
@@ -121,46 +181,48 @@ function Building({ layout, colors, cutaway = false, upTo = "all" }: { layout: L
         </mesh>
       )}
       {items.map((it, i) => (
-        <Piece key={`i-${i}`} it={it} colors={colors} />
+        <Model key={`i-${i}`} it={it} k={colors} />
       ))}
-      {/* a warm light in every room */}
+      {/* a warm light in every room, with its fixture on the ceiling when the roof is on */}
       {slabs
         .filter((s) => s.zone !== "circulation")
         .slice(0, 12)
         .map((s) => (
-          <pointLight key={`l-${s.level}-${s.id}`} position={[s.x + s.w / 2, s.y + WALL_H - 0.4, s.z + s.d / 2]} intensity={3.2} distance={7} decay={1.4} color="#ffe6c4" />
+          <group key={`l-${s.level}-${s.id}`} position={[s.x + s.w / 2, s.y + WALL_H, s.z + s.d / 2]}>
+            <pointLight position={[0, -0.45, 0]} intensity={2.6} distance={7} decay={1.4} color="#ffe6c4" />
+            {!cutaway && (
+              <mesh position={[0, -0.02, 0]}>
+                <cylinderGeometry args={[0.2, 0.2, 0.03, 24]} />
+                <meshStandardMaterial color="#fff6e8" emissive="#fff1d6" emissiveIntensity={1.2} />
+              </mesh>
+            )}
+          </group>
         ))}
     </group>
   );
 }
 
-function Piece({ it, colors }: { it: Item; colors: Scheme }) {
-  const color = colors[it.role];
-  const y = it.y + it.h / 2;
-  if (it.shape === "ball")
-    return (
-      <mesh position={[it.x, y, it.z]} scale={[it.w / 2, it.h / 2, it.d / 2]} castShadow>
-        <sphereGeometry args={[1, 16, 12]} />
-        <meshStandardMaterial color={color} roughness={0.9} />
-      </mesh>
-    );
-  if (it.shape === "cyl")
-    return (
-      <mesh position={[it.x, y, it.z]} castShadow>
-        <cylinderGeometry args={[it.w / 2, it.w / 2.4, it.h, 20]} />
-        <meshStandardMaterial color={color} roughness={0.6} />
-      </mesh>
-    );
+const WET = new Set(["bath", "laundry"]);
+const CUT = 1.4;
+// Floor boards lean toward the style: pale oak for Scandinavian, smoky for industrial; boards are 20 cm by 2.7 m.
+const FLOOR_TONE = { scandi: ["#e6d7bd", 0.5], modern: ["#cbb79b", 0.3], boho: ["#c9a77c", 0.2], industrial: ["#7d7468", 0.35], classic: ["#5a3a24", 0.15], midcentury: ["#8a5a36", 0.15] } as const;
+const WALL_DRESSING = new Set(["feature wall", "art", "backsplash", "tile", "curtain", "curtain rod"]);
+function Floor({ s, colors, look }: { s: Slab; colors: Scheme; look: Look }) {
+  const wet = WET.has(s.kind);
+  const map = useMemo(
+    () => (wet ? tiled(tiles(mix(look.tile, "#888888", 0.15), look.tileKind === "zellige" ? "plain" : look.tileKind, 2), s.w, s.d, 0.6) : tiled(planks(mix(colors.floor, FLOOR_TONE[look.style][0], FLOOR_TONE[look.style][1])), s.w, s.d, 3.6, 0.8)),
+    [wet, s.w, s.d, colors.floor, look.tile, look.tileKind, look.style],
+  );
   return (
-    <mesh position={[it.x, y, it.z]} castShadow receiveShadow>
-      <boxGeometry args={[it.w, it.h, it.d]} />
-      <meshStandardMaterial color={color} roughness={it.role === "metal" ? 0.35 : 0.75} metalness={it.role === "metal" ? 0.6 : 0} />
+    <mesh rotation-x={-Math.PI / 2} position={[s.x + s.w / 2, s.y + 0.001, s.z + s.d / 2]} receiveShadow>
+      <planeGeometry args={[s.w, s.d]} />
+      <meshStandardMaterial map={map} roughness={wet ? 0.35 : 0.55} />
     </mesh>
   );
 }
 
 // Moves the camera along the walk path at walking pace, looking where it's going.
-function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit<Props, "mode" | "palette">) {
+function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit<Props, "mode" | "brief" | "taste">) {
   const { camera } = useThree();
   const curves = useMemo(() => {
     const { path, gaze, stops } = walkPlan(layout);
@@ -213,8 +275,10 @@ function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit
     }
   }, [curves, camera, restartKey]);
 
-  useFrame((_, dt) => {
+  useFrame((_, frameDt) => {
     if (!curves) return;
+    // A slow frame must not jump the walk ahead: cap the step to a tenth of a second.
+    const dt = Math.min(frameDt, 0.1);
     // Walk at about 1.1 m/s, slowing to a near stop at each doorway view so the room can be taken in.
     const here0 = curves.path.getPointAt(t.current);
     const near = Math.min(...curves.stops.map((p) => p.distanceTo(here0)), 99);
@@ -228,7 +292,7 @@ function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit
       stepClock.current += dt * pace;
       if (stepClock.current > 0.7 && pace > 0.3) {
         stepClock.current = 0;
-        step();
+        playStep();
       }
     }
     if (!h.dragging) {
@@ -266,12 +330,163 @@ function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit
   return null;
 }
 
-// Look-around view: start from above the corner of the building, with a normal lens, every time it's opened.
+export type Pose = { x: number; z: number; yaw: number; level: number };
+
+// Free walking at eye height: W A S D or the arrow keys to move, drag to look, click the floor to walk
+// there. Walls stop you; doorways let you through. `go` jumps to a point (from the mini-map).
+function Explorer({ layout, level, go, onPose, onRoom }: { layout: Layout; level: number; go?: { x: number; z: number; key: number }; onPose?: (p: Pose) => void; onRoom?: (name: string) => void }) {
+  const { camera, gl } = useThree();
+  const walls = useMemo(() => blockers(layout, level), [layout, level]);
+  const me = useRef({ x: 0, z: 0, yaw: 0, pitch: -0.05 });
+  const target = useRef<[number, number] | null>(null);
+  const keys = useRef(new Set<string>());
+  const lastPose = useRef(0);
+  const lastRoom = useRef("");
+  const stepClock = useRef(0);
+
+  // Arrive on a floor in its first proper room, looking across it.
+  useLayoutEffect(() => {
+    const f = layout.floors.find((fl) => fl.level === level);
+    const room = f?.spaces.find((s) => s.zone !== "circulation" && onTour(s)) ?? f?.spaces[0];
+    if (!room) return;
+    const { x, y, w, h } = room.rect;
+    me.current = { x: x + w / 2, z: y + h - 0.6, yaw: Math.PI, pitch: -0.05 };
+    target.current = null;
+    if ("fov" in camera) {
+      camera.fov = 72;
+      camera.near = 0.05;
+      camera.updateProjectionMatrix();
+    }
+  }, [layout, level, camera]);
+
+  useEffect(() => {
+    if (!go?.key) return;
+    me.current.x = go.x;
+    me.current.z = go.z;
+    target.current = null;
+  }, [go]);
+
+  useEffect(() => {
+    const el = gl.domElement;
+    let down: { x: number; y: number; moved: number; lx: number; ly: number } | null = null;
+    const onDown = (e: PointerEvent) => {
+      down = { x: e.clientX, y: e.clientY, moved: 0, lx: e.clientX, ly: e.clientY };
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!down) return;
+      const dx = e.clientX - down.lx;
+      const dy = e.clientY - down.ly;
+      down.moved += Math.abs(dx) + Math.abs(dy);
+      down.lx = e.clientX;
+      down.ly = e.clientY;
+      me.current.yaw -= dx * 0.005;
+      me.current.pitch = Math.max(-1.1, Math.min(0.9, me.current.pitch - dy * 0.004));
+    };
+    const onUp = (e: PointerEvent) => {
+      // A click (not a drag) walks to the spot on the floor under the pointer.
+      if (down && down.moved < 6) {
+        const r = el.getBoundingClientRect();
+        const ndc = new Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+        const ray = new Raycaster();
+        ray.setFromCamera(ndc, camera);
+        const hit = ray.ray.intersectPlane(new Plane(new Vector3(0, 1, 0), -level * STOREY), new Vector3());
+        if (hit && hit.distanceTo(camera.position) < 25) target.current = [hit.x, hit.z];
+      }
+      down = null;
+    };
+    const keyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const k = e.key.toLowerCase();
+      if (["w", "a", "s", "d", "q", "e", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(k)) {
+        e.preventDefault();
+        keys.current.add(k);
+        target.current = null;
+      }
+    };
+    const keyUp = (e: KeyboardEvent) => keys.current.delete(e.key.toLowerCase());
+    el.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("keydown", keyDown);
+    window.addEventListener("keyup", keyUp);
+    el.style.cursor = "crosshair";
+    return () => {
+      el.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("keydown", keyDown);
+      window.removeEventListener("keyup", keyUp);
+      el.style.cursor = "";
+    };
+  }, [gl, camera, level]);
+
+  useFrame((_, frameDt) => {
+    const dt = Math.min(frameDt, 0.1);
+    const m = me.current;
+    const k = keys.current;
+    const turn = (k.has("arrowleft") || k.has("q") ? 1 : 0) - (k.has("arrowright") || k.has("e") ? 1 : 0);
+    m.yaw += turn * dt * 1.6;
+    const fwd = (k.has("w") || k.has("arrowup") ? 1 : 0) - (k.has("s") || k.has("arrowdown") ? 1 : 0);
+    const side = (k.has("d") ? 1 : 0) - (k.has("a") ? 1 : 0);
+    let dx = 0;
+    let dz = 0;
+    const speed = 1.6;
+    if (fwd || side) {
+      dx = (Math.sin(m.yaw) * fwd - Math.cos(m.yaw) * side) * speed * dt;
+      dz = (Math.cos(m.yaw) * fwd + Math.sin(m.yaw) * side) * speed * dt;
+    } else if (target.current) {
+      const [tx, tz] = target.current;
+      const dist = Math.hypot(tx - m.x, tz - m.z);
+      if (dist < 0.08) target.current = null;
+      else {
+        const s = Math.min(dist, speed * dt);
+        dx = ((tx - m.x) / dist) * s;
+        dz = ((tz - m.z) / dist) * s;
+        // Turn gently toward where we're walking.
+        const want = Math.atan2(tx - m.x, tz - m.z);
+        let diff = want - m.yaw;
+        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+        m.yaw += diff * Math.min(1, dt * 3);
+      }
+    }
+    if (dx || dz) {
+      const [nx, nz] = step(m.x, m.z, dx, dz, walls);
+      const moved = Math.hypot(nx - m.x, nz - m.z);
+      if (target.current && moved < 1e-4) target.current = null; // walked into a wall: stop
+      m.x = nx;
+      m.z = nz;
+      stepClock.current += moved;
+      if (stepClock.current > 0.7) {
+        stepClock.current = 0;
+        playStep();
+      }
+    }
+    const y = level * STOREY + EYE;
+    camera.position.set(m.x, y, m.z);
+    camera.lookAt(m.x + Math.sin(m.yaw) * Math.cos(m.pitch), y + Math.sin(m.pitch), m.z + Math.cos(m.yaw) * Math.cos(m.pitch));
+    const now = performance.now();
+    if (now - lastPose.current > 120) {
+      lastPose.current = now;
+      onPose?.({ x: m.x, z: m.z, yaw: m.yaw, level });
+      const here = layout.floors.find((f) => f.level === level)?.spaces.find((s) => m.x >= s.rect.x && m.x <= s.rect.x + s.rect.w && m.z >= s.rect.y && m.z <= s.rect.y + s.rect.h);
+      const name = here ? (here.zone === "circulation" ? (here.kind === "stairs" ? "Stairs" : "Hall") : here.name) : "Outside";
+      if (name !== lastRoom.current) {
+        if (lastRoom.current && here && here.zone !== "circulation") roomBell();
+        lastRoom.current = name;
+        onRoom?.(name);
+      }
+    }
+  });
+  return null;
+}
+
+// Look-around view: start from above the corner of the building with a normal lens. Runs as a layout
+// effect so the camera is in place before Bounds frames the model from this direction.
 function Overview({ layout }: { layout: Layout }) {
   const { camera } = useThree();
   const { width: W, depth: D } = layout.shell;
   const h = layout.floors.length * STOREY;
-  useEffect(() => {
+  useLayoutEffect(() => {
     const span = Math.max(W, D);
     camera.position.set(W / 2 + span * 1.05, h + span * 0.95, D / 2 + span * 1.25);
     if ("fov" in camera) {
@@ -280,7 +495,38 @@ function Overview({ layout }: { layout: Layout }) {
     }
     camera.lookAt(W / 2, h / 3, D / 2);
   }, [camera, W, D, h]);
-  return <OrbitControls target={[W / 2, h / 3, D / 2]} maxPolarAngle={Math.PI / 2.1} minDistance={3} maxDistance={90} enableDamping makeDefault />;
+  return <OrbitControls target={[W / 2, h / 3, D / 2]} maxPolarAngle={Math.PI / 2.1} minDistance={1.5} maxDistance={90} enableDamping makeDefault />;
+}
+
+// Room names over the floor being looked at; clicking one flies the camera to that room.
+function RoomLabels({ layout, level, fitKey }: { layout: Layout; level: number; fitKey?: number }) {
+  const api = useBounds();
+  const floor = layout.floors.find((f) => f.level === level);
+  useEffect(() => {
+    if (fitKey) api.refresh().clip().fit();
+  }, [fitKey, api]);
+  if (!floor) return null;
+  const y = level * STOREY;
+  return (
+    <>
+      {floor.spaces
+        .filter((s) => s.zone !== "circulation")
+        .map((s) => (
+          <Html key={s.id} position={[s.rect.x + s.rect.w / 2, y + 1.3, s.rect.y + s.rect.h / 2]} center zIndexRange={[20, 0]}>
+            <button
+              onClick={() => {
+                const box = new Box3(new Vector3(s.rect.x, y, s.rect.y), new Vector3(s.rect.x + s.rect.w, y + WALL_H, s.rect.y + s.rect.h));
+                api.refresh(box).fit();
+                roomBell();
+              }}
+              className="whitespace-nowrap rounded-full border border-line bg-paper/90 px-3 py-1 text-xs font-medium text-ink shadow-sm backdrop-blur transition hover:bg-btn hover:text-btn-ink"
+            >
+              {s.name}
+            </button>
+          </Html>
+        ))}
+    </>
+  );
 }
 
 // Walk view: a wide lens like a property tour.
@@ -289,31 +535,76 @@ function WideLens() {
   useEffect(() => {
     if ("fov" in camera) {
       camera.fov = 82;
+      camera.near = 0.05;
       camera.updateProjectionMatrix();
     }
   }, [camera]);
   return null;
 }
 
+// Soft studio light for reflections and fill, built from light panels, so nothing has to download.
+function Studio() {
+  return (
+    <Environment resolution={256} frames={1} environmentIntensity={0.55}>
+      <Lightformer form="rect" intensity={2} position={[0, 8, 0]} rotation-x={Math.PI / 2} scale={[20, 20, 1]} color="#fff8ee" />
+      <Lightformer form="rect" intensity={1.2} position={[-10, 3, 0]} rotation-y={Math.PI / 2} scale={[20, 6, 1]} color="#eaf2ff" />
+      <Lightformer form="rect" intensity={1.2} position={[10, 3, 0]} rotation-y={-Math.PI / 2} scale={[20, 6, 1]} color="#fff1df" />
+      <Lightformer form="rect" intensity={0.6} position={[0, 3, 10]} rotation-y={Math.PI} scale={[20, 6, 1]} />
+    </Environment>
+  );
+}
+
 export default function HouseScene(props: Props) {
-  const colors = useMemo(() => scheme(props.palette), [props.palette]);
+  const colors = useMemo(() => scheme(props.brief?.palette), [props.brief]);
+  const look = useMemo(() => lookOf(props.brief, props.taste), [props.brief, props.taste]);
   const { width: W, depth: D } = props.layout.shell;
   const h = props.layout.floors.length * STOREY;
+  const orbit = props.mode === "orbit";
+  const top = props.layout.floors.at(-1)?.level ?? 0;
+  const building = (
+    <Building layout={props.layout} colors={colors} look={look} cutaway={orbit && props.cutaway} upTo={orbit ? props.upTo : "all"} />
+  );
   return (
-    <Canvas shadows camera={{ fov: props.mode === "walk" ? 82 : 45, near: 0.05, far: 300, position: [W * 1.6, h * 2.2 + 6, D * 1.9] }} dpr={[1, 2]}>
+    <Canvas
+      shadows
+      camera={{ fov: orbit ? 45 : props.mode === "explore" ? 72 : 82, near: 0.05, far: 300, position: [W * 1.6, h * 2.2 + 6, D * 1.9] }}
+      dpr={[1, 2]}
+      gl={{ preserveDrawingBuffer: true }}
+    >
       <color attach="background" args={["#dfe8f3"]} />
-      <hemisphereLight args={["#ffffff", "#d9cfc2", 1.1]} />
-      <directionalLight position={[W + 14, 26, -8]} intensity={2.4} castShadow shadow-mapSize={[2048, 2048]} shadow-camera-left={-30} shadow-camera-right={30} shadow-camera-top={30} shadow-camera-bottom={-30} />
-      <ambientLight intensity={0.55} />
-      <Building layout={props.layout} colors={colors} cutaway={props.mode === "orbit" && props.cutaway} upTo={props.mode === "orbit" ? props.upTo : "all"} />
-      {props.mode === "walk" ? (
-        <>
-          <WideLens />
-          <Walker {...props} />
-        </>
-      ) : (
-        <Overview layout={props.layout} />
-      )}
+      <hemisphereLight args={["#ffffff", "#d9cfc2", 0.7]} />
+      <directionalLight position={[W + 14, 26, -8]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004} shadow-normalBias={0.02} shadow-camera-left={-30} shadow-camera-right={30} shadow-camera-top={30} shadow-camera-bottom={-30} />
+      <ambientLight intensity={0.25} />
+      <Studio />
+      {/* the site sits outside Bounds, so framing fits the building, not the lawn */}
+      <mesh rotation-x={-Math.PI / 2} position={[W / 2, -0.02, D / 2]} receiveShadow>
+        <planeGeometry args={[W + 40, D + 40]} />
+        <meshStandardMaterial color={colors.ground} roughness={1} />
+      </mesh>
+      <LookCtx.Provider value={look}>
+        {orbit ? (
+          <Bounds fit clip observe margin={1.12} maxDuration={0.9}>
+            <Overview layout={props.layout} />
+            {building}
+            {props.cutaway && <RoomLabels layout={props.layout} level={props.upTo === "all" || props.upTo === undefined ? top : props.upTo} fitKey={props.fitKey} />}
+          </Bounds>
+        ) : props.mode === "explore" ? (
+          <>
+            {building}
+            <Explorer layout={props.layout} level={props.level ?? 0} go={props.go} onPose={props.onPose} onRoom={props.onRoom} />
+          </>
+        ) : (
+          <>
+            {building}
+            <WideLens />
+            <Walker {...props} />
+          </>
+        )}
+      </LookCtx.Provider>
+      <EffectComposer multisampling={4}>
+        <N8AO halfRes aoRadius={0.5} distanceFalloff={0.5} intensity={2.2} quality="medium" />
+        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      </EffectComposer>
     </Canvas>
   );
 }

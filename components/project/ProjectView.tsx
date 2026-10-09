@@ -123,7 +123,7 @@ export function ProjectView({ id }: { id: string }) {
         >
           {step === "brief" && <BriefStep p={p} brief={p.brief} />}
           {step === "plans" && <PlansStep p={p} options={p.options} choosing={choosing} choose={choose} />}
-          {step === "walkthrough" && <WalkthroughStep layout={p.options[p.chosen_option ?? 0]} palette={p.brief.palette} title={p.title} />}
+          {step === "walkthrough" && <WalkthroughStep layout={p.options[p.chosen_option ?? 0]} brief={p.brief} taste={p.taste} title={p.title} />}
           {step === "budget" && <Coming title="What it will cost" text="An estimate by room and by trade, with a low and a high range for your city." />}
           {step === "drawings" && <Coming title="Your drawings" text="Plans you can download and share with your architect or builder." />}
           {step === "workspace" && <Coming title="Make it yours" text="Ask for any change and watch the plan, 3D model and budget update." />}

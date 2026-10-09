@@ -1,3 +1,4 @@
+import type { MouseEvent, ReactNode } from "react";
 import type { Floor, Layout, Opening, Space } from "@/lib/layout/schema";
 import { doorIsOpen, wallPieces } from "@/lib/layout/walls";
 
@@ -81,12 +82,29 @@ function Label({ s, units }: { s: Space; units: "imperial" | "metric" }) {
   );
 }
 
-export function PlanSvg({ layout, level = 0, units = "imperial", className = "" }: { layout: Layout; level?: number; units?: "imperial" | "metric"; className?: string }) {
+// onPick reports a click in plan metres (x across, z down the page); children draw on top in the same units.
+export function PlanSvg({
+  layout, level = 0, units = "imperial", className = "", onPick, children,
+}: { layout: Layout; level?: number; units?: "imperial" | "metric"; className?: string; onPick?: (x: number, z: number) => void; children?: ReactNode }) {
   const floor: Floor | undefined = layout.floors.find((f) => f.level === level) ?? layout.floors[0];
   const { width: W, depth: D } = layout.shell;
   const pieces = wallPieces(floor, layout.shell);
   return (
-    <svg viewBox={`${-PAD} ${-PAD} ${W + PAD * 2} ${D + PAD * 2}`} className={className} role="img" aria-label={`Floor plan, floor ${level + 1}`}>
+    <svg
+      viewBox={`${-PAD} ${-PAD} ${W + PAD * 2} ${D + PAD * 2}`}
+      className={className}
+      role="img"
+      aria-label={`Floor plan, floor ${level + 1}`}
+      onClick={
+        onPick &&
+        ((e: MouseEvent<SVGSVGElement>) => {
+          const m = e.currentTarget.getScreenCTM();
+          if (!m) return;
+          const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(m.inverse());
+          onPick(pt.x, pt.y);
+        })
+      }
+    >
       {floor.spaces.map((s) => (
         <Room key={s.id} s={s} />
       ))}
@@ -119,6 +137,7 @@ export function PlanSvg({ layout, level = 0, units = "imperial", className = "" 
       {floor.spaces.map((s) => (
         <Label key={`l-${s.id}`} s={s} units={units} />
       ))}
+      {children}
     </svg>
   );
 }
