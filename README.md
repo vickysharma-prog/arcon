@@ -6,8 +6,6 @@ Built for the Qloo Agentic Hackathon 2026. Qloo's taste graph is the engine behi
 
 ## Repo layout
 
-- `docs/plan.md` has the product and build plan.
-- `docs/qloo-findings.md` has what the Qloo API returns for our use case, tested live.
 - `scripts/qloo_probe.py` is a small script for querying the Qloo API.
 
 ## Setup
