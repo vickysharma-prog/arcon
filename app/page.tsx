@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Logo } from "@/components/Logo";
 
 export default function Home() {
@@ -12,6 +13,9 @@ export default function Home() {
           Tell Arcon the films, places and things you love. It designs your home, hotel, office or café from them, then
           walks you through it in 3D.
         </p>
+        <Link href="/start" className="mt-10 rounded-full bg-ink px-7 py-3.5 text-lg text-paper transition hover:opacity-90">
+          Start designing
+        </Link>
       </main>
     </div>
   );
