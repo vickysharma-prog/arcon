@@ -69,6 +69,6 @@ test("rooms come out close to the size the program asked for", () => {
       for (const s of f.spaces.filter((s) => s.zone !== "circulation")) {
         const asked = TEMPLATES.house.rooms.find((r) => r.id === s.id)!.area;
         const got = s.rect.w * s.rect.h;
-        assert.ok(got < asked * 2, `${s.id}: asked ${asked} m², got ${got.toFixed(1)} m²`);
+        assert.ok(got < asked * 2, `${s.id}: asked ${asked} mÂ², got ${got.toFixed(1)} mÂ²`);
       }
 });

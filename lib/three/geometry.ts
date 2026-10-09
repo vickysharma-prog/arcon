@@ -1,4 +1,5 @@
 import type { Layout, Opening, Space } from "../layout/schema.ts";
+import { wallPieces, type Piece } from "../layout/walls.ts";
 
 // Turns a 2D layout into 3D building parts. Plan x stays x; plan y becomes z; y is up. Metres throughout.
 export const STOREY = 3.1; // floor-to-floor height
@@ -10,60 +11,26 @@ const EXT = 0.2; // exterior wall thickness
 const INT = 0.1; // interior wall thickness
 const EPS = 1e-6;
 
+// Openings that cut a solid wall piece: plan axis "x" openings lie on edges running along x.
+const cuts = (run: Piece, openings: Opening[]) =>
+  openings
+    .map((o) => ({ o, at: o.axis === "x" ? o.y : o.x, c: o.axis === "x" ? o.x : o.y, axis: o.axis === "x" ? "x" : "z" }))
+    .filter(({ axis, at, c, o }) => axis === run.axis && Math.abs(at - run.at) < 1e-4 && c - o.width / 2 >= run.from - EPS && c + o.width / 2 <= run.to + EPS)
+    .sort((p, q) => p.c - q.c);
+
 // One box of wall: a run along x or z, between two heights.
 export type WallBox = { axis: "x" | "z"; at: number; from: number; to: number; y0: number; y1: number; thick: number; exterior: boolean; level: number };
 export type Glass = { axis: "x" | "z"; at: number; from: number; to: number; y0: number; y1: number; level: number };
 export type Slab = { id: string; kind: string; zone: string; x: number; z: number; w: number; d: number; y: number; level: number };
 
-type Run = { axis: "x" | "z"; at: number; from: number; to: number };
-
-// Every room edge, merged so a wall shared by two rooms is built once.
-function wallRuns(spaces: Space[]): Run[] {
-  const lines = new Map<string, [number, number][]>();
-  const add = (axis: "x" | "z", at: number, a: number, b: number) => {
-    const key = `${axis}:${at.toFixed(4)}`;
-    lines.set(key, [...(lines.get(key) ?? []), [Math.min(a, b), Math.max(a, b)]]);
-  };
-  for (const s of spaces) {
-    const { x, y, w, h } = s.rect;
-    add("x", y, x, x + w); // edges running along x sit at a fixed z (= plan y)
-    add("x", y + h, x, x + w);
-    add("z", x, y, y + h);
-    add("z", x + w, y, y + h);
-  }
-  const runs: Run[] = [];
-  for (const [key, spans] of lines) {
-    const [axis, at] = [key.split(":")[0] as "x" | "z", Number(key.split(":")[1])];
-    spans.sort((p, q) => p[0] - q[0]);
-    let [a, b] = spans[0];
-    for (const [c, d] of spans.slice(1)) {
-      if (c <= b + EPS) b = Math.max(b, d);
-      else {
-        runs.push({ axis, at, from: a, to: b });
-        [a, b] = [c, d];
-      }
-    }
-    runs.push({ axis, at, from: a, to: b });
-  }
-  return runs;
-}
-
-// Openings that cut a run: plan axis "x" openings lie on edges running along x.
-const cuts = (run: Run, openings: Opening[]) =>
-  openings
-    .filter((o) => (o.axis === "x" ? "x" : "z") === run.axis)
-    .map((o) => ({ o, at: o.axis === "x" ? o.y : o.x, c: o.axis === "x" ? o.x : o.y }))
-    .filter(({ at, c, o }) => Math.abs(at - run.at) < EPS && c - o.width / 2 >= run.from - EPS && c + o.width / 2 <= run.to + EPS)
-    .sort((p, q) => p.c - q.c);
-
 export function buildWalls(layout: Layout): { walls: WallBox[]; glass: Glass[] } {
-  const { width: W, depth: D } = layout.shell;
   const walls: WallBox[] = [];
   const glass: Glass[] = [];
   for (const floor of layout.floors) {
     const base = floor.level * STOREY;
-    for (const run of wallRuns(floor.spaces)) {
-      const exterior = (run.axis === "x" && (Math.abs(run.at) < EPS || Math.abs(run.at - D) < EPS)) || (run.axis === "z" && (Math.abs(run.at) < EPS || Math.abs(run.at - W) < EPS));
+    // Open-plan stretches (living, dining, kitchen, hall) get no wall at all.
+    for (const run of wallPieces(floor, layout.shell).filter((p) => !p.open)) {
+      const exterior = run.exterior;
       const thick = exterior ? EXT : INT;
       const box = (from: number, to: number, y0: number, y1: number) =>
         to - from > EPS && walls.push({ axis: run.axis, at: run.at, from, to, y0: base + y0, y1: base + y1, thick, exterior, level: floor.level });
