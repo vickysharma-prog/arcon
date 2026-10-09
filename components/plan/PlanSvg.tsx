@@ -30,7 +30,7 @@ function Door({ o }: { o: Opening }) {
 
     return (
 
-      <g className="stroke-clay" fill="none" strokeWidth={0.05}>
+      <g className="stroke-accent" fill="none" strokeWidth={0.05}>
 
         <line x1={x0} y1={o.y} x2={x0} y2={o.y - w} />
 
@@ -46,7 +46,7 @@ function Door({ o }: { o: Opening }) {
 
   return (
 
-    <g className="stroke-clay" fill="none" strokeWidth={0.05}>
+    <g className="stroke-accent" fill="none" strokeWidth={0.05}>
 
       <line x1={o.x} y1={y0} x2={o.x + w} y2={y0} />
 

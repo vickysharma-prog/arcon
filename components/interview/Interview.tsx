@@ -66,7 +66,7 @@ export function Interview() {
               {m.role === "assistant" &&
                 activity(m).map((a, i) => (
                   <p key={i} className="flex items-center gap-2 text-xs text-ink-soft">
-                    <span className={`h-1.5 w-1.5 rounded-full ${a.working ? "animate-pulse bg-clay" : "bg-leaf"}`} />
+                    <span className={`h-1.5 w-1.5 rounded-full ${a.working ? "animate-pulse bg-accent" : "bg-leaf"}`} />
                     {a.label}
                   </p>
                 ))}
@@ -74,13 +74,13 @@ export function Interview() {
             </li>
           ))}
           {agent.status === "submitted" && <p className="text-sm text-ink-soft">Thinking…</p>}
-          {agent.error && <p className="text-sm text-clay">Something went wrong. Please try again in a moment.</p>}
+          {agent.error && <p className="text-sm text-accent">Something went wrong. Please try again in a moment.</p>}
           <div ref={bottom} />
         </ol>
 
         {projectId ? (
           <div className="border-t border-line p-5 text-center">
-            <Link href={`/project/${projectId}`} className="inline-block rounded-full bg-ink px-6 py-3 text-paper">
+            <Link href={`/project/${projectId}`} className="inline-block rounded-full bg-btn px-6 py-3 text-btn-ink">
               See your design
             </Link>
           </div>
@@ -111,12 +111,12 @@ export function Interview() {
                 type="button"
                 onClick={listen.listening ? listen.stop : listen.start}
                 aria-label={listen.listening ? "Stop listening" : "Talk"}
-                className={`h-12 w-12 rounded-full border border-line ${listen.listening ? "animate-pulse bg-clay text-paper" : "text-ink"}`}
+                className={`h-12 w-12 rounded-full border border-line ${listen.listening ? "animate-pulse bg-accent text-paper" : "text-ink"}`}
               >
                 🎙
               </button>
             )}
-            <button type="submit" disabled={busy || !draft.trim()} className="h-12 rounded-full bg-ink px-5 text-paper disabled:opacity-40">
+            <button type="submit" disabled={busy || !draft.trim()} className="h-12 rounded-full bg-btn px-5 text-btn-ink disabled:opacity-40">
               Send
             </button>
           </form>

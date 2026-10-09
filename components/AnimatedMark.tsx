@@ -16,7 +16,7 @@ export function AnimatedMark({ size = 160, growing = true }: { size?: number; gr
           cx={s.x}
           cy={s.y}
           r={s.r}
-          className={s.accent ? "fill-clay" : "fill-ink"}
+          className={s.accent ? "fill-accent" : "fill-ink"}
           initial={still ? false : { scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={

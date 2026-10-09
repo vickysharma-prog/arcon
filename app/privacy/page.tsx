@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { Logo } from "@/components/Logo";
+import { SiteHeader } from "@/components/SiteHeader";
 
 export const metadata: Metadata = { title: "Privacy · Arcon" };
 
 export default function PrivacyPage() {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="px-4 py-5 sm:px-8">
-        <Link href="/" aria-label="Arcon home">
-          <Logo size={26} />
-        </Link>
-      </header>
+      <SiteHeader />
       <main className="mx-auto w-full max-w-2xl px-4 py-10 leading-relaxed">
         <h1 className="font-serif text-5xl">Privacy</h1>
         <p className="mt-6 text-ink-soft">Last updated 9 October 2026.</p>

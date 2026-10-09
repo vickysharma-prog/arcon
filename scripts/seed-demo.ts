@@ -29,6 +29,11 @@ const p = await createProject({
   taste_signals: signals,
   taste,
 });
-const t0 = Date.now();
-const d = await designProject(p.id, chatModel());
-console.log(JSON.stringify({ projectId: p.id, guestId, style: (d.brief as { name?: string })?.name, options: d.options?.length, ms: Date.now() - t0 }));
+// With --fresh, stop here so the web app runs the design and shows the whole reveal.
+if (process.argv.includes("--fresh")) {
+  console.log(JSON.stringify({ projectId: p.id, guestId }));
+} else {
+  const t0 = Date.now();
+  const d = await designProject(p.id, chatModel());
+  console.log(JSON.stringify({ projectId: p.id, guestId, style: (d.brief as { name?: string })?.name, options: d.options?.length, ms: Date.now() - t0 }));
+}

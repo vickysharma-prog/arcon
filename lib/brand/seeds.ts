@@ -15,7 +15,7 @@ export function seeds(count = 70, spacing = 3.25): Seed[] {
       x: +(SIZE / 2 + radius * Math.cos(angle)).toFixed(2),
       y: +(SIZE / 2 + radius * Math.sin(angle)).toFixed(2),
       r: +(0.9 + 1.7 * (n / count)).toFixed(2), // seeds grow toward the rim
-      accent: n % 8 === 0, // every eighth seed in clay
+      accent: n % 8 === 0, // every eighth seed in the accent colour
     });
   }
   return out;

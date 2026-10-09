@@ -32,7 +32,7 @@ export function CookieNotice() {
           } catch {}
           setShow(false);
         }}
-        className="rounded-full bg-ink px-4 py-1.5 text-paper"
+        className="rounded-full bg-btn px-4 py-1.5 text-btn-ink"
       >
         Got it
       </button>

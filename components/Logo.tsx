@@ -2,12 +2,12 @@ import { seeds, SIZE } from "@/lib/brand/seeds";
 
 const SEEDS = seeds();
 
-// The seed mark alone. Colours follow the theme: ink seeds, clay accents.
+// The seed mark alone. Colours follow the theme: ink seeds, accent-coloured accents.
 export function Mark({ size = 32, className = "" }: { size?: number; className?: string }) {
   return (
     <svg width={size} height={size} viewBox={`0 0 ${SIZE} ${SIZE}`} className={className} role="img" aria-label="Arcon">
       {SEEDS.map((s, i) => (
-        <circle key={i} cx={s.x} cy={s.y} r={s.r} className={s.accent ? "fill-clay" : "fill-ink"} />
+        <circle key={i} cx={s.x} cy={s.y} r={s.r} className={s.accent ? "fill-accent" : "fill-ink"} />
       ))}
     </svg>
   );

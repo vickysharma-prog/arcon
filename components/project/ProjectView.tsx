@@ -80,7 +80,7 @@ export function ProjectView({ id }: { id: string }) {
       <main className="mx-auto max-w-xl px-4 py-24 text-center">
         <p className="text-lg">{error}</p>
         {p && (
-          <button onClick={() => void design()} className="mt-6 rounded-full bg-ink px-6 py-3 text-paper">
+          <button onClick={() => void design()} className="mt-6 rounded-full bg-btn px-6 py-3 text-btn-ink">
             Try again
           </button>
         )}
@@ -117,7 +117,7 @@ export function ProjectView({ id }: { id: string }) {
             <button
               onClick={() => setStep(next)}
               disabled={!canLeave(step, p)}
-              className="rounded-full bg-ink px-8 py-3 text-lg text-paper transition disabled:opacity-30"
+              className="rounded-full bg-btn px-8 py-3 text-lg text-btn-ink transition disabled:opacity-30"
             >
               Next: {STEPS.find((s) => s.id === next)?.label}
             </button>
@@ -137,7 +137,7 @@ function Processing({ p, done }: { p: View | null; done: boolean }) {
       </h1>
       <div className="mt-8 w-full max-w-2xl rounded-2xl border border-line bg-paper-raised/80 p-5 shadow-sm">
         <div className="mb-3 flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-ink-soft">
-          <span className="h-2 w-2 animate-pulse rounded-full bg-clay" /> arcon engine
+          <span className="h-2 w-2 animate-pulse rounded-full bg-accent" /> arcon engine
         </div>
         {p ? <TypeLog lines={processingLog(p)} done={done} /> : <TypeLog lines={["> loading project"]} done={false} />}
       </div>
@@ -153,7 +153,7 @@ function Progress({ step, onJump }: { step: StepId; onJump: (s: StepId) => void 
         {STEPS.map((s, i) => (
           <li key={s.id} className="flex-1">
             <button onClick={() => onJump(s.id)} disabled={i > at} className="w-full text-left disabled:cursor-default" aria-current={i === at ? "step" : undefined}>
-              <span className={`block h-1 rounded-full ${i <= at ? "bg-clay" : "bg-line"}`} />
+              <span className={`block h-1 rounded-full ${i <= at ? "bg-accent" : "bg-line"}`} />
               <span className={`mt-1.5 hidden text-xs sm:block ${i === at ? "text-ink" : "text-ink-soft"}`}>{s.label}</span>
             </button>
           </li>
@@ -257,7 +257,7 @@ function PlansStep({ p, options, choosing, choose }: { p: View; options: Layout[
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.15 }}
-            className={`rounded-2xl border bg-paper-raised p-4 ${p.chosen_option === i ? "border-clay ring-2 ring-clay/30" : "border-line"}`}
+            className={`rounded-2xl border bg-paper-raised p-4 ${p.chosen_option === i ? "border-accent ring-2 ring-accent/30" : "border-line"}`}
           >
             <h2 className="font-serif text-2xl">Option {i + 1}</h2>
             {layout.floors.map((f) => (
@@ -269,7 +269,7 @@ function PlansStep({ p, options, choosing, choose }: { p: View; options: Layout[
             <button
               onClick={() => choose(i)}
               disabled={choosing !== null}
-              className={`mt-4 w-full rounded-full px-4 py-2.5 ${p.chosen_option === i ? "bg-clay text-paper" : "border border-ink text-ink"} disabled:opacity-50`}
+              className={`mt-4 w-full rounded-full px-4 py-2.5 ${p.chosen_option === i ? "bg-accent text-paper" : "border border-ink text-ink"} disabled:opacity-50`}
             >
               {p.chosen_option === i ? "Chosen" : choosing === i ? "Saving…" : "Choose this plan"}
             </button>

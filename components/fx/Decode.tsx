@@ -73,13 +73,13 @@ export function TypeLog({ lines, done, className = "" }: { lines: string[]; done
       {count < lines.length && (
         <div className="text-ink">
           {lines[count].slice(0, chars)}
-          <span className="ml-0.5 inline-block h-4 w-2 translate-y-0.5 animate-pulse bg-clay" />
+          <span className="ml-0.5 inline-block h-4 w-2 translate-y-0.5 animate-pulse bg-accent" />
         </div>
       )}
       {count >= lines.length && (
         <div className="text-ink">
           {done ? "> design ready" : "> working"}
-          <span className="ml-0.5 inline-block h-4 w-2 translate-y-0.5 animate-pulse bg-clay" />
+          <span className="ml-0.5 inline-block h-4 w-2 translate-y-0.5 animate-pulse bg-accent" />
         </div>
       )}
     </div>

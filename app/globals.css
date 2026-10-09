@@ -1,36 +1,42 @@
 @import "tailwindcss";
 
-/* Warm architectural palette: off-white paper, warm ink, clay accent, leaf green for greenery */
+/* Arcon theme "Mix 1": blueprint blue leads, forest green marks living things. Dark mode is Midnight Studio. */
 :root {
-  --paper: #f6f2ea;
-  --paper-raised: #fbf9f4;
-  --ink: #1f1b16;
-  --ink-soft: #5c544a;
-  --line: #e2dbcf;
-  --clay: #b5653f;
-  --leaf: #4f7a4a;
+  --paper: #f4f7fb;
+  --paper-raised: #ffffff;
+  --ink: #0e1a2b;
+  --ink-soft: #55647a;
+  --line: #dce4ef;
+  --accent: #2f6fed;
+  --leaf: #2f5d45;
+  --btn: #0e1a2b;
+  --btn-ink: #ffffff;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #141210;
-    --paper-raised: #1c1916;
-    --ink: #efe9df;
-    --ink-soft: #a89e90;
-    --line: #2e2a25;
-    --clay: #d4845d;
-    --leaf: #7fae78;
+    --paper: #0d1117;
+    --paper-raised: #151b23;
+    --ink: #e6edf3;
+    --ink-soft: #8b97a5;
+    --line: #232c37;
+    --accent: #6b9bff;
+    --leaf: #7fd17a;
+    --btn: #6b9bff;
+    --btn-ink: #0d1117;
   }
 }
 
 :root[data-theme="dark"] {
-  --paper: #141210;
-  --paper-raised: #1c1916;
-  --ink: #efe9df;
-  --ink-soft: #a89e90;
-  --line: #2e2a25;
-  --clay: #d4845d;
-  --leaf: #7fae78;
+  --paper: #0d1117;
+  --paper-raised: #151b23;
+  --ink: #e6edf3;
+  --ink-soft: #8b97a5;
+  --line: #232c37;
+  --accent: #6b9bff;
+  --leaf: #7fd17a;
+  --btn: #6b9bff;
+  --btn-ink: #0d1117;
 }
 
 @theme inline {
@@ -39,7 +45,9 @@
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
   --color-line: var(--line);
-  --color-clay: var(--clay);
+  --color-accent: var(--accent);
+  --color-btn: var(--btn);
+  --color-btn-ink: var(--btn-ink);
   --color-leaf: var(--leaf);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -62,7 +70,7 @@ body {
   inset: 0 0 auto 0;
   height: 18vh;
   pointer-events: none;
-  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--clay) 12%, transparent), transparent);
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--accent) 12%, transparent), transparent);
   animation: arcon-scan 3.2s linear infinite;
 }
 @keyframes arcon-draw {
