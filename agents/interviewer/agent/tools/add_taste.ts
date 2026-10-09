@@ -16,7 +16,7 @@ export default defineTool({
     const unknown = entityIds.filter((id) => !known[id]);
     if (unknown.length) throw new Error(`Call find_taste first; these ids weren't found in this conversation: ${unknown.join(", ")}`);
 
-    const p = await sessionProject(ctx.session.id);
+    const p = await sessionProject(ctx);
     const added = entityIds.map((id) => known[id]);
     const updated = await addTasteSignals(
       p.id,

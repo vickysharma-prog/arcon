@@ -8,6 +8,7 @@ export type TasteSignal = { entityId: string; name: string; layer: 1 | 2 | 3; ty
 export type Project = {
   id: string;
   owner_id: string | null;
+  guest_id: string | null;
   mode: "owner" | "pro";
   space_type: SpaceType | null;
   title: string | null;
@@ -37,6 +38,10 @@ export const getProject = (id: string) =>
 
 export const updateProject = (id: string, patch: Patch) =>
   must<Project>(supabaseAdmin().from("projects").update(patch).eq("id", id).select().single());
+
+// A project is visible to the user who signed in to it, or to the browser that started it.
+export const ownsProject = (p: Pick<Project, "owner_id" | "guest_id">, who: { userId?: string | null; guestId?: string | null }) =>
+  (!!who.userId && p.owner_id === who.userId) || (!!who.guestId && p.guest_id === who.guestId);
 
 export const deleteProject = (id: string) => must(supabaseAdmin().from("projects").delete().eq("id", id));
 

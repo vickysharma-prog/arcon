@@ -5,7 +5,7 @@ import type { Project } from "../project/store.ts";
 import type { Profile } from "../qloo/taste.ts";
 
 const project = (over: Partial<Project> = {}): Project => ({
-  id: "p", owner_id: null, mode: "owner", space_type: null, title: null, status: "interview",
+  id: "p", owner_id: null, guest_id: null, mode: "owner", space_type: null, title: null, status: "interview",
   site: {}, interview: {}, taste_signals: [], taste: null, brief: null, program: null, chosen_option: null, ...over,
 });
 

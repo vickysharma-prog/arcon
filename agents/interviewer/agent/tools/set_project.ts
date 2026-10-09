@@ -21,7 +21,7 @@ export default defineTool({
   async execute(input, ctx) {
     const problem = siteSizeProblem(input.width, input.depth, input.unit);
     if (problem) return { saved: false, problem };
-    const p = await sessionProject(ctx.session.id);
+    const p = await sessionProject(ctx);
     const site = { ...p.site };
     if (input.width) site.width = toMetres(input.width, input.unit);
     if (input.depth) site.depth = toMetres(input.depth, input.unit);

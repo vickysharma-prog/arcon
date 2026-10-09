@@ -5,14 +5,18 @@ import { bindSession, createProject, projectForSession, type Project } from "../
 // Qloo entities found during this conversation, by id, so add_taste can use their full tags.
 export const candidates = defineState<Record<string, Entity>>("interviewer.candidates", () => ({}));
 
-// The project this session works on. The web app binds it when the session starts;
-// a session started without one (for example from the terminal) gets a fresh project.
-export async function sessionProject(sessionId: string): Promise<Project> {
+type SessionCtx = { session: { id: string; auth: { initiator?: { principalId?: string; authenticator?: string } | null } } };
+
+// The project this session works on. The first tool call of a new interview creates it,
+// owned by the guest who started the session, and binds the session to it.
+export async function sessionProject(ctx: SessionCtx): Promise<Project> {
   try {
-    return await projectForSession(sessionId);
+    return await projectForSession(ctx.session.id);
   } catch {
-    const p = await createProject({});
-    await bindSession(sessionId, p.id, "interviewer");
+    const who = ctx.session.auth.initiator;
+    const guestId = who?.authenticator === "arcon-guest" ? who.principalId : null;
+    const p = await createProject({ guest_id: guestId ?? null });
+    await bindSession(ctx.session.id, p.id, "interviewer");
     return p;
   }
 }

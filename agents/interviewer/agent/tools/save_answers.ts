@@ -12,7 +12,7 @@ export default defineTool({
   }),
   label: { start: ({ section }) => `Noting ${section}` },
   async execute({ section, facts }, ctx) {
-    const p = await sessionProject(ctx.session.id);
+    const p = await sessionProject(ctx);
     await saveInterview(p.id, section, facts);
     return { saved: Object.keys(facts) };
   },

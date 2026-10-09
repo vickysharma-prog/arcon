@@ -10,7 +10,7 @@ export default defineTool({
   inputSchema: z.object({ title: z.string().describe("a short project name, e.g. 'The Austin house' or 'Brooklyn boutique hotel'") }),
   label: { start: () => "Starting your design" },
   async execute({ title }, ctx) {
-    const p = await getProject((await sessionProject(ctx.session.id)).id);
+    const p = await getProject((await sessionProject(ctx)).id);
     const missing = missingForDesign(p);
     if (missing.length) return { ready: false, stillNeed: missing };
     await updateProject(p.id, { status: "designing", title });
