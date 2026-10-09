@@ -1,82 +1,108 @@
 import type { Layout, Opening, Space } from "../layout/schema.ts";
 import { STOREY } from "./geometry.ts";
 
-// Simple furniture and plants for each room, as boxes and cylinders the 3D view can style from the brief.
-// Role decides the colour: wood, textile, metal, accent, base, or plant.
+// Furniture and plants for each room. This file decides what goes where; the 3D view draws each piece
+// from its name (a sofa gets a seat, back, arms and cushions; a kitchen counter gets a sink, hob and fridge).
+// Role decides the main colour: wood, textile, metal, accent, base, plant or pot.
 export type Role = "wood" | "textile" | "metal" | "accent" | "base" | "plant" | "pot";
-export type Item = { room: string; name: string; shape: "box" | "cyl" | "ball"; x: number; z: number; y: number; w: number; d: number; h: number; role: Role; level: number };
-
-// Pieces in room-local terms: fx, fz are fractions of the room (0 = near the wall at the room's back), sizes in metres.
-type Piece = { name: string; fx: number; fz: number; w: number; d: number; h: number; role: Role; shape?: Item["shape"]; lift?: number };
-
-const SETS: Record<string, Piece[]> = {
-  bedroom: [
-    { name: "bed", fx: 0.5, fz: 0.32, w: 1.6, d: 2.0, h: 0.5, role: "textile" },
-    { name: "headboard", fx: 0.5, fz: 0.05, w: 1.7, d: 0.08, h: 1.1, role: "wood" },
-    { name: "side table", fx: 0.18, fz: 0.1, w: 0.45, d: 0.4, h: 0.5, role: "wood" },
-    { name: "side table", fx: 0.82, fz: 0.1, w: 0.45, d: 0.4, h: 0.5, role: "wood" },
-  ],
-  "guest-room": [
-    { name: "bed", fx: 0.5, fz: 0.32, w: 1.6, d: 2.0, h: 0.5, role: "textile" },
-    { name: "headboard", fx: 0.5, fz: 0.05, w: 1.7, d: 0.08, h: 1.1, role: "wood" },
-    { name: "desk", fx: 0.8, fz: 0.85, w: 1.0, d: 0.5, h: 0.75, role: "wood" },
-  ],
-  living: [
-    { name: "sofa", fx: 0.5, fz: 0.18, w: 2.2, d: 0.9, h: 0.8, role: "textile" },
-    { name: "coffee table", fx: 0.5, fz: 0.45, w: 1.1, d: 0.6, h: 0.4, role: "wood" },
-    { name: "rug", fx: 0.5, fz: 0.42, w: 2.6, d: 1.8, h: 0.02, role: "accent" },
-    { name: "armchair", fx: 0.85, fz: 0.45, w: 0.8, d: 0.8, h: 0.8, role: "accent" },
-    { name: "media unit", fx: 0.5, fz: 0.92, w: 1.8, d: 0.4, h: 0.5, role: "wood" },
-  ],
-  lounge: [
-    { name: "sofa", fx: 0.5, fz: 0.2, w: 2.0, d: 0.9, h: 0.8, role: "textile" },
-    { name: "coffee table", fx: 0.5, fz: 0.5, w: 1.0, d: 0.6, h: 0.4, role: "wood" },
-  ],
-  kitchen: [
-    { name: "counter", fx: 0.5, fz: 0.08, w: 3.0, d: 0.6, h: 0.9, role: "base" },
-    { name: "upper cabinets", fx: 0.5, fz: 0.05, w: 3.0, d: 0.35, h: 0.7, role: "wood", lift: 1.5 },
-    { name: "island", fx: 0.5, fz: 0.6, w: 1.8, d: 0.9, h: 0.9, role: "wood" },
-  ],
-  dining: [
-    { name: "dining table", fx: 0.5, fz: 0.5, w: 1.8, d: 0.9, h: 0.75, role: "wood" },
-    { name: "pendant", fx: 0.5, fz: 0.5, w: 0.5, d: 0.5, h: 0.3, role: "metal", shape: "cyl", lift: 1.8 },
-    { name: "chair", fx: 0.3, fz: 0.25, w: 0.45, d: 0.45, h: 0.85, role: "textile" },
-    { name: "chair", fx: 0.7, fz: 0.25, w: 0.45, d: 0.45, h: 0.85, role: "textile" },
-    { name: "chair", fx: 0.3, fz: 0.75, w: 0.45, d: 0.45, h: 0.85, role: "textile" },
-    { name: "chair", fx: 0.7, fz: 0.75, w: 0.45, d: 0.45, h: 0.85, role: "textile" },
-  ],
-  bath: [
-    { name: "vanity", fx: 0.3, fz: 0.1, w: 0.9, d: 0.5, h: 0.85, role: "wood" },
-    { name: "shower", fx: 0.75, fz: 0.25, w: 0.9, d: 0.9, h: 0.05, role: "base" },
-    { name: "toilet", fx: 0.75, fz: 0.75, w: 0.4, d: 0.65, h: 0.45, role: "base" },
-  ],
-  office: [
-    { name: "desk", fx: 0.5, fz: 0.15, w: 1.5, d: 0.7, h: 0.75, role: "wood" },
-    { name: "chair", fx: 0.5, fz: 0.35, w: 0.55, d: 0.55, h: 0.9, role: "metal" },
-    { name: "bookshelf", fx: 0.85, fz: 0.75, w: 0.9, d: 0.35, h: 1.9, role: "wood" },
-  ],
-  workspace: [
-    { name: "desk row", fx: 0.5, fz: 0.25, w: 3.2, d: 0.8, h: 0.75, role: "wood" },
-    { name: "desk row", fx: 0.5, fz: 0.65, w: 3.2, d: 0.8, h: 0.75, role: "wood" },
-  ],
-  meeting: [{ name: "meeting table", fx: 0.5, fz: 0.5, w: 2.4, d: 1.1, h: 0.75, role: "wood" }],
-  reception: [{ name: "reception desk", fx: 0.5, fz: 0.3, w: 2.0, d: 0.7, h: 1.05, role: "wood" }],
-  counter: [{ name: "service counter", fx: 0.5, fz: 0.4, w: 2.6, d: 0.7, h: 1.05, role: "wood" }],
-  retail: [
-    { name: "display table", fx: 0.35, fz: 0.5, w: 1.6, d: 0.9, h: 0.8, role: "wood" },
-    { name: "display table", fx: 0.7, fz: 0.5, w: 1.6, d: 0.9, h: 0.8, role: "wood" },
-  ],
-  laundry: [{ name: "washer and dryer", fx: 0.4, fz: 0.15, w: 1.3, d: 0.65, h: 0.9, role: "base" }],
-  storage: [{ name: "shelving", fx: 0.5, fz: 0.15, w: 1.2, d: 0.45, h: 1.9, role: "metal" }],
+export type Item = {
+  room: string;
+  name: string;
+  /** World footprint centre and size (x, z, w along x, d along z), used for clearance checks. */
+  x: number; z: number; y: number; w: number; d: number; h: number;
+  /** The piece's own width and depth before turning, and which way its front faces (radians about y). */
+  lw: number; ld: number; rot: number;
+  role: Role; level: number;
 };
 
-const PLANTS: Piece[] = [
-  { name: "plant pot", fx: 0.9, fz: 0.1, w: 0.4, d: 0.4, h: 0.4, role: "pot", shape: "cyl" },
-  { name: "plant", fx: 0.9, fz: 0.1, w: 0.7, d: 0.7, h: 0.8, role: "plant", shape: "ball", lift: 0.4 },
+// Pieces in room-local terms: fx, fz are fractions of the room (0 = the wall at the room's back), sizes in
+// metres. face is the direction the front looks, in room terms: [0, 1] faces into the room (the default),
+// [0, -1] faces the back wall, [1, 0] and [-1, 0] face sideways.
+// or is a smaller piece to try when this one can't fit around the door.
+type Piece = { name: string; fx: number; fz: number; w: number; d: number; h: number; role: Role; lift?: number; face?: [number, number]; or?: Piece };
+
+const bed = (fx = 0.5): Piece[] => [
+  { name: "rug", fx, fz: 0.42, w: 2.6, d: 1.9, h: 0.015, role: "accent" },
+  { name: "bed", fx, fz: 0, w: 2.7, d: 2.05, h: 1.1, role: "textile", or: { name: "bed", fx, fz: 0, w: 2.4, d: 1.9, h: 1.1, role: "textile" } },
 ];
+const wardrobe: Piece = { name: "wardrobe", fx: 0.96, fz: 0.72, w: 1.5, d: 0.6, h: 2.2, role: "wood", face: [-1, 0] };
+
+const SETS: Record<string, Piece[]> = {
+  bedroom: [...bed(0.45), wardrobe, { name: "floor lamp", fx: 0.06, fz: 0.75, w: 0.4, d: 0.4, h: 1.6, role: "metal" }],
+  "guest-room": [...bed(0.45), wardrobe, { name: "desk", fx: 0.1, fz: 0.75, w: 1.1, d: 0.55, h: 0.75, role: "wood", face: [1, 0] }],
+  living: [
+    { name: "rug", fx: 0.5, fz: 0.42, w: 2.8, d: 2.0, h: 0.015, role: "accent" },
+    { name: "sofa", fx: 0.5, fz: 0.15, w: 2.3, d: 0.95, h: 0.85, role: "textile" },
+    { name: "coffee table", fx: 0.5, fz: 0.42, w: 1.1, d: 0.6, h: 0.42, role: "wood" },
+    { name: "armchair", fx: 0.86, fz: 0.42, w: 0.85, d: 0.85, h: 0.85, role: "accent", face: [-1, 0] },
+    { name: "media unit", fx: 0.5, fz: 0.95, w: 1.9, d: 0.42, h: 1.4, role: "wood", face: [0, -1] },
+    { name: "floor lamp", fx: 0.1, fz: 0.1, w: 0.4, d: 0.4, h: 1.6, role: "metal" },
+    { name: "bookshelf", fx: 0.04, fz: 0.62, w: 0.9, d: 0.35, h: 1.9, role: "wood", face: [1, 0] },
+  ],
+  lounge: [
+    { name: "rug", fx: 0.5, fz: 0.45, w: 2.6, d: 1.8, h: 0.015, role: "accent" },
+    { name: "sofa", fx: 0.5, fz: 0.18, w: 2.1, d: 0.95, h: 0.85, role: "textile" },
+    { name: "coffee table", fx: 0.5, fz: 0.48, w: 1.0, d: 0.6, h: 0.42, role: "wood" },
+    { name: "armchair", fx: 0.5, fz: 0.8, w: 0.85, d: 0.85, h: 0.85, role: "accent", face: [0, -1] },
+  ],
+  kitchen: [
+    { name: "kitchen run", fx: 0.5, fz: 0.07, w: 3.8, d: 0.65, h: 2.3, role: "base" },
+    {
+      name: "island", fx: 0.5, fz: 0.58, w: 1.9, d: 1.5, h: 0.95, role: "wood",
+      or: { name: "cafe table", fx: 0.5, fz: 0.58, w: 1.2, d: 1.2, h: 0.95, role: "wood" },
+    },
+  ],
+  dining: [
+    { name: "dining set", fx: 0.5, fz: 0.5, w: 2.0, d: 2.0, h: 2.8, role: "wood" },
+    { name: "sideboard", fx: 0.5, fz: 0.04, w: 1.6, d: 0.45, h: 0.8, role: "wood" },
+  ],
+  bath: [
+    { name: "vanity", fx: 0.28, fz: 0.08, w: 0.9, d: 0.5, h: 1.9, role: "wood" },
+    { name: "shower", fx: 0.8, fz: 0.25, w: 0.95, d: 0.95, h: 2.1, role: "base" },
+    { name: "toilet", fx: 0.8, fz: 0.75, w: 0.42, d: 0.68, h: 0.8, role: "base", face: [-1, 0] },
+  ],
+  office: [
+    { name: "desk", fx: 0.5, fz: 0.1, w: 1.5, d: 0.7, h: 0.75, role: "wood" },
+    { name: "office chair", fx: 0.5, fz: 0.3, w: 0.6, d: 0.6, h: 1.05, role: "metal", face: [0, -1] },
+    { name: "bookshelf", fx: 0.9, fz: 0.75, w: 0.9, d: 0.35, h: 1.9, role: "wood", face: [-1, 0] },
+    { name: "rug", fx: 0.5, fz: 0.3, w: 1.6, d: 1.2, h: 0.015, role: "accent" },
+  ],
+  workspace: [
+    { name: "desk row", fx: 0.5, fz: 0.25, w: 3.2, d: 1.6, h: 1.05, role: "wood" },
+    { name: "desk row", fx: 0.5, fz: 0.68, w: 3.2, d: 1.6, h: 1.05, role: "wood" },
+  ],
+  meeting: [
+    { name: "meeting set", fx: 0.5, fz: 0.5, w: 3.2, d: 2.2, h: 1.05, role: "wood" },
+    { name: "wall screen", fx: 0.5, fz: 0.02, w: 1.6, d: 0.06, h: 0.95, role: "metal", lift: 1.0 },
+  ],
+  reception: [
+    { name: "reception desk", fx: 0.5, fz: 0.25, w: 2.2, d: 0.75, h: 1.1, role: "wood", face: [0, 1] },
+    { name: "sofa", fx: 0.5, fz: 0.85, w: 2.0, d: 0.9, h: 0.85, role: "textile", face: [0, -1] },
+  ],
+  counter: [
+    { name: "service counter", fx: 0.5, fz: 0.3, w: 2.8, d: 0.75, h: 1.1, role: "wood" },
+    { name: "cafe table", fx: 0.3, fz: 0.75, w: 1.3, d: 1.3, h: 0.95, role: "wood" },
+    { name: "cafe table", fx: 0.72, fz: 0.75, w: 1.3, d: 1.3, h: 0.95, role: "wood" },
+  ],
+  retail: [
+    { name: "display table", fx: 0.35, fz: 0.5, w: 1.6, d: 0.9, h: 0.9, role: "wood" },
+    { name: "display table", fx: 0.7, fz: 0.5, w: 1.6, d: 0.9, h: 0.9, role: "wood" },
+    { name: "shelving", fx: 0.5, fz: 0.05, w: 2.4, d: 0.45, h: 2.0, role: "wood" },
+  ],
+  fitting: [{ name: "mirror", fx: 0.5, fz: 0.03, w: 0.7, d: 0.05, h: 1.7, role: "metal", lift: 0.2 }],
+  laundry: [
+    { name: "washer", fx: 0.25, fz: 0.1, w: 0.62, d: 0.62, h: 0.86, role: "base" },
+    { name: "washer", fx: 0.48, fz: 0.1, w: 0.62, d: 0.62, h: 0.86, role: "base" },
+  ],
+  storage: [{ name: "shelving", fx: 0.5, fz: 0.1, w: 1.2, d: 0.45, h: 2.0, role: "metal" }],
+};
+
+const PLANT: Piece = { name: "plant", fx: 0.94, fz: 0.08, w: 0.55, d: 0.55, h: 1.3, role: "plant" };
+// A taste that leans green (gardens, botanical places) gets a second, smaller plant in the opposite corner.
+const LUSH_PLANT: Piece = { name: "plant", fx: 0.06, fz: 0.92, w: 0.45, d: 0.45, h: 0.9, role: "plant" };
 
 // The room's "back" is the wall facing its door, so furniture sits against it and the door stays clear.
-function orient(room: Space, door: Opening | undefined) {
+export function orient(room: Space, door: Opening | undefined) {
   const { x, y, w, h } = room.rect;
   if (!door) return { origin: [x, y], u: [1, 0], v: [0, 1], W: w, D: h };
   if (door.axis === "x") {
@@ -99,10 +125,10 @@ export function doorClearance(door: Opening, room: Space) {
 }
 
 type Box = { x: number; z: number; w: number; d: number };
-function slideClear(box: Box, clear: Box, room: Space, turned: boolean): Box | null {
+function slideClear(box: Box, clear: Box, room: Space, alongZ: boolean): Box | null {
   const { x, y, w, h } = room.rect;
-  // Pieces slide along the wall they stand against: along x unless the room is turned.
-  const options = turned
+  // Pieces slide along the wall they stand against.
+  const options = alongZ
     ? [clear.z - clear.d / 2 - box.d / 2 - 0.02, clear.z + clear.d / 2 + box.d / 2 + 0.02].map((z) => ({ ...box, z }))
     : [clear.x - clear.w / 2 - box.w / 2 - 0.02, clear.x + clear.w / 2 + box.w / 2 + 0.02].map((nx) => ({ ...box, x: nx }));
   return (
@@ -110,7 +136,7 @@ function slideClear(box: Box, clear: Box, room: Space, turned: boolean): Box | n
   );
 }
 
-export function furnish(layout: Layout): Item[] {
+export function furnish(layout: Layout, { lush = false } = {}): Item[] {
   const items: Item[] = [];
   for (const floor of layout.floors) {
     const base = floor.level * STOREY;
@@ -119,24 +145,33 @@ export function furnish(layout: Layout): Item[] {
       const { origin, u, v, W, D } = orient(room, door);
       // Keep the door's swing clear: 0.85 m into the room, a little wider than the door.
       const clear = door ? doorClearance(door, room) : null;
-      for (const p of [...(SETS[room.kind] ?? []), ...PLANTS]) {
-        const w = Math.min(p.w, W - 0.3);
-        const d = Math.min(p.d, D - 0.3);
-        if (w <= 0.2 || d <= 0.2) continue;
-        const lx = Math.min(Math.max(p.fx * W, w / 2 + 0.1), W - w / 2 - 0.1);
-        const lz = Math.min(Math.max(p.fz * D, d / 2 + 0.1), D - d / 2 - 0.1);
+      const place = (p: Piece): void => {
+        const [fu, fv] = p.face ?? [0, 1];
+        const sideways = fu !== 0;
+        // The piece's own size, shrunk to fit the room, then its footprint along the room's u and v.
+        const lw = Math.min(p.w, (sideways ? D : W) - 0.3);
+        const ld = Math.min(p.d, (sideways ? W : D) - 0.3);
+        if (lw <= 0.2 || ld <= 0.2) return p.or && place(p.or);
+        const [su, sv] = sideways ? [ld, lw] : [lw, ld];
+        // 0.11 m keeps pieces clear of the wall itself (an outside wall is 0.2 m thick, centred on the edge).
+        const lx = Math.min(Math.max(p.fx * W, su / 2 + 0.11), W - su / 2 - 0.11);
+        const lz = Math.min(Math.max(p.fz * D, sv / 2 + 0.11), D - sv / 2 - 0.11);
         const X = origin[0] + u[0] * lx + v[0] * lz;
         const Z = origin[1] + u[1] * lx + v[1] * lz;
-        const turned = u[0] === 0;
-        let box = { x: X, z: Z, w: turned ? d : w, d: turned ? w : d };
+        const turned = u[0] === 0; // the room's u runs along world z
+        let box = { x: X, z: Z, w: turned ? sv : su, d: turned ? su : sv };
         if (clear && overlaps(box, clear)) {
-          // Slide the piece sideways along its wall to clear the door; drop it only if it can't fit either side.
-          const moved = slideClear(box, clear, room, turned);
-          if (!moved) continue;
+          // Slide the piece along its wall to clear the door; drop it only if it can't fit either side.
+          const moved = slideClear(box, clear, room, turned !== sideways);
+          if (!moved) return p.or && place(p.or);
           box = moved;
         }
-        items.push({ room: room.id, name: p.name, shape: p.shape ?? "box", ...box, y: base + (p.lift ?? 0), h: p.h, role: p.role, level: floor.level });
-      }
+        // World direction of the piece's front, as a turn about y (0 faces +z).
+        const dx = u[0] * fu + v[0] * fv;
+        const dz = u[1] * fu + v[1] * fv;
+        items.push({ room: room.id, name: p.name, ...box, y: base + (p.lift ?? 0), h: p.h, lw, ld, rot: Math.atan2(dx, dz), role: p.role, level: floor.level });
+      };
+      for (const p of [...(SETS[room.kind] ?? []), PLANT, ...(lush ? [LUSH_PLANT] : [])]) place(p);
     }
   }
   return items;

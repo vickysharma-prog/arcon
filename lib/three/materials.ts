@@ -42,3 +42,72 @@ export function scheme(palette: Swatch[] | undefined): Scheme {
     pot: mix(wood, "#ffffff", 0.35),
   };
 }
+
+// How the walls are dressed, read from the brief's words: a feature-wall finish, its colour, the tile for
+// kitchens and baths, curtain fabric, and the colours the framed art is painted in.
+export type Finish = "paint" | "panel" | "plaster" | "brick" | "wallpaper";
+export type Style = "midcentury" | "industrial" | "scandi" | "boho" | "classic" | "modern";
+export type Look = {
+  finish: Finish; feature: string; tile: string; tileKind: "plain" | "zellige" | "marble" | "terracotta"; curtain: string; frame: string; art: string[];
+  /** Furniture style, and whether the space leans green (more plants) or cozy (throws and cushions). */
+  style: Style; lush: boolean; cozy: boolean;
+  /** The loved places and brands whose Qloo tags chose the style, strongest first. */
+  because: string[];
+};
+type BriefWords = { name?: string; summary?: string; palette?: Swatch[]; materials?: { name: string; where: string }[] };
+type Taste = { tags: { value: string; weight: number; sources: { name: string }[] }[]; brands: { name: string; aesthetic: string[] }[] };
+
+const STYLES: [Style, RegExp][] = [
+  ["midcentury", /mid.?century|retro|atomic|sixties|seventies|danish/],
+  ["industrial", /industrial|loft|exposed|raw|edgy|urban|grunge|warehouse/],
+  ["scandi", /scandi|nordic|minimal|airy|hygge|serene|calm|clean/],
+  ["boho", /boho|bohemian|eclectic|rattan|global|eccentric|artsy|quirky|maximal|whimsical/],
+  ["classic", /classic|traditional|elegant|luxur|opulent|ornate|antique|glam|regal|vintage/],
+  ["modern", /modern|contemporary|sleek|chic|polished/],
+];
+const LUSH = /green|botanical|garden|lush|natural|plant|tropical|outdoor/;
+const COZY = /cozy|cosy|warm|intimate|homey|comfort|snug|moody/;
+
+/** Scores each furniture style from the Qloo taste tags (by weight), brand aesthetics and the brief's words. */
+export function styleOf(taste: Taste | null | undefined, words: string) {
+  const score = new Map<Style, number>();
+  const credit = new Map<Style, Map<string, number>>();
+  const add = (text: string, w: number, from: string[]) => {
+    for (const [style, re] of STYLES)
+      if (re.test(text)) {
+        score.set(style, (score.get(style) ?? 0) + w);
+        const c = credit.get(style) ?? new Map<string, number>();
+        for (const f of from) c.set(f, (c.get(f) ?? 0) + w);
+        credit.set(style, c);
+      }
+  };
+  for (const t of taste?.tags ?? []) add(t.value.replaceAll("_", " ").toLowerCase(), t.weight, t.sources.map((s) => s.name));
+  for (const b of taste?.brands ?? []) for (const a of b.aesthetic) add(a.replaceAll("_", " ").toLowerCase(), 0.5, [b.name]);
+  add(words, 1, []);
+  const style = [...score].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "modern";
+  const because = [...(credit.get(style) ?? [])].sort((a, b) => b[1] - a[1]).map(([n]) => n).slice(0, 3);
+  const all = [words, ...(taste?.tags ?? []).map((t) => t.value.replaceAll("_", " "))].join(" ").toLowerCase();
+  return { style, because, lush: LUSH.test(all), cozy: COZY.test(all) };
+}
+
+export function look(brief: BriefWords | null | undefined, taste?: Taste | null): Look {
+  const k = scheme(brief?.palette);
+  const words = [brief?.name, brief?.summary, ...(brief?.materials ?? []).map((m) => `${m.name} ${m.where}`)].join(" ").toLowerCase();
+  const has = (re: RegExp) => re.test(words);
+  const finish: Finish = has(/panel|slat|wainscot|batten|fluted|reeded/)
+    ? "panel"
+    : has(/brick/)
+      ? "brick"
+      : has(/wallpaper|botanical print|patterned wall/)
+        ? "wallpaper"
+        : has(/limewash|plaster|venetian|tadelakt|stucco|clay wall|microcement/)
+          ? "plaster"
+          : "paint";
+  const tileKind = has(/zellige/) ? "zellige" : has(/marble/) ? "marble" : has(/terracotta|saltillo/) ? "terracotta" : "plain";
+  const tile = { zellige: mix(k.accent, k.plant, 0.4), marble: "#ecebe8", terracotta: "#c0673f", plain: mix(k.base, "#ffffff", 0.4) }[tileKind];
+  const feature =
+    finish === "panel" ? k.wood : finish === "brick" ? "#9a5a43" : mix(brief?.palette?.find((c) => c.role === "green")?.hex ?? k.accent, k.wall, 0.3);
+  const frame = has(/brass|gold|bronze/) ? "#b08d57" : luminance(k.wood) < 0.25 ? k.wood : "#232323";
+  const art = [...new Set([k.accent, k.plant, k.textile, k.wood, k.metal])];
+  return { finish, feature, tile, tileKind, curtain: mix(k.textile, "#ffffff", 0.35), frame, art, ...styleOf(taste, words) };
+}

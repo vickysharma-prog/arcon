@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { luminance, mix, scheme } from "./materials.ts";
+import { look, luminance, mix, scheme, styleOf } from "./materials.ts";
 
 const palette = [
   { hex: "#4a4a4a", role: "base" },
@@ -31,4 +31,34 @@ test("walls stay bright even with a dark palette", () => {
 
 test("no palette falls back to a neutral scheme", () => {
   assert.equal(scheme(undefined).wall, "#f2efe9");
+});
+
+test("the brief's words choose the wall finish and tile", () => {
+  const brief = { name: "Moody Eclectic", summary: "", palette, materials: [{ name: "Walnut slat panelling", where: "living feature wall" }, { name: "Green zellige", where: "kitchen backsplash" }] };
+  const l = look(brief);
+  assert.equal(l.finish, "panel");
+  assert.equal(l.feature, "#8b4513");
+  assert.equal(l.tileKind, "zellige");
+  assert.equal(look({ ...brief, materials: [{ name: "Limewash", where: "walls" }] }).finish, "plaster");
+  assert.equal(look(null).finish, "paint");
+});
+
+test("Qloo taste tags choose the furniture style and say which loves chose it", () => {
+  const taste = {
+    tags: [
+      { value: "mid_century_modern", weight: 3, sources: [{ name: "Hotel A" }] },
+      { value: "retro", weight: 1.5, sources: [{ name: "Cafe B" }] },
+      { value: "industrial", weight: 1, sources: [{ name: "Bar C" }] },
+      { value: "cozy", weight: 1, sources: [{ name: "Cafe B" }] },
+    ],
+    brands: [{ name: "Brand D", aesthetic: ["retro"] }],
+  };
+  const s = styleOf(taste, "");
+  assert.equal(s.style, "midcentury");
+  assert.deepEqual(s.because, ["Hotel A", "Cafe B", "Brand D"]);
+  assert.equal(s.cozy, true);
+  assert.equal(s.lush, false);
+  assert.equal(styleOf(null, "").style, "modern");
+  assert.equal(styleOf(null, "lush botanical rattan").lush, true);
+  assert.equal(look(null, taste).style, "midcentury");
 });

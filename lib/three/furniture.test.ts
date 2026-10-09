@@ -39,9 +39,37 @@ test("every room gets a plant", () => {
       }
 });
 
-test("bedrooms get a bed and kitchens a counter", () => {
-  const house = planOptions(TEMPLATES.house, buildingShell(TEMPLATES.house, DEFAULT_SHELLS.house))[0];
+const house = planOptions(TEMPLATES.house, buildingShell(TEMPLATES.house, DEFAULT_SHELLS.house))[0];
+
+test("bedrooms get a bed and kitchens a full kitchen run", () => {
   const items = furnish(house);
   assert.ok(items.some((i) => i.room === "primary" && i.name === "bed"));
-  assert.ok(items.some((i) => i.room === "kitchen" && i.name === "counter"));
+  assert.ok(items.some((i) => i.room === "kitchen" && i.name === "kitchen run"));
+});
+
+test("a piece's footprint is its own size, turned", () => {
+  for (const layout of layouts)
+    for (const it of furnish(layout)) {
+      const across = Math.abs(Math.sin(it.rot)) > 0.5;
+      assert.ok(Math.abs((across ? it.ld : it.lw) - it.w) < 1e-9 && Math.abs((across ? it.lw : it.ld) - it.d) < 1e-9, `${it.room}/${it.name}`);
+    }
+});
+
+test("a kitchen too tight for an island gets a small table instead", () => {
+  const items = furnish(house).filter((i) => i.room === "kitchen");
+  assert.ok(items.some((i) => i.name === "island" || i.name === "cafe table"));
+});
+
+test("the sofa faces the TV, and pieces face into their room", () => {
+  const items = furnish(house).filter((i) => i.room === "living");
+  const sofa = items.find((i) => i.name === "sofa")!;
+  const tv = items.find((i) => i.name === "media unit")!;
+  assert.ok(Math.cos(sofa.rot - tv.rot) < -0.99, "they look at each other");
+  // From the sofa, its front points toward the TV.
+  assert.ok(Math.sin(sofa.rot) * (tv.x - sofa.x) + Math.cos(sofa.rot) * (tv.z - sofa.z) > 0);
+});
+
+test("a green-leaning taste gets more plants", () => {
+  const count = (lush: boolean) => furnish(house, { lush }).filter((i) => i.name === "plant").length;
+  assert.ok(count(true) > count(false));
 });
