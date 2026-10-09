@@ -144,6 +144,8 @@ export function ProjectView({ id }: { id: string }) {
               brief={p.brief}
               taste={p.taste}
               title={p.title}
+              option={p.chosen_option ?? 0}
+              changePlan={() => setStep("plans")}
               next={next ? { label: `Next: ${STEPS.find((s) => s.id === next)?.label}`, go: () => setStep(next) } : undefined}
             />
           )}

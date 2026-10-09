@@ -19,8 +19,13 @@ const HouseScene = dynamic(() => import("@/components/three/HouseScene"), {
 });
 
 export function WalkthroughStep({
-  layout, brief, taste, title, next,
-}: { layout: Layout; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null; next?: { label: string; go: () => void } }) {
+  layout, brief, taste, title, option = 0, changePlan, next,
+}: {
+  layout: Layout; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null;
+  /** Which of the three plan options this is, and a way back to pick another. */
+  option?: number; changePlan?: () => void;
+  next?: { label: string; go: () => void };
+}) {
   const [mode, setMode] = useState<Mode>("walk");
   const [playing, setPlaying] = useState(true);
   const [room, setRoom] = useState("Outside");
@@ -50,7 +55,14 @@ export function WalkthroughStep({
     <main className="mx-auto w-full max-w-[1400px] px-4 pb-4 pt-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs uppercase tracking-widest text-ink-soft">{title} · walkthrough</p>
+          <p className="text-xs uppercase tracking-widest text-ink-soft">
+            {title} · plan option {option + 1}
+            {changePlan && (
+              <button onClick={changePlan} className="ml-2 normal-case tracking-normal text-accent underline-offset-2 hover:underline">
+                Change plan
+              </button>
+            )}
+          </p>
           <h1 className="font-serif text-3xl">
             <Decode text={mode === "walk" ? "Walk through your space" : mode === "explore" ? "Explore inside" : "Look around it"} />
           </h1>
