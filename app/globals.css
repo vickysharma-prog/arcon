@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/* Warm architectural palette: off-white paper, warm ink, clay accent, leaf green for greenery */
+:root {
+  --paper: #f6f2ea;
+  --paper-raised: #fbf9f4;
+  --ink: #1f1b16;
+  --ink-soft: #5c544a;
+  --line: #e2dbcf;
+  --clay: #b5653f;
+  --leaf: #4f7a4a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #141210;
+    --paper-raised: #1c1916;
+    --ink: #efe9df;
+    --ink-soft: #a89e90;
+    --line: #2e2a25;
+    --clay: #d4845d;
+    --leaf: #7fae78;
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #141210;
+  --paper-raised: #1c1916;
+  --ink: #efe9df;
+  --ink-soft: #a89e90;
+  --line: #2e2a25;
+  --clay: #d4845d;
+  --leaf: #7fae78;
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-paper-raised: var(--paper-raised);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-clay: var(--clay);
+  --color-leaf: var(--leaf);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-instrument-serif);
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
