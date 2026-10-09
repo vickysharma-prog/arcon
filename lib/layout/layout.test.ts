@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { Layout } from "./schema.ts";
 import { planOptions, place } from "./place.ts";
 import { DEFAULT_SHELLS, TEMPLATES } from "./templates.ts";
+import { buildingShell } from "./footprint.ts";
 import { validate } from "./validate.ts";
 
 for (const [type, program] of Object.entries(TEMPLATES)) {
@@ -38,4 +39,36 @@ test("the validator catches overlaps, unreachable rooms and missing windows", ()
 
 test("a shell too shallow for two rows of rooms is refused", () => {
   assert.throws(() => place(TEMPLATES.apartment, { width: 12, depth: 5 }), /too shallow/);
+});
+
+test("on a deep lot the hall runs front to back and rooms keep sensible proportions", () => {
+  const lot = { width: 12.2, depth: 18.3 };
+  const deep = buildingShell(TEMPLATES.house, lot);
+  assert.ok(deep.depth > deep.width);
+  for (const layout of planOptions(TEMPLATES.house, deep)) {
+    assert.deepEqual(validate(layout), []);
+    for (const f of layout.floors) {
+      const hall = f.spaces.find((s) => s.kind === "corridor")!;
+      assert.ok(hall.rect.h > hall.rect.w, "hall runs along the depth");
+      for (const s of f.spaces.filter((s) => s.zone !== "circulation")) {
+        const ratio = Math.max(s.rect.w, s.rect.h) / Math.min(s.rect.w, s.rect.h);
+        // Rooms people live in stay roomy; utility rooms may be galley-shaped.
+        const limit = s.zone === "service" ? 4.5 : 3.2;
+        assert.ok(ratio <= limit, `${s.id} is ${ratio.toFixed(1)}:1, limit ${limit}`);
+      }
+    }
+    const entry = layout.floors[0].openings.find((o) => o.id === "door-entry")!;
+    assert.ok(entry.y === 0 || entry.y === deep.depth, "the entrance is on the street or garden side");
+  }
+});
+
+test("rooms come out close to the size the program asked for", () => {
+  const lot = { width: 12.2, depth: 18.3 };
+  for (const layout of planOptions(TEMPLATES.house, buildingShell(TEMPLATES.house, lot)))
+    for (const f of layout.floors)
+      for (const s of f.spaces.filter((s) => s.zone !== "circulation")) {
+        const asked = TEMPLATES.house.rooms.find((r) => r.id === s.id)!.area;
+        const got = s.rect.w * s.rect.h;
+        assert.ok(got < asked * 2, `${s.id}: asked ${asked} m², got ${got.toFixed(1)} m²`);
+      }
 });

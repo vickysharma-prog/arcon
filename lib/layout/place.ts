@@ -50,6 +50,17 @@ function sides(rooms: ProgramRoom[], v: Variant): [ProgramRoom[], ProgramRoom[]]
   // A hall with rooms on one side only wastes the other strip; move the smallest room across.
   if (!pub.length) pub.push(...priv.splice(0, Math.ceil(priv.length / 2)));
   if (!priv.length) priv.push(...pub.splice(Math.floor(pub.length / 2)));
+  // Keep each side between 30% and 70% of the floor area, or a lone room stretches the length of the hall.
+  // Service rooms move first, then the smallest room.
+  const total = sum(rooms);
+  for (let guard = 0; guard < rooms.length; guard++) {
+    const [big, small] = sum(pub) > sum(priv) ? [pub, priv] : [priv, pub];
+    if (sum(big) <= total * 0.7 || big.length < 2) break;
+    const pick = [...big].sort((a, b) => (a.zone === "service" ? 0 : 1) - (b.zone === "service" ? 0 : 1) || a.area - b.area)[0];
+    if (sum(small) + pick.area > total * 0.7) break;
+    big.splice(big.indexOf(pick), 1);
+    small.push(pick);
+  }
   return [pub, priv];
 }
 
@@ -59,7 +70,10 @@ function frontDepth(rooms: ProgramRoom[], D: number, v: Variant): number {
   if (room < 2 * MIN_STRIP) throw new Error(`a ${D.toFixed(1)} m deep shell is too shallow for rooms on both sides`);
   const [pub, priv] = sides(rooms, v);
   const frontRooms = v.publicSide === "front" ? pub : priv;
-  return Math.min(Math.max((room * sum(frontRooms)) / sum(rooms), MIN_STRIP), room - MIN_STRIP);
+  // Each side gets 40-60% of the depth: an extra-deep strip turns small rooms into slivers.
+  const lo = Math.max(MIN_STRIP, room * 0.4);
+  const hi = Math.min(room - MIN_STRIP, room * 0.6);
+  return Math.min(Math.max((room * sum(frontRooms)) / sum(rooms), lo), hi);
 }
 
 function placeFloor(level: number, rooms: ProgramRoom[], shell: Shell, stairs: boolean, v: Variant, front: number): Floor {
@@ -131,7 +145,26 @@ function placeFloor(level: number, rooms: ProgramRoom[], shell: Shell, stairs: b
   return { level, spaces, openings };
 }
 
+// Swap x and y: used to lay a deep shell out sideways so the hall runs along its long side.
+function transpose(layout: Layout, shell: Shell): Layout {
+  return {
+    ...layout,
+    shell,
+    floors: layout.floors.map((f) => ({
+      ...f,
+      spaces: f.spaces.map((s) => ({ ...s, rect: { x: s.rect.y, y: s.rect.x, w: s.rect.h, h: s.rect.w } })),
+      openings: f.openings.map((o) => ({ ...o, x: o.y, y: o.x, axis: o.axis === "x" ? ("y" as const) : ("x" as const) })),
+    })),
+  };
+}
+
 export function place(program: Program, shell: Shell, variant: Variant = VARIANTS[0]): Layout {
+  // The hall runs along the longer side, so rooms keep sensible proportions on deep lots.
+  if (shell.depth > shell.width) return transpose(placeAlong(program, { width: shell.depth, depth: shell.width }, variant), shell);
+  return placeAlong(program, shell, variant);
+}
+
+function placeAlong(program: Program, shell: Shell, variant: Variant): Layout {
   const stairs = program.floors > 1;
   const front = frontDepth(program.rooms.filter((r) => r.floor === 0), shell.depth, variant);
   const floors = Array.from({ length: program.floors }, (_, level) => {

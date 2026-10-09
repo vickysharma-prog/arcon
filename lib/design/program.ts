@@ -4,6 +4,7 @@ import { planOptions } from "../layout/place.ts";
 import { Program, type Layout, type Shell, type SpaceType } from "../layout/schema.ts";
 import { TEMPLATES } from "../layout/templates.ts";
 import { validate } from "../layout/validate.ts";
+import { buildingShell } from "../layout/footprint.ts";
 import type { Project } from "../project/store.ts";
 
 export const KINDS = [
@@ -38,7 +39,7 @@ export function toProgram(spaceType: SpaceType, floors: number, rooms: z.infer<t
 export function optionsFor(program: Program, shell: Shell): Layout[] | null {
   try {
     if (Array.from({ length: program.floors }, (_, f) => program.rooms.some((r) => r.floor === f)).includes(false)) return null;
-    const options = planOptions(program, shell);
+    const options = planOptions(program, buildingShell(program, shell));
     return options.every((o) => validate(o).length === 0) ? options : null;
   } catch {
     return null;
@@ -67,7 +68,7 @@ ${JSON.stringify(example)}
 
 Rules:
 - Include every room the client asked for, and the rooms a ${p.space_type} always needs (bathrooms, storage, a kitchen where people live or eat).
-- Areas are in square metres. Each floor's rooms should add up to about 85% of ${shell}.
+- Areas are in square metres. Size rooms for how these people live, not to fill the site: the building is sized to its rooms and the rest of the site becomes garden.
 - zone: "public" for shared and guest-facing rooms, "private" for bedrooms and focused work, "service" for baths, laundry, storage and kitchens in businesses.
 - Every floor must have at least two rooms. Put a home's bedrooms upstairs when there are two floors.
 - No corridors or stairs: the layout adds them.`;
