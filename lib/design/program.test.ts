@@ -71,3 +71,11 @@ test("a broken or unplaceable draft falls back to the tested template", async ()
 test("a site too small for the space type is refused clearly", async () => {
   await assert.rejects(generateProgram(project({ space_type: "hotel", site: { width: 8, depth: 10 } }), reply("x")), /doesn't fit/);
 });
+
+test("the draft schema has no integer types, which Gemini rejects", async () => {
+  const { z } = await import("zod");
+  const mod = await import("./program.ts");
+  const json = JSON.stringify(z.toJSONSchema(z.object({ rooms: z.array(z.object({ floor: z.number().min(0).max(1) })) })));
+  assert.ok(!json.includes("9007199254740991"));
+  assert.equal(mod.toProgram("house", 2, [{ name: "A", kind: "bedroom", area: 10, zone: "private", floor: 0.6 }]).rooms[0].floor, 1);
+});

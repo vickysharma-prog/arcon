@@ -12,13 +12,17 @@ export const KINDS = [
   "workspace", "meeting", "reception", "lounge", "counter", "retail", "fitting", "guest-room",
 ] as const;
 
-const Room = z.object({
+// The model gets a plain schema (providers differ in which JSON-schema limits they accept);
+// the strict checks run in code on what comes back.
+const LooseRoom = z.object({
   name: z.string(),
   kind: z.enum(KINDS),
-  area: z.number().min(2).max(400).describe("square metres"),
+  area: z.number().describe("square metres"),
   zone: z.enum(["public", "private", "service"]),
-  floor: z.number().int().min(0).max(1),
+  floor: z.number().describe("0 for the ground floor, 1 for upstairs"),
 });
+const LooseDraft = z.object({ rooms: z.array(LooseRoom) });
+const Room = LooseRoom.extend({ area: z.number().min(2).max(400), floor: z.number().min(0).max(1) });
 const Draft = z.object({ rooms: z.array(Room).min(1).max(30) });
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "room";
@@ -30,7 +34,7 @@ export function toProgram(spaceType: SpaceType, floors: number, rooms: z.infer<t
     const base = slug(r.name);
     const n = (used.get(base) ?? 0) + 1;
     used.set(base, n);
-    return { id: n === 1 ? base : `${base}-${n}`, name: r.name, kind: r.kind, area: r.area, zone: r.zone, floor: Math.min(r.floor, floors - 1) };
+    return { id: n === 1 ? base : `${base}-${n}`, name: r.name, kind: r.kind, area: r.area, zone: r.zone, floor: Math.min(Math.round(r.floor), floors - 1) };
   });
   return Program.parse({ spaceType, floors, rooms: placed });
 }
@@ -82,12 +86,13 @@ export async function generateProgram(p: Project, model: LanguageModel): Promise
   const floors = spaceType === "hotel" ? 1 : Math.min(Math.max(p.site.floors ?? 1, 1), 2);
   const shell: Shell = { width: p.site.width ?? 12, depth: p.site.depth ?? 10 };
   try {
-    const { output } = await generateText({ model, output: Output.object({ schema: Draft }), prompt: programPrompt(p, floors) });
-    const program = toProgram(spaceType, floors, output.rooms);
+    const { output } = await generateText({ model, output: Output.object({ schema: LooseDraft }), prompt: programPrompt(p, floors) });
+    const program = toProgram(spaceType, floors, Draft.parse(output).rooms);
     const options = optionsFor(program, shell);
     if (options) return { program, options, source: "model" };
-  } catch {
-    // fall through to the template
+  } catch (e) {
+    // Fall through to the template, but say why so a broken prompt or schema never hides.
+    console.warn("program draft rejected, using the template:", e instanceof Error ? e.message : e);
   }
   const program = templateFor(spaceType, floors);
   const options = optionsFor(program, shell);
