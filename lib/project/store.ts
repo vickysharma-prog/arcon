@@ -19,6 +19,7 @@ export type Project = {
   taste: Profile | null;
   brief: unknown;
   program: Program | null;
+  options?: Layout[] | null;
   chosen_option: number | null;
 };
 

@@ -50,3 +50,13 @@ test("versions count up and the latest comes back", async () => {
 test("status only accepts known values", async () => {
   await assert.rejects(updateProject(p.id, { status: "nope" as never }), /check constraint/);
 });
+
+test("only the guest who started a project owns it", async () => {
+  const { ownsProject } = await import("./store.ts");
+  const mine = { owner_id: null, guest_id: "g1" };
+  assert.equal(ownsProject(mine, { guestId: "g1" }), true);
+  assert.equal(ownsProject(mine, { guestId: "g2" }), false);
+  assert.equal(ownsProject(mine, {}), false);
+  assert.equal(ownsProject({ owner_id: "u1", guest_id: null }, { userId: "u1" }), true);
+  assert.equal(ownsProject({ owner_id: null, guest_id: null }, { guestId: null, userId: null }), false);
+});
