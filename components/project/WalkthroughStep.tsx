@@ -18,7 +18,11 @@ export function WalkthroughStep({ layout, palette, title }: { layout: Layout; pa
   const [room, setRoom] = useState("Outside");
   const [progress, setProgress] = useState(0);
   const [restart, setRestart] = useState(0);
+  const [cutaway, setCutaway] = useState(true);
+  const [upTo, setUpTo] = useState<number | "all">("all");
+  const [finished, setFinished] = useState(false);
   const ended = progress >= 1;
+  const floors = layout.floors.length;
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8">
@@ -47,7 +51,14 @@ export function WalkthroughStep({ layout, palette, title }: { layout: Layout; pa
           restartKey={restart}
           onRoom={setRoom}
           onProgress={(p) => setProgress((old) => (Math.abs(old - p) > 0.004 || p === 1 ? p : old))}
-          onEnd={() => setPlaying(false)}
+          cutaway={cutaway}
+          upTo={upTo}
+          onEnd={() => {
+            // When the walk ends, hand over the controls: look around from any angle.
+            setPlaying(false);
+            setFinished(true);
+            setMode("orbit");
+          }}
         />
         {mode === "walk" && (
           <>
@@ -74,7 +85,30 @@ export function WalkthroughStep({ layout, palette, title }: { layout: Layout; pa
             </div>
           </>
         )}
-        {mode === "orbit" && <p className="pointer-events-none absolute bottom-4 left-4 rounded-full bg-paper/85 px-4 py-1.5 text-sm text-ink-soft backdrop-blur">Drag to turn · scroll to zoom</p>}
+        {mode === "orbit" && (
+          <>
+            {finished && (
+              <p className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full bg-btn px-4 py-1.5 text-sm text-btn-ink">
+                Walk finished. Now look around from any angle.
+              </p>
+            )}
+            <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-center gap-2">
+              <button onClick={() => setCutaway((c) => !c)} aria-pressed={cutaway} className={`rounded-full px-4 py-1.5 text-sm ${cutaway ? "bg-btn text-btn-ink" : "bg-paper/85 text-ink backdrop-blur"}`}>
+                {cutaway ? "Showing inside" : "Show inside"}
+              </button>
+              {floors > 1 && (
+                <div role="radiogroup" aria-label="Floors" className="flex gap-1 rounded-full bg-paper/85 p-1 backdrop-blur">
+                  {[...layout.floors.map((f) => f.level), "all" as const].map((l) => (
+                    <button key={String(l)} role="radio" aria-checked={upTo === l} onClick={() => setUpTo(l)} className={`rounded-full px-3 py-1 text-sm ${upTo === l ? "bg-btn text-btn-ink" : "text-ink-soft"}`}>
+                      {l === "all" ? "All floors" : l === 0 ? "Ground" : "Upstairs"}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <p className="pointer-events-none ml-auto rounded-full bg-paper/85 px-4 py-1.5 text-sm text-ink-soft backdrop-blur">Drag to turn · right-drag to move · scroll to zoom</p>
+            </div>
+          </>
+        )}
       </div>
     </main>
   );

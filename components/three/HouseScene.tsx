@@ -13,6 +13,9 @@ export type Mode = "walk" | "orbit";
 
 type Props = {
   layout: Layout;
+  /** Look-around only: lift the roof off, and show floors up to this level ("all" keeps every floor). */
+  cutaway?: boolean;
+  upTo?: number | "all";
   palette?: { hex: string; role: string }[];
   mode: Mode;
   playing: boolean;
@@ -34,10 +37,15 @@ function wallGeom(w: WallBox | Glass, thick: number) {
     : { position: [w.at, y, mid] as const, size: [thick, h, len] as const };
 }
 
-function Building({ layout, colors }: { layout: Layout; colors: Scheme }) {
-  const { walls, glass } = useMemo(() => buildWalls(layout), [layout]);
-  const slabs = useMemo(() => buildSlabs(layout), [layout]);
-  const items = useMemo(() => furnish(layout), [layout]);
+function Building({ layout, colors, cutaway = false, upTo = "all" }: { layout: Layout; colors: Scheme; cutaway?: boolean; upTo?: number | "all" }) {
+  const shown = (level: number) => upTo === "all" || level <= upTo;
+  const built = useMemo(() => buildWalls(layout), [layout]);
+  const walls = built.walls.filter((w) => shown(w.level));
+  const glass = built.glass.filter((g) => shown(g.level));
+  const allSlabs = useMemo(() => buildSlabs(layout), [layout]);
+  const slabs = allSlabs.filter((s) => shown(s.level));
+  const allItems = useMemo(() => furnish(layout), [layout]);
+  const items = allItems.filter((i) => shown(i.level));
   const { width: W, depth: D } = layout.shell;
   const top = (layout.floors.length - 1) * STOREY + WALL_H;
   return (
@@ -55,7 +63,7 @@ function Building({ layout, colors }: { layout: Layout; colors: Scheme }) {
         </mesh>
       ))}
       {layout.floors
-        .filter((f) => f.level > 0)
+        .filter((f) => f.level > 0 && !cutaway && shown(f.level))
         .map((f) => (
           <mesh key={`ceil-${f.level}`} position={[W / 2, f.level * STOREY - (STOREY - WALL_H) / 2 - 0.12, D / 2]}>
             <boxGeometry args={[W, STOREY - WALL_H, D]} />
@@ -104,11 +112,13 @@ function Building({ layout, colors }: { layout: Layout; colors: Scheme }) {
               );
             });
           })}
-      {/* roof with a small overhang */}
-      <mesh position={[W / 2, top + 0.15, D / 2]} castShadow>
-        <boxGeometry args={[W + 0.6, 0.3, D + 0.6]} />
-        <meshStandardMaterial color={colors.roof} roughness={0.8} />
-      </mesh>
+      {/* roof with a small overhang, lifted off in the cutaway view */}
+      {!cutaway && upTo === "all" && (
+        <mesh position={[W / 2, top + 0.15, D / 2]} castShadow>
+          <boxGeometry args={[W + 0.6, 0.3, D + 0.6]} />
+          <meshStandardMaterial color={colors.roof} roughness={0.8} />
+        </mesh>
+      )}
       {items.map((it, i) => (
         <Piece key={`i-${i}`} it={it} colors={colors} />
       ))}
@@ -214,7 +224,7 @@ export default function HouseScene(props: Props) {
       <hemisphereLight args={["#ffffff", "#d9cfc2", 1.1]} />
       <directionalLight position={[W + 14, 26, -8]} intensity={2.4} castShadow shadow-mapSize={[2048, 2048]} shadow-camera-left={-30} shadow-camera-right={30} shadow-camera-top={30} shadow-camera-bottom={-30} />
       <ambientLight intensity={0.55} />
-      <Building layout={props.layout} colors={colors} />
+      <Building layout={props.layout} colors={colors} cutaway={props.mode === "orbit" && props.cutaway} upTo={props.mode === "orbit" ? props.upTo : "all"} />
       {props.mode === "walk" ? (
         <Walker {...props} />
       ) : (

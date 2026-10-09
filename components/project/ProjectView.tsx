@@ -37,7 +37,9 @@ export function ProjectView({ id }: { id: string }) {
 
   useEffect(() => {
     try {
-      const saved = sessionStorage.getItem(key);
+      // A link can open a step directly (?step=walkthrough); otherwise resume where this tab left off.
+      const asked = new URLSearchParams(location.search).get("step");
+      const saved = isStep(asked) ? asked : sessionStorage.getItem(key);
       if (isStep(saved)) setStepState(saved);
     } catch {}
   }, [key]);
