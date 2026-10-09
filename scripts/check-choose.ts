@@ -22,8 +22,12 @@ await wait(process.env.FAST ? 50 : 4000);
 console.log("buttons:", await Promise.all(buttons.map((b) => b.evaluate((e) => e.textContent))));
 await page.click("::-p-text(Next: Walkthrough)");
 await wait(4000);
-await page.click("::-p-text(Explore inside)");
-await wait(8000);
+// VIEW picks the mode to check: "Explore inside" (default), "Look around" or "Walk through".
+const view = process.env.VIEW ?? "Explore inside";
+if (view !== "Walk through") await page.click(`::-p-text(${view})`);
+await wait(4000);
+await page.click("::-p-text(Got it)").catch(() => {});
+await wait(Number(process.env.AFTER_MS ?? 8000));
 await page.screenshot({ path: out });
 await browser.close();
 console.log(errors.length ? errors.join("\n") : "no page errors");

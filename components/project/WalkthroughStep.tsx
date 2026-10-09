@@ -32,7 +32,7 @@ export function WalkthroughStep({
   const [progress, setProgress] = useState(0);
   const [restart, setRestart] = useState(0);
   const [cutaway, setCutaway] = useState(true);
-  const [upTo, setUpTo] = useState<number | "all">("all");
+  const [upTo, setUpTo] = useState<number | "all">(0);
   const [finished, setFinished] = useState(false);
   const [guide, setGuide] = useState(false);
   const [fitKey, setFitKey] = useState(0);
