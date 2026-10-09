@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildSlabs, buildWalls, DOOR_H, EYE, SILL, STOREY, walkPath, walkPlan, WALL_H } from "./geometry.ts";
+import { buildSlabs, buildWalls, DOOR_H, EYE, onTour, SILL, STOREY, walkPath, walkPlan, WALL_H } from "./geometry.ts";
 import { place } from "../layout/place.ts";
 import { DEFAULT_SHELLS, TEMPLATES } from "../layout/templates.ts";
 import type { Layout } from "../layout/schema.ts";
@@ -62,7 +62,7 @@ test("the walk starts outside, enters by the front door and visits every room", 
   assert.ok(path[0][0] < 0 || path[0][2] < 0 || path[0][0] > layout.shell.width || path[0][2] > layout.shell.depth, "starts outside");
   assert.deepEqual([path[1][0], path[1][2]], [entry.x, entry.y]);
   for (const f of layout.floors)
-    for (const s of f.spaces.filter((s) => s.zone !== "circulation")) {
+    for (const s of f.spaces.filter(onTour)) {
       const { x, y, w, h } = s.rect;
       const inRoom = (p: number[]) => p[0] > x + 0.2 && p[0] < x + w - 0.2 && p[2] > y + 0.2 && p[2] < y + h - 0.2 && Math.abs(p[1] - (f.level * STOREY + EYE)) < 1e-9;
       assert.ok(path.some(inRoom), `steps into ${s.id}`);
@@ -91,7 +91,7 @@ test("inside each room the camera looks across the room, not back at the hall", 
   const { path, gaze } = walkPlan(layout);
   assert.equal(path.length, gaze.length);
   for (const f of layout.floors)
-    for (const s of f.spaces.filter((s) => s.zone !== "circulation")) {
+    for (const s of f.spaces.filter(onTour)) {
       const { x, y, w, h } = s.rect;
       const i = path.findIndex((p) => p[0] > x && p[0] < x + w && p[2] > y && p[2] < y + h && Math.abs(p[1] - (f.level * STOREY + EYE)) < 1e-9);
       assert.ok(i >= 0, `steps into ${s.id}`);
@@ -99,4 +99,14 @@ test("inside each room the camera looks across the room, not back at the hall", 
       assert.ok(g[0] >= x - 1e-6 && g[0] <= x + w + 1e-6 && g[2] >= y - 1e-6 && g[2] <= y + h + 1e-6, `looks into ${s.id}`);
       assert.ok(g[1] < path[i][1], "looks slightly down, toward the furniture");
     }
+});
+
+test("the tour skips small utility rooms and pauses at every room it shows", () => {
+  const layout = place(TEMPLATES.house, DEFAULT_SHELLS.house);
+  const { path, stops } = walkPlan(layout);
+  const powder = layout.floors[0].spaces.find((s) => s.id === "powder")!;
+  const { x, y, w, h } = powder.rect;
+  assert.ok(!path.some((p) => p[0] > x + 0.2 && p[0] < x + w - 0.2 && p[2] > y + 0.2 && p[2] < y + h - 0.2 && p[1] === EYE), "no detour into the powder room");
+  const toured = layout.floors.flatMap((f) => f.spaces.filter(onTour));
+  assert.equal(stops.length, toured.length);
 });

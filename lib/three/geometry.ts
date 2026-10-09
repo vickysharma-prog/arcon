@@ -105,11 +105,17 @@ function inside(o: Opening, s: Space, by: number): [number, number] {
 // A first-person walk: from the street, through the front door, a step into every room and back, then upstairs.
 // `path` is where the eye goes; `gaze` (same length) is what it looks at at each point: along the hall,
 // and into each room from its doorway, so the view shows rooms and furniture rather than the next wall.
-export type Walk = { path: Point[]; gaze: Point[] };
+// `stops` are the doorway views where the camera slows to take each room in.
+export type Walk = { path: Point[]; gaze: Point[]; stops: Point[] };
+
+// Small utility rooms stay in the model but the walk skips them: it's a tour of the rooms people live in.
+const SKIP = new Set(["bath", "storage", "closet", "laundry", "server"]);
+export const onTour = (s: Space) => s.zone !== "circulation" && !(SKIP.has(s.kind) && s.rect.w * s.rect.h < 12);
 
 export function walkPlan(layout: Layout): Walk {
   const path: Point[] = [];
   const gaze: Point[] = [];
+  const stops: Point[] = [];
   const add = (p: Point, g: Point) => {
     path.push(p);
     gaze.push(g);
@@ -117,7 +123,7 @@ export function walkPlan(layout: Layout): Walk {
   const ground = layout.floors.find((f) => f.level === 0) ?? layout.floors[0];
   const entry = ground.openings.find((o) => o.id === "door-entry");
   const hall = ground.spaces.find((s) => s.kind === "corridor");
-  if (!entry || !hall) return { path, gaze };
+  if (!entry || !hall) return { path, gaze, stops };
   const look = (s: Space, y: number): Point => [centre(s)[0], y - 0.35, centre(s)[1]];
 
   const out = inside(entry, hall, -3);
@@ -133,7 +139,7 @@ export function walkPlan(layout: Layout): Walk {
     const doors = floor.openings
       .filter((o) => o.type === "door" && o.id !== "door-entry" && o.id !== "door-stairs")
       .map((o) => ({ o, room: byId.get(o.between[0])!, via: byId.get(o.between[1])! }))
-      .filter((d) => d.room && d.via && d.room.zone !== "circulation");
+      .filter((d) => d.room && d.via && onTour(d.room));
     // Visit rooms in order along the hall, from the entrance end.
     const along = (o: Opening) => (corridor && corridor.rect.w >= corridor.rect.h ? o.x : o.y);
     const fromEnd = entry.axis === "y" ? (entry.x === 0 ? 1 : -1) : entry.y === 0 ? 1 : -1;
@@ -148,6 +154,7 @@ export function walkPlan(layout: Layout): Walk {
       add([hx, y, hz], [o.x, y - 0.2, o.y]);
       add([o.x, y, o.y], into);
       add([vx, y, vz], into);
+      stops.push([vx, y, vz]);
       add([o.x, y, o.y], look(via, y));
       add([hx, y, hz], corridor ? look(corridor, y) : look(via, y));
     }
@@ -160,7 +167,7 @@ export function walkPlan(layout: Layout): Walk {
       add([sx, y + STOREY, sz], up ? look(up, y + STOREY) : [sx, y + STOREY, sz]);
     }
   }
-  return { path, gaze };
+  return { path, gaze, stops };
 }
 
 export const walkPath = (layout: Layout): Point[] => walkPlan(layout).path;

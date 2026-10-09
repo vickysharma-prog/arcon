@@ -152,10 +152,10 @@ function Piece({ it, colors }: { it: Item; colors: Scheme }) {
 function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit<Props, "mode" | "palette">) {
   const { camera } = useThree();
   const curves = useMemo(() => {
-    const { path, gaze } = walkPlan(layout);
+    const { path, gaze, stops } = walkPlan(layout);
     if (path.length < 2) return null;
     const mk = (pts: number[][]) => new CatmullRomCurve3(pts.map((p) => new Vector3(p[0], p[1], p[2])), false, "centripetal", 0.5);
-    return { path: mk(path), gaze: mk(gaze) };
+    return { path: mk(path), gaze: mk(gaze), stops: stops.map((p) => new Vector3(p[0], p[1], p[2])) };
   }, [layout]);
   const length = useMemo(() => curves?.path.getLength() ?? 1, [curves]);
   const t = useRef(0);
@@ -174,7 +174,11 @@ function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit
 
   useFrame((_, dt) => {
     if (!curves) return;
-    if (playing && t.current < 1) t.current = Math.min(1, t.current + (dt * 0.9) / length);
+    // Walk at about 1.1 m/s, slowing to a near stop at each doorway view so the room can be taken in.
+    const here0 = curves.path.getPointAt(t.current);
+    const near = Math.min(...curves.stops.map((p) => p.distanceTo(here0)), 99);
+    const pace = 1.1 * Math.min(1, Math.max(0.12, near / 1.4));
+    if (playing && t.current < 1) t.current = Math.min(1, t.current + (dt * pace) / length);
     // Even walking speed along the path; the gaze follows the same control point, so each look matches its spot.
     const u = curves.path.getUtoTmapping(t.current, 0);
     const pos = curves.path.getPoint(u);
