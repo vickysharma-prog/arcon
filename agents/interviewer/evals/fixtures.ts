@@ -12,7 +12,7 @@ export const aceHotelTaste: ToolStub[] = [
     id: "find-ace",
     tool: "find_taste",
     outcome: {
-      response: [{ asked: "Ace Hotel New York", matches: [{ entityId: "ent-ace", name: "Ace Hotel New York", kind: "place", detail: "20 W 29th St, New York", layer: 1 }] }],
+      response: { results: [{ asked: "Ace Hotel New York", matches: [{ entityId: "ent-ace", name: "Ace Hotel New York", kind: "place", detail: "20 W 29th St, New York", layer: 1 }] }] },
     },
   },
   {

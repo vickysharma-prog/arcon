@@ -18,6 +18,7 @@ export default defineTool({
       for (const e of found.flat()) next[e.entity_id] = e;
       return next;
     });
-    return names.map((name, i) => ({ asked: name, matches: found[i].map(toCandidate) }));
+    // An object, not a bare array: Gemini requires tool results to be JSON objects.
+    return { results: names.map((name, i) => ({ asked: name, matches: found[i].map(toCandidate) })) };
   },
 });

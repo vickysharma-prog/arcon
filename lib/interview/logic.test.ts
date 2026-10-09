@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { missingForDesign, profileSummary, toCandidate, toMetres } from "./logic.ts";
+import { missingForDesign, profileSummary, siteSizeProblem, toCandidate, toMetres } from "./logic.ts";
 import type { Project } from "../project/store.ts";
 import type { Profile } from "../qloo/taste.ts";
 
@@ -58,4 +58,13 @@ test("the summary keeps the strongest words and their sources", () => {
   const s = profileSummary(profile, 1);
   assert.deepEqual(s.style, [{ word: "post industrial", from: ["A hotel"] }]);
   assert.deepEqual(s.brands, [{ name: "A brand", look: ["clean lines", "natural materials"] }]);
+});
+
+test("site sizes outside a studio-to-hotel range are refused", () => {
+  assert.equal(siteSizeProblem(8, 6, "m"), null); // small studio
+  assert.equal(siteSizeProblem(40, 60, "ft"), null); // typical US lot
+  assert.equal(siteSizeProblem(undefined, undefined, "ft"), null);
+  assert.match(siteSizeProblem(10000, 60, "ft")!, /width of 10000 ft/);
+  assert.match(siteSizeProblem(40, 3, "m")!, /depth of 3 m/);
+  assert.match(siteSizeProblem(15, 15, "ft")!, /width of 15 ft/); // 4.6 m is too small for any room pair
 });

@@ -2,7 +2,7 @@ import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { SpaceType } from "../../../../lib/layout/schema.ts";
 import { updateProject } from "../../../../lib/project/store.ts";
-import { toMetres } from "../../../../lib/interview/logic.ts";
+import { siteSizeProblem, toMetres } from "../../../../lib/interview/logic.ts";
 import { sessionProject } from "../lib/session.ts";
 
 export default defineTool({
@@ -19,6 +19,8 @@ export default defineTool({
   }),
   label: { start: () => "Saving the project details" },
   async execute(input, ctx) {
+    const problem = siteSizeProblem(input.width, input.depth, input.unit);
+    if (problem) return { saved: false, problem };
     const p = await sessionProject(ctx.session.id);
     const site = { ...p.site };
     if (input.width) site.width = toMetres(input.width, input.unit);

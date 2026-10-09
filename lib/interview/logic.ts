@@ -18,6 +18,16 @@ const KIND: Record<string, string> = {
   "urn:entity:person": "person",
 };
 
+// Sides from 6 m (a small studio) to 180 m (a large hotel). Anything else is almost certainly a typo.
+export function siteSizeProblem(width: number | undefined, depth: number | undefined, unit: "ft" | "m"): string | null {
+  for (const [name, v] of [["width", width], ["depth", depth]] as const) {
+    if (v === undefined) continue;
+    const m = toMetres(v, unit);
+    if (m < 6 || m > 180) return `A ${name} of ${v} ${unit} is outside 6 to 180 metres (20 to 590 feet). Ask the user to check it.`;
+  }
+  return null;
+}
+
 export type Candidate = { entityId: string; name: string; kind: string; detail: string; layer: 1 | 2 | 3 };
 
 // A short, human description of a Qloo match, so the user can tell two "Ace Hotel"s apart.
