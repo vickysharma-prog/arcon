@@ -123,13 +123,22 @@ export function ProjectView({ id }: { id: string }) {
         >
           {step === "brief" && <BriefStep p={p} brief={p.brief} />}
           {step === "plans" && <PlansStep p={p} options={p.options} choosing={choosing} choose={choose} />}
-          {step === "walkthrough" && <WalkthroughStep layout={p.options[p.chosen_option ?? 0]} brief={p.brief} taste={p.taste} title={p.title} />}
+          {step === "walkthrough" && (
+            <WalkthroughStep
+              layout={p.options[p.chosen_option ?? 0]}
+              brief={p.brief}
+              taste={p.taste}
+              title={p.title}
+              next={next ? { label: `Next: ${STEPS.find((s) => s.id === next)?.label}`, go: () => setStep(next) } : undefined}
+            />
+          )}
           {step === "budget" && <Coming title="What it will cost" text="An estimate by room and by trade, with a low and a high range for your city." />}
           {step === "drawings" && <Coming title="Your drawings" text="Plans you can download and share with your architect or builder." />}
           {step === "workspace" && <Coming title="Make it yours" text="Ask for any change and watch the plan, 3D model and budget update." />}
         </motion.div>
       </AnimatePresence>
-      {next && (
+      {/* The walkthrough carries its own Next button in its top row, so the 3D view gets the full height. */}
+      {next && step !== "walkthrough" && (
         <div className="sticky bottom-0 border-t border-line bg-paper/90 px-4 py-4 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">{step === "plans" && p.chosen_option === null ? "Choose a plan to continue" : " "}</p>

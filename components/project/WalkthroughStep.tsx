@@ -18,7 +18,9 @@ const HouseScene = dynamic(() => import("@/components/three/HouseScene"), {
   loading: () => <div className="grid h-full place-items-center font-mono text-sm text-ink-soft">&gt; building your 3D model…</div>,
 });
 
-export function WalkthroughStep({ layout, brief, taste, title }: { layout: Layout; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null }) {
+export function WalkthroughStep({
+  layout, brief, taste, title, next,
+}: { layout: Layout; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null; next?: { label: string; go: () => void } }) {
   const [mode, setMode] = useState<Mode>("walk");
   const [playing, setPlaying] = useState(true);
   const [room, setRoom] = useState("Outside");
@@ -45,14 +47,19 @@ export function WalkthroughStep({ layout, brief, taste, title }: { layout: Layou
   const floors = layout.floors.length;
 
   return (
-    <main className="mx-auto w-full max-w-[1400px] px-4 py-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <p className="text-sm uppercase tracking-widest text-ink-soft">{title} · walkthrough</p>
-          <h1 className="mt-1 font-serif text-5xl">
+    <main className="mx-auto w-full max-w-[1400px] px-4 pb-4 pt-2">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-widest text-ink-soft">{title} · walkthrough</p>
+          <h1 className="font-serif text-3xl">
             <Decode text={mode === "walk" ? "Walk through your space" : mode === "explore" ? "Explore inside" : "Look around it"} />
           </h1>
+          <p className="text-sm text-ink-soft">
+            Furnished in a <span className="font-medium text-ink">{STYLE_NAME[style.style]}</span> style
+            {style.because.length > 0 && <> because you love {style.because.join(", ")}</>}.
+          </p>
         </div>
+        <div className="flex flex-wrap items-center gap-3">
         <div role="radiogroup" aria-label="View" className="flex gap-1 rounded-full border border-line p-1">
           {(["walk", "explore", "orbit"] as const).map((m) => (
             <button
@@ -67,14 +74,16 @@ export function WalkthroughStep({ layout, brief, taste, title }: { layout: Layou
             </button>
           ))}
         </div>
+        {next && (
+          <button onClick={next.go} className="rounded-full bg-btn px-6 py-2.5 text-btn-ink transition hover:opacity-90">
+            {next.label}
+          </button>
+        )}
+        </div>
       </div>
 
-      {/* Sized to end above the sticky Next bar, so the 3D controls are never hidden under it. */}
-      <p className="mt-2 text-sm text-ink-soft">
-        Furnished in a <span className="font-medium text-ink">{STYLE_NAME[style.style]}</span> style
-        {style.because.length > 0 && <> because you love {style.because.join(", ")}</>}.
-      </p>
-      <div ref={box} className={`relative mt-4 overflow-hidden border-line bg-paper-raised ${full ? "h-screen" : "h-[calc(100svh-330px)] min-h-[300px] rounded-2xl border"}`}>
+      {/* Fills the screen below the header and this row; the Next button lives in the row above. */}
+      <div ref={box} className={`relative mt-3 overflow-hidden border-line bg-paper-raised ${full ? "h-screen" : "h-[calc(100svh-218px)] min-h-[340px] rounded-2xl border"}`}>
         <HouseScene
           layout={layout}
           brief={brief}
