@@ -22,6 +22,7 @@ export function ProjectView({ id }: { id: string }) {
   const [work, setWork] = useState(0);
   const [step, setStepState] = useState<StepId>("brief");
   const [choosing, setChoosing] = useState<number | null>(null);
+  const [started, setStarted] = useState(false);
   const key = `arcon-step-${id}`;
 
   const setStep = (s: StepId) => {
@@ -66,7 +67,6 @@ export function ProjectView({ id }: { id: string }) {
         if (!res.ok) throw new Error("We couldn't find this project in this browser.");
         const body: View = await res.json();
         setP(body);
-        if (!body.brief || !body.options?.length) void design();
       })
       .catch((e) => setError(e.message));
   }, [id, design]);
@@ -90,6 +90,18 @@ export function ProjectView({ id }: { id: string }) {
       </main>
     );
 
+  // A design that hasn't been made yet waits for one click: the reveal starts on the user's cue,
+  // and that click is what lets the browser play its sounds.
+  if (p && (!p.brief || !p.options?.length) && !started)
+    return (
+      <Ready
+        title={p.title}
+        onStart={() => {
+          setStarted(true);
+          void design();
+        }}
+      />
+    );
   if (!p || !p.brief || !p.options?.length) return <Processing p={p} done={work >= WORK.length} />;
 
   const next = nextStep(step);
@@ -128,6 +140,22 @@ export function ProjectView({ id }: { id: string }) {
         </div>
       )}
     </div>
+  );
+}
+
+function Ready({ title, onStart }: { title?: string | null; onStart: () => void }) {
+  return (
+    <main className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
+      <AnimatedMark size={110} growing={false} />
+      <p className="mt-8 font-mono text-xs uppercase tracking-[0.3em] text-ink-soft">Interview complete</p>
+      <h1 className="mt-3 font-serif text-5xl sm:text-6xl">
+        <Decode text={`Ready to see ${title ?? "your space"}?`} />
+      </h1>
+      <p className="mt-4 max-w-md text-lg text-ink-soft">Arcon turns everything you told it into a style, three plans and a walk through your space.</p>
+      <button onClick={onStart} className="mt-10 rounded-full bg-btn px-9 py-4 text-lg text-btn-ink transition hover:opacity-90">
+        Design my space
+      </button>
+    </main>
   );
 }
 
