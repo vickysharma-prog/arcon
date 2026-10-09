@@ -64,7 +64,7 @@ function tone(freq: number, ms: number, { type = "square" as OscillatorType, gai
 }
 
 // Recorded sounds: a sci-fi "computer processing" loop and a short data burst, cut from a Pixabay track
-// and high-passed at 1.5 kHz to remove its background music,
+// with its background music removed (high-pass at 2.2 kHz and a gate, so only the short blips remain),
 // (Pixabay Content License: free for commercial use in an app, no attribution required).
 const buffers = new Map<string, Promise<AudioBuffer | null>>();
 function load(url: string): Promise<AudioBuffer | null> {
