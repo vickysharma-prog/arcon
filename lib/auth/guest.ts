@@ -44,3 +44,11 @@ export function readCookie(header: string | null, name: string): string | null {
   }
   return null;
 }
+
+// Decide what a request needs: keep a valid guest cookie, or mint a new signed one.
+export async function ensureGuest(cookie: string | null | undefined, secret: string, newId: () => string = () => crypto.randomUUID()) {
+  const id = await verifyGuest(cookie, secret);
+  if (id) return { id, set: null };
+  const fresh = newId();
+  return { id: fresh, set: await signGuest(fresh, secret) };
+}

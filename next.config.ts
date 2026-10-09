@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
+import { withEve } from "eve/next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -14,4 +14,5 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Mounts every agent under agents/<name>/ at /eve/<name>/v1/* on the same origin as the app.
+export default withEve(nextConfig);

@@ -31,3 +31,14 @@ test("cookies are read from a Cookie header", () => {
   assert.equal(readCookie(null, "arcon_guest"), null);
   assert.equal(readCookie("a=1", "arcon_guest"), null);
 });
+
+test("a valid cookie is kept; a missing or forged one is replaced", async () => {
+  const { ensureGuest } = await import("./guest.ts");
+  const good = await signGuest(ID, SECRET);
+  assert.deepEqual(await ensureGuest(good, SECRET), { id: ID, set: null });
+  const fresh = "00000000-0000-4000-8000-000000000001";
+  const made = await ensureGuest(`${ID}.forged`, SECRET, () => fresh);
+  assert.equal(made.id, fresh);
+  assert.equal(await verifyGuest(made.set, SECRET), fresh);
+  assert.equal((await ensureGuest(undefined, SECRET, () => fresh)).id, fresh);
+});
