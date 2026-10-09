@@ -7,7 +7,6 @@
 const KEY = "arcon-sound";
 let ctx: AudioContext | null = null;
 let out: AudioNode | null = null; // master output: a compressor keeps louder blips clean
-let lastTick = 0;
 
 export function soundOn(): boolean {
   try {
@@ -64,18 +63,74 @@ function tone(freq: number, ms: number, { type = "square" as OscillatorType, gai
   osc.stop(t + ms / 1000 + 0.02);
 }
 
-// A short data blip for each burst of typed characters. Throttled so fast typing stays a texture, not noise.
-export function tick() {
-  const now = performance.now();
-  if (now - lastTick < 45) return;
-  lastTick = now;
-  tone(1700 + Math.random() * 900, 16, { gain: 0.06 });
+// Recorded sounds: a sci-fi "computer processing" loop and a short data burst, cut from a Pixabay track
+// (Pixabay Content License: free for commercial use in an app, no attribution required).
+const buffers = new Map<string, Promise<AudioBuffer | null>>();
+function load(url: string): Promise<AudioBuffer | null> {
+  if (!buffers.has(url)) {
+    buffers.set(
+      url,
+      fetch(url)
+        .then((r) => r.arrayBuffer())
+        .then((b) => (audio() ?? new AudioContext()).decodeAudioData(b))
+        .catch(() => null),
+    );
+  }
+  return buffers.get(url)!;
+}
+
+// Fetch the recordings early so they start instantly when needed.
+export function preload() {
+  void load("/sfx/processing.mp3");
+  void load("/sfx/burst.mp3");
+}
+
+// The processing bed: loops while the engine works, fades in and out. Returns a stop function.
+export function startProcessing(): () => void {
+  let stop = () => {};
+  let cancelled = false;
+  void load("/sfx/processing.mp3").then((buf) => {
+    const a = audio();
+    if (!buf || !a || cancelled) return;
+    const src = a.createBufferSource();
+    const g = a.createGain();
+    src.buffer = buf;
+    src.loop = true;
+    g.gain.setValueAtTime(0.0001, a.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.55, a.currentTime + 0.6);
+    src.connect(g).connect(out ?? a.destination);
+    src.start();
+    stop = () => {
+      g.gain.cancelScheduledValues(a.currentTime);
+      g.gain.setValueAtTime(g.gain.value, a.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.0001, a.currentTime + 0.8);
+      src.stop(a.currentTime + 0.85);
+    };
+  });
+  return () => {
+    cancelled = true;
+    stop();
+  };
+}
+
+// A short data burst, played when a headline decodes.
+export function burst() {
+  void load("/sfx/burst.mp3").then((buf) => {
+    const a = audio();
+    if (!buf || !a) return;
+    const src = a.createBufferSource();
+    const g = a.createGain();
+    src.buffer = buf;
+    g.gain.value = 0.5;
+    src.connect(g).connect(out ?? a.destination);
+    src.start();
+  });
 }
 
 // A two-note "ok" when a log line finishes.
 export function ok() {
-  tone(880, 45, { type: "sine", gain: 0.1 });
-  setTimeout(() => tone(1320, 55, { type: "sine", gain: 0.1 }), 50);
+  tone(880, 45, { type: "sine", gain: 0.05 });
+  setTimeout(() => tone(1320, 55, { type: "sine", gain: 0.05 }), 50);
 }
 
 // A rising sweep when the screen moves to a new step.

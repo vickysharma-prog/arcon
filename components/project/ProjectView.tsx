@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AnimatedMark } from "@/components/AnimatedMark";
 import { Decode, TypeLog } from "@/components/fx/Decode";
 import { processingLog } from "@/lib/design/log";
-import { chime, whoosh } from "@/components/fx/sfx";
+import { chime, preload, startProcessing, whoosh } from "@/components/fx/sfx";
 import { PlanSvg } from "@/components/plan/PlanSvg";
 import type { Brief } from "@/lib/design/brief";
 import type { Layout } from "@/lib/layout/schema";
@@ -97,6 +97,7 @@ export function ProjectView({ id }: { id: string }) {
       <Ready
         title={p.title}
         onStart={() => {
+          preload();
           setStarted(true);
           void design();
         }}
@@ -160,6 +161,8 @@ function Ready({ title, onStart }: { title?: string | null; onStart: () => void 
 }
 
 function Processing({ p, done }: { p: View | null; done: boolean }) {
+  // The computer-processing sound plays for as long as this screen is up.
+  useEffect(() => startProcessing(), []);
   return (
     <main className="arcon-scan flex flex-1 flex-col items-center justify-center px-4 py-12">
       <AnimatedMark size={130} />

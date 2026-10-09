@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useReducedMotion } from "motion/react";
-import { ok, tick } from "./sfx";
+import { burst, ok } from "./sfx";
 
 const GLYPHS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&*+=<>/\\[]{}";
 
@@ -22,7 +22,7 @@ export function Decode({ text, delay = 0, speed = 28, className = "" }: { text: 
       timer = setInterval(() => {
         frame++;
         const settled = Math.floor(frame / 2);
-        tick();
+        if (frame === 1) burst();
         setShown(
           text
             .split("")
@@ -55,10 +55,7 @@ export function TypeLog({ lines, done, className = "" }: { lines: string[]; done
     if (still || count >= lines.length) return;
     const line = lines[count];
     if (chars < line.length) {
-      const t = setTimeout(() => {
-        tick();
-        setChars((c) => Math.min(c + 2, line.length));
-      }, 14);
+      const t = setTimeout(() => setChars((c) => Math.min(c + 2, line.length)), 14);
       return () => clearTimeout(t);
     }
     const t = setTimeout(() => {
