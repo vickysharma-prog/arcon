@@ -26,6 +26,4 @@ for (const sel of (process.env.CLICKS ?? "").split("||").filter(Boolean)) {
 await page.screenshot({ path: out, fullPage: true });
 await browser.close();
 console.log("saved", out);
-console.log(errors.length ? `page errors:
-${errors.join("
-")}` : "no page errors");
+console.log(errors.length ? ["page errors:", ...errors].join("\n") : "no page errors");
