@@ -15,6 +15,8 @@
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.78",
     "@ai-sdk/google": "^4.0.93",
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.1",
     "@supabase/supabase-js": "^2.117.3",
     "ai": "^7.0.136",
     "eve": "^0.75.1",
@@ -22,6 +24,7 @@
     "next": "16.4.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
+    "three": "^0.186.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -29,6 +32,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/three": "^0.186.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.0",
     "postgres": "^3.4.9",
