@@ -1,11 +1,12 @@
 "use client";
 
-// Interface sounds made live with Web Audio: no files to download. Quiet by design.
+// Interface sounds made live with Web Audio: no files to download.
 // Browsers only allow sound after the user has interacted with the page, so the context starts
 // on the first click or key press and every sound before that is skipped silently.
 
 const KEY = "arcon-sound";
 let ctx: AudioContext | null = null;
+let out: AudioNode | null = null; // master output: a compressor keeps louder blips clean
 let lastTick = 0;
 
 export function soundOn(): boolean {
@@ -28,6 +29,13 @@ function audio(): AudioContext | null {
     const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctor) return null;
     ctx = new Ctor();
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -14;
+    comp.ratio.value = 4;
+    const master = ctx.createGain();
+    master.gain.value = 1.6;
+    comp.connect(master).connect(ctx.destination);
+    out = comp;
   }
   if (ctx.state === "suspended") void ctx.resume().catch(() => {});
   return ctx.state === "running" ? ctx : null;
@@ -51,7 +59,7 @@ function tone(freq: number, ms: number, { type = "square" as OscillatorType, gai
   if (to) osc.frequency.exponentialRampToValueAtTime(to, t + ms / 1000);
   g.gain.setValueAtTime(gain, t);
   g.gain.exponentialRampToValueAtTime(0.0001, t + ms / 1000);
-  osc.connect(g).connect(a.destination);
+  osc.connect(g).connect(out ?? a.destination);
   osc.start(t);
   osc.stop(t + ms / 1000 + 0.02);
 }
@@ -61,21 +69,21 @@ export function tick() {
   const now = performance.now();
   if (now - lastTick < 45) return;
   lastTick = now;
-  tone(1700 + Math.random() * 900, 14, { gain: 0.018 });
+  tone(1700 + Math.random() * 900, 16, { gain: 0.06 });
 }
 
 // A two-note "ok" when a log line finishes.
 export function ok() {
-  tone(880, 40, { type: "sine", gain: 0.03 });
-  setTimeout(() => tone(1320, 50, { type: "sine", gain: 0.03 }), 45);
+  tone(880, 45, { type: "sine", gain: 0.1 });
+  setTimeout(() => tone(1320, 55, { type: "sine", gain: 0.1 }), 50);
 }
 
 // A rising sweep when the screen moves to a new step.
 export function whoosh() {
-  tone(180, 260, { type: "sine", gain: 0.04, to: 720 });
+  tone(180, 280, { type: "sine", gain: 0.13, to: 720 });
 }
 
 // A soft chord when the design is ready.
 export function chime() {
-  [523.25, 659.25, 783.99].forEach((f, i) => setTimeout(() => tone(f, 420, { type: "sine", gain: 0.035 }), i * 70));
+  [523.25, 659.25, 783.99].forEach((f, i) => setTimeout(() => tone(f, 480, { type: "sine", gain: 0.11 }), i * 70));
 }
