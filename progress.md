@@ -2,6 +2,21 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-09 (night): Fixes from Vicky's testing, and the plan options problem
+
+Vicky tested the live site and found three layout problems: the explore guide was cut off on short screens,
+the 3D window was too short, and the Next bar wasted space. All three are fixed: the guide is compact and
+scrolls, Next sits top right on every step, and the 3D view fills the screen. The style page said
+"Industrial Bohemian" while the 3D said "Scandinavian"; the brief's style name now leads, so they always match.
+
+Choosing another plan did change the 3D (checked in Chrome for all three options and all three modes). It
+looked the same because Look around opened on the upstairs and the walk starts at the same door. Look around
+now opens on the ground floor, and the header names the plan option.
+
+The real finding: the three options are one layout idea flipped and mirrored. Decided with Vicky that the user
+gets three plans picked for how they live, from a library of real layout concepts, each with a reason quoted
+from their interview or Qloo taste. Designed today, built tomorrow.
+
 ## 2026-10-09 (evening): Realistic, taste-styled 3D and walking inside
 
 Living, dining and kitchen areas now open into each other in both the plan and the 3D model. Furniture is drawn from parts: sofas with cushions, made beds, a full kitchen run with sink, hob, fridge and utensils, a TV, books, lamps and plants. The Qloo taste profile picks the furniture style (mid-century, industrial, Scandinavian, boho, classic or modern) and the viewer names the loves that chose it. The brief picks the feature wall finish, tile and art colours. Walls get art and curtains, and the floors get planks and tile. Ambient occlusion and soft light replace the flat look.
