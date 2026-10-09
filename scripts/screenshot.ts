@@ -15,6 +15,11 @@ if (guestId) {
 }
 await page.goto(url, { waitUntil: "domcontentloaded", timeout: 120_000 });
 await new Promise((r) => setTimeout(r, Number(waitMs)));
+// CLICKS="selector||selector" clicks each in turn before the shot, e.g. to open a menu.
+for (const sel of (process.env.CLICKS ?? "").split("||").filter(Boolean)) {
+  await page.click(sel);
+  await new Promise((r) => setTimeout(r, 400));
+}
 await page.screenshot({ path: out, fullPage: true });
 await browser.close();
 console.log("saved", out);

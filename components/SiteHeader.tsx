@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
-import { Settings } from "./Settings";
+import { ProfileMenu } from "./ProfileMenu";
 
 export function SiteHeader() {
   return (
@@ -8,7 +8,7 @@ export function SiteHeader() {
       <Link href="/" aria-label="Arcon home">
         <Logo size={26} />
       </Link>
-      <Settings />
+      <ProfileMenu />
     </header>
   );
 }
