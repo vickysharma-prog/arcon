@@ -214,6 +214,35 @@ function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit
   return null;
 }
 
+// Look-around view: start from above the corner of the building, with a normal lens, every time it's opened.
+function Overview({ layout }: { layout: Layout }) {
+  const { camera } = useThree();
+  const { width: W, depth: D } = layout.shell;
+  const h = layout.floors.length * STOREY;
+  useEffect(() => {
+    const span = Math.max(W, D);
+    camera.position.set(W / 2 + span * 1.05, h + span * 0.95, D / 2 + span * 1.25);
+    if ("fov" in camera) {
+      camera.fov = 45;
+      camera.updateProjectionMatrix();
+    }
+    camera.lookAt(W / 2, h / 3, D / 2);
+  }, [camera, W, D, h]);
+  return <OrbitControls target={[W / 2, h / 3, D / 2]} maxPolarAngle={Math.PI / 2.1} minDistance={3} maxDistance={90} enableDamping makeDefault />;
+}
+
+// Walk view: a wide lens like a property tour.
+function WideLens() {
+  const { camera } = useThree();
+  useEffect(() => {
+    if ("fov" in camera) {
+      camera.fov = 82;
+      camera.updateProjectionMatrix();
+    }
+  }, [camera]);
+  return null;
+}
+
 export default function HouseScene(props: Props) {
   const colors = useMemo(() => scheme(props.palette), [props.palette]);
   const { width: W, depth: D } = props.layout.shell;
@@ -226,9 +255,12 @@ export default function HouseScene(props: Props) {
       <ambientLight intensity={0.55} />
       <Building layout={props.layout} colors={colors} cutaway={props.mode === "orbit" && props.cutaway} upTo={props.mode === "orbit" ? props.upTo : "all"} />
       {props.mode === "walk" ? (
-        <Walker {...props} />
+        <>
+          <WideLens />
+          <Walker {...props} />
+        </>
       ) : (
-        <OrbitControls target={[W / 2, h / 3, D / 2]} maxPolarAngle={Math.PI / 2.1} minDistance={4} maxDistance={80} enableDamping />
+        <Overview layout={props.layout} />
       )}
     </Canvas>
   );
