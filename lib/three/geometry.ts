@@ -102,18 +102,29 @@ function inside(o: Opening, s: Space, by: number): [number, number] {
   return [o.x + (centre(s)[0] > o.x ? by : -by), o.y];
 }
 
-// A first-person path: from the street, through the front door, a step into every room and back, then upstairs.
-// The camera looks ahead along the path, so in each room it faces the room from its doorway.
-export function walkPath(layout: Layout): Point[] {
+// A first-person walk: from the street, through the front door, a step into every room and back, then upstairs.
+// `path` is where the eye goes; `gaze` (same length) is what it looks at at each point: along the hall,
+// and into each room from its doorway, so the view shows rooms and furniture rather than the next wall.
+export type Walk = { path: Point[]; gaze: Point[] };
+
+export function walkPlan(layout: Layout): Walk {
   const path: Point[] = [];
+  const gaze: Point[] = [];
+  const add = (p: Point, g: Point) => {
+    path.push(p);
+    gaze.push(g);
+  };
   const ground = layout.floors.find((f) => f.level === 0) ?? layout.floors[0];
   const entry = ground.openings.find((o) => o.id === "door-entry");
   const hall = ground.spaces.find((s) => s.kind === "corridor");
-  if (!entry || !hall) return path;
+  if (!entry || !hall) return { path, gaze };
+  const look = (s: Space, y: number): Point => [centre(s)[0], y - 0.35, centre(s)[1]];
+
   const out = inside(entry, hall, -3);
-  path.push([out[0], EYE, out[1]]);
+  add([out[0], EYE, out[1]], [entry.x, EYE - 0.2, entry.y]);
   const [ix, iz] = inside(entry, hall, 0.8);
-  path.push([entry.x, EYE, entry.y], [ix, EYE, iz]);
+  add([entry.x, EYE, entry.y], look(hall, EYE));
+  add([ix, EYE, iz], look(hall, EYE));
 
   for (const floor of [...layout.floors].sort((a, b) => a.level - b.level)) {
     const y = floor.level * STOREY + EYE;
@@ -129,17 +140,27 @@ export function walkPath(layout: Layout): Point[] {
     doors.sort((p, q) => fromEnd * (along(p.o) - along(q.o)));
     for (const { o, room, via } of doors) {
       const [hx, hz] = inside(o, via, 0.6);
-      // Stop a step inside the doorway, as a person would, rather than walking through furniture to the middle.
+      // Stop a step inside the doorway, as a person would, and look across the room.
       const depth = o.axis === "x" ? room.rect.h : room.rect.w;
-      const [vx, vz] = inside(o, room, Math.min(1.1, depth / 2));
-      path.push([hx, y, hz], [o.x, y, o.y], [vx, y, vz], [o.x, y, o.y], [hx, y, hz]);
+      const [vx, vz] = inside(o, room, Math.min(0.9, depth / 3));
+      const [fx, fz] = inside(o, room, depth - 0.2); // the far wall, straight ahead
+      const into: Point = [fx, y - 0.45, fz];
+      add([hx, y, hz], [o.x, y - 0.2, o.y]);
+      add([o.x, y, o.y], into);
+      add([vx, y, vz], into);
+      add([o.x, y, o.y], look(via, y));
+      add([hx, y, hz], corridor ? look(corridor, y) : look(via, y));
     }
     const stairs = floor.spaces.find((s) => s.kind === "stairs");
     const nextFloor = layout.floors.find((f) => f.level === floor.level + 1);
     if (stairs && nextFloor) {
       const [sx, sz] = centre(stairs);
-      path.push([sx, y, sz], [sx, y + STOREY, sz]);
+      add([sx, y, sz], [sx, y + STOREY, sz]);
+      const up = nextFloor.spaces.find((s) => s.kind === "corridor");
+      add([sx, y + STOREY, sz], up ? look(up, y + STOREY) : [sx, y + STOREY, sz]);
     }
   }
-  return path;
+  return { path, gaze };
 }
+
+export const walkPath = (layout: Layout): Point[] => walkPlan(layout).path;

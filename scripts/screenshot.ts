@@ -21,11 +21,20 @@ await new Promise((r) => setTimeout(r, Number(waitMs)));
 // CLICKS="selector||selector" clicks each in turn before the shot, e.g. to open a menu.
 for (const sel of (process.env.CLICKS ?? "").split("||").filter(Boolean)) {
   await page.click(sel);
-  await new Promise((r) => setTimeout(r, 600));
+  await new Promise((r) => setTimeout(r, Number(process.env.CLICK_WAIT ?? 600)));
 }
 // AFTER_MS waits after the clicks, e.g. for a 3D scene to draw.
 await new Promise((r) => setTimeout(r, Number(process.env.AFTER_MS ?? 0)));
-await page.screenshot({ path: out, fullPage: !process.env.VIEWPORT_ONLY });
+// SHOTS="4000,12000" takes a series instead, each that many ms after the clicks: out-1.png, out-2.png...
+const shots = (process.env.SHOTS ?? "").split(",").filter(Boolean).map(Number);
+if (shots.length) {
+  let waited = 0;
+  for (const [i, at] of shots.entries()) {
+    await new Promise((r) => setTimeout(r, at - waited));
+    waited = at;
+    await page.screenshot({ path: out.replace(/\.png$/, `-${i + 1}.png`), fullPage: false });
+  }
+} else await page.screenshot({ path: out, fullPage: !process.env.VIEWPORT_ONLY });
 await browser.close();
 console.log("saved", out);
 console.log(errors.length ? ["page errors:", ...errors].join("\n") : "no page errors");

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildSlabs, buildWalls, DOOR_H, EYE, SILL, STOREY, walkPath, WALL_H } from "./geometry.ts";
+import { buildSlabs, buildWalls, DOOR_H, EYE, SILL, STOREY, walkPath, walkPlan, WALL_H } from "./geometry.ts";
 import { place } from "../layout/place.ts";
 import { DEFAULT_SHELLS, TEMPLATES } from "../layout/templates.ts";
 import type { Layout } from "../layout/schema.ts";
@@ -84,4 +84,19 @@ test("the walk never passes through a wall", () => {
     if (onDoor(ax, az) || onDoor(bx, bz) || !where(ax, az) || !where(bx, bz)) continue;
     assert.equal(where(ax, az)?.id, where(bx, bz)?.id, `step ${i} crosses from ${where(ax, az)?.id} to ${where(bx, bz)?.id}`);
   }
+});
+
+test("inside each room the camera looks across the room, not back at the hall", () => {
+  const layout = place(TEMPLATES.house, DEFAULT_SHELLS.house);
+  const { path, gaze } = walkPlan(layout);
+  assert.equal(path.length, gaze.length);
+  for (const f of layout.floors)
+    for (const s of f.spaces.filter((s) => s.zone !== "circulation")) {
+      const { x, y, w, h } = s.rect;
+      const i = path.findIndex((p) => p[0] > x && p[0] < x + w && p[2] > y && p[2] < y + h && Math.abs(p[1] - (f.level * STOREY + EYE)) < 1e-9);
+      assert.ok(i >= 0, `steps into ${s.id}`);
+      const g = gaze[i];
+      assert.ok(g[0] >= x - 1e-6 && g[0] <= x + w + 1e-6 && g[2] >= y - 1e-6 && g[2] <= y + h + 1e-6, `looks into ${s.id}`);
+      assert.ok(g[1] < path[i][1], "looks slightly down, toward the furniture");
+    }
 });

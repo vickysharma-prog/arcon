@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { CatmullRomCurve3, Vector3 } from "three";
 import type { Layout } from "@/lib/layout/schema";
 import { furnish, type Item } from "@/lib/three/furniture";
-import { buildSlabs, buildWalls, STOREY, walkPath, WALL_H, type Glass, type WallBox } from "@/lib/three/geometry";
+import { buildSlabs, buildWalls, STOREY, walkPlan, WALL_H, type Glass, type WallBox } from "@/lib/three/geometry";
 import { scheme, type Scheme } from "@/lib/three/materials";
 
 export type Mode = "walk" | "orbit";
@@ -117,7 +117,7 @@ function Building({ layout, colors }: { layout: Layout; colors: Scheme }) {
         .filter((s) => s.zone !== "circulation")
         .slice(0, 12)
         .map((s) => (
-          <pointLight key={`l-${s.level}-${s.id}`} position={[s.x + s.w / 2, s.y + WALL_H - 0.4, s.z + s.d / 2]} intensity={2.2} distance={6} decay={1.6} color="#ffe2b8" />
+          <pointLight key={`l-${s.level}-${s.id}`} position={[s.x + s.w / 2, s.y + WALL_H - 0.4, s.z + s.d / 2]} intensity={3.2} distance={7} decay={1.4} color="#ffe6c4" />
         ))}
     </group>
   );
@@ -151,11 +151,13 @@ function Piece({ it, colors }: { it: Item; colors: Scheme }) {
 // Moves the camera along the walk path at walking pace, looking where it's going.
 function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit<Props, "mode" | "palette">) {
   const { camera } = useThree();
-  const curve = useMemo(() => {
-    const pts = walkPath(layout).map((p) => new Vector3(...p));
-    return pts.length > 1 ? new CatmullRomCurve3(pts, false, "centripetal", 0.5) : null;
+  const curves = useMemo(() => {
+    const { path, gaze } = walkPlan(layout);
+    if (path.length < 2) return null;
+    const mk = (pts: number[][]) => new CatmullRomCurve3(pts.map((p) => new Vector3(p[0], p[1], p[2])), false, "centripetal", 0.5);
+    return { path: mk(path), gaze: mk(gaze) };
   }, [layout]);
-  const length = useMemo(() => curve?.getLength() ?? 1, [curve]);
+  const length = useMemo(() => curves?.path.getLength() ?? 1, [curves]);
   const t = useRef(0);
   const look = useRef(new Vector3());
   const lastRoom = useRef("");
@@ -164,20 +166,21 @@ function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit
   useEffect(() => {
     t.current = 0;
     ended.current = false;
-    if (curve) {
-      camera.position.copy(curve.getPointAt(0));
-      look.current.copy(curve.getPointAt(Math.min(1, 1 / length)));
+    if (curves) {
+      camera.position.copy(curves.path.getPointAt(0));
+      look.current.copy(curves.gaze.getPointAt(0));
     }
-  }, [curve, camera, length, restartKey]);
+  }, [curves, camera, restartKey]);
 
   useFrame((_, dt) => {
-    if (!curve) return;
-    if (playing && t.current < 1) t.current = Math.min(1, t.current + (dt * 1.15) / length);
-    const pos = curve.getPointAt(t.current);
-    const ahead = curve.getPointAt(Math.min(1, t.current + 1.4 / length));
-    ahead.y = pos.y;
+    if (!curves) return;
+    if (playing && t.current < 1) t.current = Math.min(1, t.current + (dt * 0.9) / length);
+    // Even walking speed along the path; the gaze follows the same control point, so each look matches its spot.
+    const u = curves.path.getUtoTmapping(t.current, 0);
+    const pos = curves.path.getPoint(u);
+    const target = curves.gaze.getPoint(u);
     camera.position.copy(pos);
-    look.current.lerp(ahead, Math.min(1, dt * 3));
+    look.current.lerp(target, Math.min(1, dt * 2.2));
     camera.lookAt(look.current);
     onProgress?.(t.current);
     const level = Math.round((pos.y - 1.6) / STOREY);
@@ -202,11 +205,11 @@ export default function HouseScene(props: Props) {
   const { width: W, depth: D } = props.layout.shell;
   const h = props.layout.floors.length * STOREY;
   return (
-    <Canvas shadows camera={{ fov: props.mode === "walk" ? 72 : 45, near: 0.05, far: 300, position: [W * 1.6, h * 2.2 + 6, D * 1.9] }} dpr={[1, 2]}>
+    <Canvas shadows camera={{ fov: props.mode === "walk" ? 82 : 45, near: 0.05, far: 300, position: [W * 1.6, h * 2.2 + 6, D * 1.9] }} dpr={[1, 2]}>
       <color attach="background" args={["#dfe8f3"]} />
-      <hemisphereLight args={["#ffffff", "#8f7d66", 0.75]} />
+      <hemisphereLight args={["#ffffff", "#d9cfc2", 1.1]} />
       <directionalLight position={[W + 14, 26, -8]} intensity={2.4} castShadow shadow-mapSize={[2048, 2048]} shadow-camera-left={-30} shadow-camera-right={30} shadow-camera-top={30} shadow-camera-bottom={-30} />
-      <ambientLight intensity={0.25} />
+      <ambientLight intensity={0.55} />
       <Building layout={props.layout} colors={colors} />
       {props.mode === "walk" ? (
         <Walker {...props} />
