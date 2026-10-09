@@ -10,5 +10,3 @@ __pycache__/
 .qloo-cache/
 fixtures/qloo/
 
-# Plans and research stay local and in the private doc, never on GitHub
-private/
