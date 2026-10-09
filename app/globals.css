@@ -50,3 +50,30 @@ body {
   background: var(--paper);
   color: var(--ink);
 }
+
+/* Tech motion: a scan line sweeping the processing screen, and plan walls drawing themselves. */
+@keyframes arcon-scan {
+  from { transform: translateY(-10vh); }
+  to { transform: translateY(110vh); }
+}
+.arcon-scan::after {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 18vh;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--clay) 12%, transparent), transparent);
+  animation: arcon-scan 3.2s linear infinite;
+}
+@keyframes arcon-draw {
+  to { stroke-dashoffset: 0; }
+}
+.arcon-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: arcon-draw 1.4s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .arcon-scan::after { display: none; }
+  .arcon-draw { animation: none; stroke-dashoffset: 0; }
+}
