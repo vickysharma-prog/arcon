@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { setSound, soundOn } from "./fx/sfx";
 
 type Mode = "light" | "dark" | "system";
 const KEY = "arcon-theme";
@@ -23,11 +24,13 @@ export function ProfileMenu() {
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState(false);
   const [mode, setMode] = useState<Mode>("system");
+  const [sound, setSoundState] = useState(true);
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const t = document.documentElement.dataset.theme;
     setMode(t === "light" || t === "dark" ? t : "system");
+    setSoundState(soundOn());
   }, []);
 
   useEffect(() => {
@@ -97,6 +100,21 @@ export function ProfileMenu() {
                     {m}
                   </button>
                 ))}
+              </div>
+              <div className="mt-4 flex items-center justify-between">
+                <p className="text-xs uppercase tracking-widest text-ink-soft">Sound effects</p>
+                <button
+                  role="switch"
+                  aria-checked={sound}
+                  aria-label="Sound effects"
+                  onClick={() => {
+                    setSound(!sound);
+                    setSoundState(!sound);
+                  }}
+                  className={`relative h-6 w-11 rounded-full transition ${sound ? "bg-btn" : "bg-line"}`}
+                >
+                  <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-paper-raised shadow transition-all ${sound ? "left-5" : "left-0.5"}`} />
+                </button>
               </div>
             </div>
           )}

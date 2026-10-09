@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AnimatedMark } from "@/components/AnimatedMark";
 import { Decode, TypeLog } from "@/components/fx/Decode";
 import { processingLog } from "@/lib/design/log";
+import { chime, whoosh } from "@/components/fx/sfx";
 import { PlanSvg } from "@/components/plan/PlanSvg";
 import type { Brief } from "@/lib/design/brief";
 import type { Layout } from "@/lib/layout/schema";
@@ -24,6 +25,7 @@ export function ProjectView({ id }: { id: string }) {
   const key = `arcon-step-${id}`;
 
   const setStep = (s: StepId) => {
+    whoosh();
     setStepState(s);
     try {
       sessionStorage.setItem(key, s);
@@ -49,6 +51,7 @@ export function ProjectView({ id }: { id: string }) {
       setWork(WORK.length);
       // Let the engine log finish typing before the reveal, even when the design comes back fast.
       await new Promise((r) => setTimeout(r, Math.max(900, 6500 - (performance.now() - started))));
+      chime();
       setP(body);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Design failed");

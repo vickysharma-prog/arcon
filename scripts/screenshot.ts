@@ -7,6 +7,9 @@ const [url, out, guestId, width = "1280", height = "900", waitMs = "1500"] = pro
 const chrome = ["C:/Program Files/Google/Chrome/Application/chrome.exe", "C:/Program Files (x86)/Google/Chrome/Application/chrome.exe"];
 const browser = await puppeteer.launch({ executablePath: chrome[0], headless: true, args: ["--force-color-profile=srgb"] });
 const page = await browser.newPage();
+const errors: string[] = [];
+page.on("pageerror", (e) => errors.push(String(e)));
+page.on("console", (m) => m.type() === "error" && errors.push(m.text()));
 await page.setViewport({ width: Number(width), height: Number(height) });
 await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "light" }]);
 if (guestId) {
@@ -23,3 +26,6 @@ for (const sel of (process.env.CLICKS ?? "").split("||").filter(Boolean)) {
 await page.screenshot({ path: out, fullPage: true });
 await browser.close();
 console.log("saved", out);
+console.log(errors.length ? `page errors:
+${errors.join("
+")}` : "no page errors");
