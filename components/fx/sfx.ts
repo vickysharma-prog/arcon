@@ -143,3 +143,29 @@ export function whoosh() {
 export function chime() {
   [523.25, 659.25, 783.99].forEach((f, i) => setTimeout(() => tone(f, 480, { type: "sine", gain: 0.11 }), i * 70));
 }
+
+// A soft footstep: a short low thump of filtered noise.
+export function step() {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime;
+  const n = Math.floor(a.sampleRate * 0.09);
+  const buf = a.createBuffer(1, n, a.sampleRate);
+  const d = buf.getChannelData(0);
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3);
+  const src = a.createBufferSource();
+  src.buffer = buf;
+  const f = a.createBiquadFilter();
+  f.type = "lowpass";
+  f.frequency.value = 260 + Math.random() * 80;
+  const g = a.createGain();
+  g.gain.value = 0.55;
+  src.connect(f).connect(g).connect(out ?? a.destination);
+  src.start(t);
+}
+
+// A gentle bell when the walk enters a new room.
+export function roomBell() {
+  tone(659.25, 600, { type: "sine", gain: 0.07 });
+  setTimeout(() => tone(987.77, 700, { type: "sine", gain: 0.05 }), 90);
+}

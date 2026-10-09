@@ -21,6 +21,7 @@ export function WalkthroughStep({ layout, palette, title }: { layout: Layout; pa
   const [cutaway, setCutaway] = useState(true);
   const [upTo, setUpTo] = useState<number | "all">("all");
   const [finished, setFinished] = useState(false);
+  const [guide, setGuide] = useState(false);
   const ended = progress >= 1;
   const floors = layout.floors.length;
 
@@ -35,7 +36,14 @@ export function WalkthroughStep({ layout, palette, title }: { layout: Layout; pa
         </div>
         <div role="radiogroup" aria-label="View" className="flex gap-1 rounded-full border border-line p-1">
           {(["walk", "orbit"] as const).map((m) => (
-            <button key={m} role="radio" aria-checked={mode === m} onClick={() => setMode(m)} className={`rounded-full px-4 py-1.5 text-sm ${mode === m ? "bg-btn text-btn-ink" : "text-ink-soft hover:text-ink"}`}>
+            <button
+              key={m}
+              role="radio"
+              aria-checked={mode === m}
+              onClick={() => {
+                setMode(m);
+                if (m === "orbit" && !finished) setGuide(true);
+              }} className={`rounded-full px-4 py-1.5 text-sm ${mode === m ? "bg-btn text-btn-ink" : "text-ink-soft hover:text-ink"}`}>
               {m === "walk" ? "Walk through" : "Look around"}
             </button>
           ))}
@@ -59,6 +67,7 @@ export function WalkthroughStep({ layout, palette, title }: { layout: Layout; pa
             setPlaying(false);
             setFinished(true);
             setMode("orbit");
+            setGuide(true);
           }}
         />
         {mode === "walk" && (
@@ -67,6 +76,7 @@ export function WalkthroughStep({ layout, palette, title }: { layout: Layout; pa
               <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-accent" />
               {room}
             </div>
+            <p className="pointer-events-none absolute right-4 top-4 rounded-full bg-paper/85 px-4 py-1.5 text-sm text-ink-soft backdrop-blur">Hold and drag to look around</p>
             <div className="absolute inset-x-4 bottom-4 flex items-center gap-3">
               <button
                 onClick={() => {
@@ -88,11 +98,7 @@ export function WalkthroughStep({ layout, palette, title }: { layout: Layout; pa
         )}
         {mode === "orbit" && (
           <>
-            {finished && (
-              <p className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-btn px-4 py-1.5 text-sm text-btn-ink">
-                Walk finished. Now look around from any angle.
-              </p>
-            )}
+            {guide && <MouseGuide finished={finished} onClose={() => setGuide(false)} />}
             <div className="absolute left-4 right-4 top-4 flex flex-wrap items-center gap-2">
               <button onClick={() => setCutaway((c) => !c)} aria-pressed={cutaway} className={`rounded-full px-4 py-1.5 text-sm ${cutaway ? "bg-btn text-btn-ink" : "bg-paper/85 text-ink backdrop-blur"}`}>
                 {cutaway ? "Showing inside" : "Show inside"}
@@ -106,11 +112,49 @@ export function WalkthroughStep({ layout, palette, title }: { layout: Layout; pa
                   ))}
                 </div>
               )}
-              <p className="pointer-events-none ml-auto rounded-full bg-paper/85 px-4 py-1.5 text-sm text-ink-soft backdrop-blur">Drag to turn · right-drag to move · scroll to zoom</p>
+              <button onClick={() => setGuide(true)} className="ml-auto rounded-full bg-paper/85 px-4 py-1.5 text-sm text-ink-soft backdrop-blur hover:text-ink">
+                How to explore
+              </button>
             </div>
           </>
         )}
       </div>
     </main>
+  );
+}
+
+// How to move around the 3D model with a mouse, trackpad or touch screen.
+function MouseGuide({ finished, onClose }: { finished: boolean; onClose: () => void }) {
+  const rows = [
+    { icon: "M8 4h8a4 4 0 0 1 4 4v8a8 8 0 0 1-16 0V8a4 4 0 0 1 4-4zM12 4v6", what: "Turn around", how: "Drag with the left mouse button, or one finger" },
+    { icon: "M12 3v18M3 12h18M7 7l-4 5 4 5M17 7l4 5-4 5", what: "Move sideways", how: "Drag with the right button, or two fingers" },
+    { icon: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-5-5M8 11h6M11 8v6", what: "Zoom in and out", how: "Scroll the wheel, or pinch" },
+    { icon: "M3 9l9-6 9 6v11H3zM9 20v-6h6v6", what: "See inside", how: "Show inside lifts the roof; pick a floor to see its rooms" },
+  ];
+  return (
+    <div className="absolute inset-0 grid place-items-center bg-ink/30 p-4 backdrop-blur-[2px]">
+      <div role="dialog" aria-label="How to explore" className="w-full max-w-md rounded-2xl border border-line bg-paper-raised p-6 shadow-xl">
+        <p className="font-mono text-xs uppercase tracking-[0.25em] text-ink-soft">{finished ? "Walk finished" : "Look around"}</p>
+        <h2 className="mt-2 font-serif text-3xl">Explore it your way</h2>
+        <ul className="mt-5 space-y-4">
+          {rows.map((r) => (
+            <li key={r.what} className="flex items-start gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-paper text-accent">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={r.icon} />
+                </svg>
+              </span>
+              <span>
+                <span className="block font-medium">{r.what}</span>
+                <span className="block text-sm text-ink-soft">{r.how}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <button onClick={onClose} className="mt-6 w-full rounded-full bg-btn py-3 text-btn-ink">
+          Got it
+        </button>
+      </div>
+    </div>
   );
 }

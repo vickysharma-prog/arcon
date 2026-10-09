@@ -8,6 +8,7 @@ import type { Layout } from "@/lib/layout/schema";
 import { furnish, type Item } from "@/lib/three/furniture";
 import { buildSlabs, buildWalls, STOREY, walkPlan, WALL_H, type Glass, type WallBox } from "@/lib/three/geometry";
 import { scheme, type Scheme } from "@/lib/three/materials";
+import { roomBell, step } from "@/components/fx/sfx";
 
 export type Mode = "walk" | "orbit";
 
@@ -172,6 +173,36 @@ function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit
   const look = useRef(new Vector3());
   const lastRoom = useRef("");
   const ended = useRef(false);
+  const { gl } = useThree();
+  // Mouse look while walking: drag to turn your head; let go and the view eases back to the path.
+  const head = useRef({ yaw: 0, pitch: 0, dragging: false, x: 0, y: 0 });
+  const stepClock = useRef(0);
+
+  useEffect(() => {
+    const el = gl.domElement;
+    const down = (e: PointerEvent) => Object.assign(head.current, { dragging: true, x: e.clientX, y: e.clientY });
+    const move = (e: PointerEvent) => {
+      const h = head.current;
+      if (!h.dragging) return;
+      h.yaw -= (e.clientX - h.x) * 0.005;
+      h.pitch = Math.max(-0.9, Math.min(0.9, h.pitch - (e.clientY - h.y) * 0.004));
+      h.x = e.clientX;
+      h.y = e.clientY;
+    };
+    const up = () => {
+      head.current.dragging = false;
+    };
+    el.addEventListener("pointerdown", down);
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    el.style.cursor = "grab";
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      el.style.cursor = "";
+    };
+  }, [gl]);
 
   useEffect(() => {
     t.current = 0;
@@ -187,15 +218,35 @@ function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit
     // Walk at about 1.1 m/s, slowing to a near stop at each doorway view so the room can be taken in.
     const here0 = curves.path.getPointAt(t.current);
     const near = Math.min(...curves.stops.map((p) => p.distanceTo(here0)), 99);
-    const pace = 1.1 * Math.min(1, Math.max(0.12, near / 1.4));
-    if (playing && t.current < 1) t.current = Math.min(1, t.current + (dt * pace) / length);
+    const pace = 0.75 * Math.min(1, Math.max(0.08, near / 1.6));
+    const h = head.current;
+    // Holding the mouse down pauses the walk so you can look around where you stand.
+    const walking = playing && t.current < 1 && !h.dragging;
+    if (walking) {
+      t.current = Math.min(1, t.current + (dt * pace) / length);
+      // A footstep about every 0.7 m.
+      stepClock.current += dt * pace;
+      if (stepClock.current > 0.7 && pace > 0.3) {
+        stepClock.current = 0;
+        step();
+      }
+    }
+    if (!h.dragging) {
+      h.yaw *= 1 - Math.min(1, dt * 1.5);
+      h.pitch *= 1 - Math.min(1, dt * 1.5);
+    }
     // Even walking speed along the path; the gaze follows the same control point, so each look matches its spot.
     const u = curves.path.getUtoTmapping(t.current, 0);
     const pos = curves.path.getPoint(u);
     const target = curves.gaze.getPoint(u);
     camera.position.copy(pos);
     look.current.lerp(target, Math.min(1, dt * 2.2));
-    camera.lookAt(look.current);
+    // Turn the head by the drag: rotate the look direction around the eye.
+    const dir = look.current.clone().sub(pos);
+    const flat = Math.hypot(dir.x, dir.z) || 1;
+    const yaw0 = Math.atan2(dir.x, dir.z) + h.yaw;
+    const pitch0 = Math.atan2(dir.y, flat) + h.pitch;
+    camera.lookAt(pos.x + Math.sin(yaw0) * Math.cos(pitch0), pos.y + Math.sin(pitch0), pos.z + Math.cos(yaw0) * Math.cos(pitch0));
     onProgress?.(t.current);
     const level = Math.round((pos.y - 1.6) / STOREY);
     const here = layout.floors
@@ -203,6 +254,7 @@ function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit
       ?.spaces.find((s) => pos.x >= s.rect.x && pos.x <= s.rect.x + s.rect.w && pos.z >= s.rect.y && pos.z <= s.rect.y + s.rect.h);
     const name = here ? (here.zone === "circulation" ? (here.kind === "stairs" ? "Stairs" : "Hall") : here.name) : "Outside";
     if (name !== lastRoom.current) {
+      if (lastRoom.current && here && here.zone !== "circulation") roomBell();
       lastRoom.current = name;
       onRoom?.(name);
     }
