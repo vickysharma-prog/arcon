@@ -5,3 +5,7 @@ node_modules/
 __pycache__/
 .venv/
 .DS_Store
+
+# Qloo response data must never be in a public repo (hackathon rules)
+.qloo-cache/
+fixtures/qloo/
