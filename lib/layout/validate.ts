@@ -4,7 +4,8 @@ const EPS = 1e-6;
 
 // Smallest allowed side of a space, in metres.
 // A bedroom needs a bed (2 m long) plus the swing of its door, so 2.6 m is its narrowest usable side.
-const MIN_SIDE: Record<string, number> = { bath: 1.5, corridor: 0.9, stairs: 0.9, storage: 1.2, bedroom: 2.6, "guest-room": 2.6 };
+// A living room needs a sofa facing a TV across a coffee table (3 m); a dining room a table with chairs both sides.
+const MIN_SIDE: Record<string, number> = { bath: 1.5, corridor: 0.9, stairs: 0.9, storage: 1.2, bedroom: 2.6, "guest-room": 2.6, living: 3.0, lounge: 3.0, dining: 2.6 };
 // Smallest usable floor area, in m², for rooms people sleep in.
 const MIN_AREA: Record<string, number> = { bedroom: 7, "guest-room": 7 };
 const minSide = (kind: string) => MIN_SIDE[kind] ?? 2.1;
@@ -68,6 +69,11 @@ function checkFloor(layout: Layout, floor: Floor, errors: string[]) {
     const stairsTo = a.kind === "stairs" ? b : b.kind === "stairs" ? a : null;
     if (stairsTo && stairsTo.zone !== "circulation") errors.push(`${at}: ${stairsTo.id} opens into the stairs`);
   }
+
+  // The front door opens into a hall or a living space, never a kitchen, bath or bedroom.
+  const entry = floor.openings.find((o) => o.id === "door-entry");
+  const into = entry && byId.get(entry.between.find((id) => id !== "outside") ?? "");
+  if (into && ["kitchen", "bath", "bedroom", "guest-room", "laundry", "storage"].includes(into.kind)) errors.push(`${at}: the front door opens into the ${into.kind}`);
 
   // Nobody reaches a bedroom, bath or office through the kitchen.
   const PRIVATE = new Set(["bedroom", "guest-room", "bath", "office"]);

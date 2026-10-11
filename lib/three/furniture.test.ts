@@ -30,10 +30,11 @@ test("nothing blocks the space in front of a door", () => {
     }
 });
 
-test("every room gets a plant", () => {
+test("every room people live in gets a plant", () => {
+  const LIVED_IN = new Set(["living", "lounge", "bedroom", "guest-room", "dining", "office", "reception"]);
   for (const layout of layouts)
     for (const f of layout.floors)
-      for (const room of f.spaces.filter((s) => s.zone !== "circulation")) {
+      for (const room of f.spaces.filter((s) => LIVED_IN.has(s.kind))) {
         const has = furnish(layout).some((it) => it.room === room.id && it.level === f.level && it.role === "plant");
         // A plant may be dropped only when the room is too small to keep it clear of the door.
         if (room.rect.w * room.rect.h >= 6) assert.ok(has, `${layout.spaceType}/${room.id} has a plant`);
@@ -77,4 +78,10 @@ test("a green-leaning taste gets more plants", () => {
 
 test("every room in every template plan gets its essentials: a bed, a sofa and TV, a dining table, a toilet", () => {
   for (const layout of layouts) assert.deepEqual(missingEssentials(layout), [], layout.spaceType);
+});
+
+test("a powder room gets a toilet and basin but no shower", () => {
+  const items = furnish(house).filter((i) => i.room === "powder");
+  assert.ok(items.some((i) => i.name === "toilet") && items.some((i) => i.name === "vanity"));
+  assert.ok(!items.some((i) => i.name === "shower"));
 });

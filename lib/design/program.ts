@@ -44,8 +44,15 @@ export function toProgram(spaceType: SpaceType, floors: number, rooms: z.infer<t
 export function optionsFor(program: Program, shell: Shell, who: Who = {}, min = 2): Layout[] | null {
   try {
     if (Array.from({ length: program.floors }, (_, f) => program.rooms.some((r) => r.floor === f)).includes(false)) return null;
-    const options = planOptionsFor(program, buildingShell(program, shell), who);
-    return options.length >= min && options.every((o) => validate(o).length === 0) ? options : null;
+    // The tightest building first; if fewer than three layout ideas fit it, let the building grow a little
+    // into the lot (as an architect would) and keep whichever size offers the most good plans.
+    let best: Layout[] = [];
+    for (const grow of [1, 1.1, 1.2, 1.35]) {
+      const options = planOptionsFor(program, buildingShell(program, shell, grow), who).filter((o) => validate(o).length === 0);
+      if (options.length > best.length) best = options;
+      if (best.length >= 3) break;
+    }
+    return best.length >= min ? best : null;
   } catch {
     return null;
   }

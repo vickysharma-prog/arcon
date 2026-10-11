@@ -10,7 +10,7 @@ import type { Layout, Program, ProgramRoom } from "./schema.ts";
 import { furnish, missingEssentials } from "../three/furniture.ts";
 import { decorate } from "../three/decor.ts";
 import { walkPlan } from "../three/geometry.ts";
-import { blockers } from "../three/explore.ts";
+import { blockers, wallCrossings } from "../three/explore.ts";
 
 const shellOf = (p: Program) => buildingShell(p, DEFAULT_SHELLS[p.spaceType]);
 const house = TEMPLATES.house;
@@ -34,7 +34,9 @@ for (const [type, program] of Object.entries(TEMPLATES))
       assert.deepEqual(validate(l), []);
       placedOnce(l, program);
     }
-    assert.ok(fits >= 3, `${type}: only ${fits} concepts fit`);
+    // A hotel template is one typical guest floor: a corridor with rooms both sides is the only sensible idea,
+    // so only the two corridor concepts apply. Every other type gets at least three.
+    assert.ok(fits >= (type === "hotel" ? 2 : 3), `${type}: only ${fits} concepts fit`);
   });
 
 test("the four concepts are four different houses, not flips of one", () => {
@@ -178,6 +180,7 @@ test(`fuzz: ${FUZZ_N} random programs on random lots never yield a broken plan`,
       decorate(l);
       const walk = walkPlan(l);
       assert.ok(walk.path.every((p) => p.every(Number.isFinite)), `${ctx}: walk path`);
+      assert.deepEqual(wallCrossings(l, walk.path), [], `${ctx}: walk goes through a wall`);
       for (const f of l.floors) blockers(l, f.level);
     }
   }

@@ -155,12 +155,19 @@ function Building({ layout, colors, look, cutaway = false, upTo = "all" }: { lay
         layout.floors[0].spaces
           .filter((s) => s.kind === "stairs")
           .flatMap((s) =>
-            stairBoxes(s.rect, layout.floors[0].openings.find((o) => o.id === "door-stairs")).map((b, i) => (
-              <mesh key={`st-${s.id}-${i}`} position={[b.x, b.h / 2, b.z]} castShadow receiveShadow>
-                <boxGeometry args={[b.w, b.h, b.d]} />
-                <meshStandardMaterial color={colors.wood} roughness={0.6} />
-              </mesh>
-            )),
+            stairBoxes(s.rect, layout.floors[0].openings.find((o) => o.id === "door-stairs"))
+              // In the section view the stair is cut at the same height as the walls.
+              .filter((b) => !(cutaway && topShown === 0 && b.y + b.h > CUT) && !(!shown(1) && b.y + b.h > WALL_H))
+              .map((b, i) => {
+                // Each step is a tread 22 cm thick (an open, floating stair), so both flights and the landings read.
+                const t = Math.min(b.h, 0.22);
+                return (
+                  <mesh key={`st-${s.id}-${i}`} position={[b.x, b.y + b.h - t / 2, b.z]} castShadow receiveShadow>
+                    <boxGeometry args={[b.w, t, b.d]} />
+                    <meshStandardMaterial color={colors.wood} roughness={0.6} />
+                  </mesh>
+                );
+              }),
           )}
       {/* roof with a small overhang, lifted off in the cutaway view */}
       {!cutaway && upTo === "all" && (
@@ -518,7 +525,7 @@ function RoomLabels({ layout, level }: { layout: Layout; level: number }) {
   return (
     <>
       {floor.spaces
-        .filter((s) => s.zone !== "circulation")
+        .filter((s) => s.zone !== "circulation" || s.kind === "stairs")
         .map((s) => (
           <Html key={s.id} position={[s.rect.x + s.rect.w / 2, y + 1.3, s.rect.y + s.rect.h / 2]} center zIndexRange={[20, 0]}>
             <button

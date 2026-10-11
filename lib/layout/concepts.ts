@@ -1,5 +1,5 @@
 import type { Floor, Layout, Opening, Program, ProgramRoom, Shell, Space } from "./schema.ts";
-import { DOOR, ENTRY, frontDepth, HALL, placeFloor, STAIR_RUN, transpose, VARIANTS, widths } from "./place.ts";
+import { DOOR, ENTRY, frontDepth, HALL, placeFloor, STAIR_RUN, stairWidth, transpose, VARIANTS, widths } from "./place.ts";
 import { validate } from "./validate.ts";
 
 // Layout ideas an architect would actually offer, not one plan flipped three ways.
@@ -99,7 +99,9 @@ function band(
     }
     return wings.includes("right") ? [...kitchens, ...rest] : [...rest, ...kitchens];
   };
-  const [frontRow, backRow] = (livingAt === "front" ? [near, far] : [far, near]).map(awayFromWings);
+  let [frontRow, backRow] = (livingAt === "front" ? [near, far] : [far, near]).map(awayFromWings);
+  // The front door must open into a living space, not the kitchen: a front row of only kitchens swaps rows.
+  if (entry && frontRow.length && frontRow.every((r) => r.kind === "kitchen") && backRow.some((r) => r.kind !== "kitchen")) [frontRow, backRow] = [backRow, frontRow];
 
   const spaces: Space[] = [];
   const openings: Opening[] = [];
@@ -122,7 +124,13 @@ function band(
   // and that room's window takes the rest of the wall, so the two never overlap.
   const mid = (box.x0 + box.x1) / 2;
   const onEnd = entryWall === "end" && box.x0 === 0;
-  const entryRoom = entry && fr.length ? (onEnd ? fr[0] : (fr.find((s) => s.rect.x <= mid && mid <= s.rect.x + s.rect.w) ?? fr[0])) : null;
+  const notKitchen = fr.filter((s) => s.kind !== "kitchen");
+  const entryRoom = entry && fr.length
+    ? onEnd
+      ? (fr[0].kind !== "kitchen" ? fr[0] : null)
+      : (notKitchen.find((s) => s.rect.x <= mid && mid <= s.rect.x + s.rect.w) ?? notKitchen.sort((a, b) => Math.abs(a.rect.x + a.rect.w / 2 - mid) - Math.abs(b.rect.x + b.rect.w / 2 - mid))[0] ?? null)
+    : null;
+  if (entry && !entryRoom) throw new Error("no living space at the front for the front door");
   if (entryRoom && onEnd)
     openings.push({ id: "door-entry", type: "door", between: [entryRoom.id, "outside"], x: 0, y: entryRoom.rect.y + entryRoom.rect.h / 2, axis: "y", width: ENTRY });
   else if (entryRoom) openings.push({ id: "door-entry", type: "door", between: [entryRoom.id, "outside"], x: entryRoom.rect.x + 0.3 + ENTRY / 2, y: 0, axis: "x", width: ENTRY });
@@ -223,10 +231,11 @@ function stairsWing(rooms: ProgramRoom[], box: Box, D: number, front: number, b:
   // Same pattern as the hall layout: the hall runs the wing's full width, the stairwell closes the far end of
   // the front strip, and every room opens onto the hall.
   const hall: Space = { id: hallId, name: "Hall", kind: "corridor", zone: "circulation", rect: { x: box.x0, y: front, w: box.x1 - box.x0, h: HALL } };
-  const stairs: Space = { id: "stairs", name: "Stairs", kind: "stairs", zone: "circulation", rect: { x: box.x1 - STAIR_RUN, y: 0, w: STAIR_RUN, h: front } };
+  const sw = stairWidth(front);
+  const stairs: Space = { id: "stairs", name: "Stairs", kind: "stairs", zone: "circulation", rect: { x: box.x1 - sw, y: 0, w: sw, h: front } };
   const spaces: Space[] = [hall, stairs];
-  const openings: Opening[] = [{ id: "door-stairs", type: "door", between: ["stairs", hallId], x: box.x1 - STAIR_RUN / 2, y: front, axis: "x", width: DOOR }];
-  const ws = widths(rooms, box.x1 - STAIR_RUN - box.x0);
+  const openings: Opening[] = [{ id: "door-stairs", type: "door", between: ["stairs", hallId], x: box.x1 - sw + 0.1 + DOOR / 2, y: front, axis: "x", width: DOOR }];
+  const ws = widths(rooms, box.x1 - sw - box.x0);
   let x = box.x0;
   rooms.forEach((r, i) => {
     const w = ws[i];

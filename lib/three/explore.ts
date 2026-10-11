@@ -35,3 +35,28 @@ export function step(x: number, z: number, dx: number, dz: number, walls: Rect[]
   }
   return [x, z];
 }
+
+/**
+ * Pieces of a walk that pass through a solid wall: each segment is sampled every 5 cm and every sample must
+ * be clear of the walls of the floor it's on. Climbs between floors (the eye height changes) are checked
+ * on the floor they start from. Empty means the walk never goes through a wall.
+ */
+export function wallCrossings(layout: Layout, path: [number, number, number][], eye = 1.6): string[] {
+  const walls = new Map(layout.floors.map((f) => [f.level, blockers(layout, f.level)]));
+  const out: string[] = [];
+  for (let i = 1; i < path.length; i++) {
+    const [a, b] = [path[i - 1], path[i]];
+    const level = Math.max(0, Math.round((a[1] - eye) / STOREY));
+    const ws = walls.get(level) ?? [];
+    const n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[2] - a[2]) / 0.05));
+    for (let k = 0; k <= n; k++) {
+      const x = a[0] + ((b[0] - a[0]) * k) / n;
+      const z = a[2] + ((b[2] - a[2]) * k) / n;
+      if (ws.some((w) => x > w.x0 + 1e-6 && x < w.x1 - 1e-6 && z > w.z0 + 1e-6 && z < w.z1 - 1e-6)) {
+        out.push(`segment ${i} (${x.toFixed(2)}, ${z.toFixed(2)}) on floor ${level}`);
+        break;
+      }
+    }
+  }
+  return out;
+}

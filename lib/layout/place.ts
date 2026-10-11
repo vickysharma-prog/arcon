@@ -5,12 +5,17 @@ import type { Floor, Layout, Opening, Program, ProgramRoom, Shell, Space } from 
 // ponytail: rectangles in a rectangular shell; add L-shapes and courtyards when the shape editor lands.
 
 export const HALL = 1.2; // corridor depth, m
-export const STAIR_RUN = 3.0; // stairs length along the hall, m
+// Stairwell length along the hall: two flights of 8 treads (22.5 cm) plus a 90 cm landing at each end.
+export const STAIR_RUN = 3.6;
+// When the front strip is deep enough, the stair turns to run front to back and the stairwell along the hall
+// only needs the width of two flights.
+export const stairWidth = (front: number) => (front >= STAIR_RUN ? 2.6 : STAIR_RUN);
 export const DOOR = 0.9;
 export const ENTRY = 1.0;
 const MIN_STRIP = 2.4;
 
-const minSide = (kind: string) => (kind === "bath" ? 1.5 : kind === "storage" ? 1.2 : kind === "bedroom" || kind === "guest-room" ? 2.6 : 2.1);
+const MIN: Record<string, number> = { bath: 1.5, storage: 1.2, bedroom: 2.6, "guest-room": 2.6, living: 3.0, lounge: 3.0, dining: 2.6 };
+const minSide = (kind: string) => MIN[kind] ?? 2.1;
 const NO_WINDOW = new Set(["storage", "closet", "server"]);
 
 export type Variant = { publicSide: "front" | "back"; mirror: boolean; serviceWithPublic: boolean };
@@ -80,6 +85,17 @@ export function placeFloor(level: number, rooms: ProgramRoom[], shell: Shell, st
   const { width: W, depth: D } = shell;
   const [pub, priv] = sides(rooms, v);
   const [frontRooms, backRooms] = v.publicSide === "front" ? [pub, priv] : [priv, pub];
+  // The front strip shares its length with the stairwell. If its rooms can't fit, move rooms to the back
+  // strip, service rooms first, then the smallest, while the back strip still has room for them.
+  const need = (list: ProgramRoom[]) => list.reduce((t, r) => t + minSide(r.kind), 0);
+  const sw = stairWidth(front);
+  const frontLength = W - (stairs ? sw : 0);
+  while (need(frontRooms) > frontLength + 1e-9 && frontRooms.length > 1) {
+    const pick = [...frontRooms].sort((a, b) => (a.zone === "service" ? 0 : 1) - (b.zone === "service" ? 0 : 1) || a.area - b.area)[0];
+    if (need(backRooms) + minSide(pick.kind) > W + 1e-9) break;
+    frontRooms.splice(frontRooms.indexOf(pick), 1);
+    backRooms.push(pick);
+  }
   const hallY = front;
   const backY = front + HALL;
 
@@ -89,7 +105,7 @@ export function placeFloor(level: number, rooms: ProgramRoom[], shell: Shell, st
   const entryAtLeft = !v.mirror;
   const hall: Space = { id: "hall", name: "Hall", kind: "corridor", zone: "circulation", rect: { x: 0, y: hallY, w: W, h: HALL } };
   const spaces: Space[] = [hall];
-  const well = stairs ? { x: entryAtLeft ? W - STAIR_RUN : 0, y: 0, w: STAIR_RUN, h: front } : null;
+  const well = stairs ? { x: entryAtLeft ? W - sw : 0, y: 0, w: sw, h: front } : null;
   if (well) spaces.push({ id: "stairs", name: "Stairs", kind: "stairs", zone: "circulation", rect: well });
 
   const openings: Opening[] = [];
@@ -106,16 +122,21 @@ export function placeFloor(level: number, rooms: ProgramRoom[], shell: Shell, st
       const dx = entryAtLeft ? x + 0.1 + dw / 2 : x + w - 0.1 - dw / 2;
       openings.push({ id: `door-${r.id}`, type: "door", between: [r.id, "hall"], x: dx, y: isFront ? y + h : y, axis: "x", width: dw });
       if (!NO_WINDOW.has(r.kind)) {
-        const win = r.kind === "bath" ? 0.6 : Math.min(w * 0.5, 2.4);
-        openings.push({ id: `win-${r.id}`, type: "window", between: [r.id, "outside"], x: x + w / 2, y: isFront ? 0 : D, axis: "x", width: win });
+        // A living room's window sits toward one end, leaving a clear stretch of wall for the TV.
+        const living = r.kind === "living" || r.kind === "lounge";
+        const win = r.kind === "bath" ? 0.6 : Math.min(w * (living ? 0.4 : 0.5), 2.4);
+        const wx = living ? x + w * 0.3 : x + w / 2;
+        openings.push({ id: `win-${r.id}`, type: "window", between: [r.id, "outside"], x: wx, y: isFront ? 0 : D, axis: "x", width: win });
       }
       x += w;
     });
   };
-  strip(frontRooms, well && !entryAtLeft ? STAIR_RUN : 0, W - (well ? STAIR_RUN : 0), 0, front, true);
+  strip(frontRooms, well && !entryAtLeft ? sw : 0, W - (well ? sw : 0), 0, front, true);
   strip(backRooms, 0, W, backY, D - backY, false);
 
-  if (well) openings.push({ id: "door-stairs", type: "door", between: ["stairs", "hall"], x: well.x + STAIR_RUN / 2, y: hallY, axis: "x", width: DOOR });
+  // The stairwell door sits at its inner end, by the foot of the first flight.
+  if (well)
+    openings.push({ id: "door-stairs", type: "door", between: ["stairs", "hall"], x: entryAtLeft ? well.x + 0.1 + DOOR / 2 : well.x + sw - 0.1 - DOOR / 2, y: hallY, axis: "x", width: DOOR });
   if (level === 0)
     openings.push({ id: "door-entry", type: "door", between: ["hall", "outside"], x: entryAtLeft ? 0 : W, y: hallY + HALL / 2, axis: "y", width: ENTRY });
 
