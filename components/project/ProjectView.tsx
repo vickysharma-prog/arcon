@@ -18,6 +18,7 @@ import { importedOf } from "@/lib/plan-import/edits";
 import { creditOf, sayCredit, styleWords, tasteTrail } from "@/lib/design/trail";
 import { TasteTrail } from "./TasteTrail";
 import { Moodboard } from "./Moodboard";
+import { BudgetStep } from "./BudgetStep";
 
 type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null };
 
@@ -161,7 +162,9 @@ export function ProjectView({ id }: { id: string }) {
               next={next ? { label: `Next: ${STEPS.find((s) => s.id === next)?.label}`, go: () => setStep(next) } : undefined}
             />
           )}
-          {step === "budget" && <Coming title="What it will cost" text="An estimate by room and by trade, with a low and a high range for your city." />}
+          {step === "budget" && p.options?.[p.chosen_option ?? 0] && (
+            <BudgetStep id={p.id} layout={p.options[p.chosen_option ?? 0]} location={p.site.location} interview={p.interview} />
+          )}
           {step === "drawings" && <Coming title="Your drawings" text="Plans you can download and share with your architect or builder." />}
           {step === "workspace" && <Coming title="Make it yours" text="Ask for any change and watch the plan, 3D model and budget update." />}
         </motion.div>
