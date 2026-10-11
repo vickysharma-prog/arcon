@@ -82,14 +82,14 @@ export function HowItWorks() {
 
 // Invented examples of what someone loves, the taste words found in them, and what the design does with them.
 const LOVES = ["A slow film you rewatch every winter", "The corner café with the long wooden bar", "Linen sheets, always", "Old jazz while you cook"];
-const TAGS = ["Low light", "Vintage", "Warm", "Natural materials", "Understated"];
+const TAGS = ["Low light", "Vintage", "Warm", "Natural materials", "Understated", "Cosy", "Earthy", "Handmade"];
 const MAKES = ["Warm lamps, no glare from above", "A wooden bar between kitchen and living", "Oak floors and linen curtains", "A record shelf in a deep green study"];
 // Which taste words each love carries, and which design choices each love leads to.
 const LINKS: { tags: number[]; makes: number[] }[] = [
-  { tags: [0, 1], makes: [0, 3] },
-  { tags: [2, 3], makes: [1, 2] },
-  { tags: [3, 4], makes: [2] },
-  { tags: [1, 2], makes: [3, 1] },
+  { tags: [0, 1, 5], makes: [0, 3] },
+  { tags: [2, 3, 7], makes: [1, 2] },
+  { tags: [3, 4, 6], makes: [2] },
+  { tags: [1, 2, 5], makes: [3, 1] },
 ];
 
 export function TasteFlow() {
@@ -110,13 +110,13 @@ export function TasteFlow() {
         className="pointer-events-none absolute inset-0 opacity-[0.05]"
         style={{ backgroundImage: "linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px)", backgroundSize: "32px 32px" }}
       />
-      <div className="relative mx-auto max-w-6xl px-4 sm:px-8">
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-8">
         <Heading
           eyebrow="Taste becomes space"
           title="Your films, cafés and brands, read by Qloo's taste AI."
           sub="Most design tools ask you to describe a style. Arcon finds it in the things you already love, then shows you why every choice was made."
         />
-        <div className="mt-14 grid gap-6 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center" onMouseLeave={() => setHeld(false)}>
+        <div className="mt-16 grid gap-8 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center md:gap-4" onMouseLeave={() => setHeld(false)}>
           <Column title="You say">
             {LOVES.map((l, i) => (
               <button
@@ -131,7 +131,7 @@ export function TasteFlow() {
                   setHeld(true);
                   setOn(i);
                 }}
-                className={`w-full rounded-xl border px-4 py-3 text-left transition-all duration-300 ${i === on ? "border-accent bg-paper shadow-[0_10px_30px_-16px_var(--accent)]" : "border-line bg-paper/60 text-ink-soft"}`}
+                className={`w-full rounded-2xl border px-5 py-4 text-left text-base transition-all duration-300 sm:text-lg ${i === on ? "translate-x-1 border-accent bg-paper shadow-[0_14px_40px_-16px_var(--accent)]" : "border-line bg-paper/60 text-ink-soft"}`}
               >
                 “{l}”
               </button>
@@ -139,13 +139,15 @@ export function TasteFlow() {
           </Column>
           <Flow />
           <Column title="Qloo reads">
-            <div className="flex flex-wrap justify-center gap-2">
+            <div className="relative flex flex-wrap justify-center gap-2.5 rounded-3xl border border-accent/30 bg-paper/70 px-5 py-8 shadow-[0_0_80px_-30px_var(--accent)]">
+              {/* the taste engine at the centre, pulsing */}
+              <span aria-hidden className="pointer-events-none absolute inset-0 rounded-3xl bg-[radial-gradient(circle_at_center,color-mix(in_srgb,var(--accent)_14%,transparent),transparent_70%)] animate-pulse motion-reduce:animate-none" />
               {TAGS.map((t, i) => (
                 <motion.span
                   key={t}
                   animate={{ scale: link.tags.includes(i) ? 1.08 : 1, opacity: link.tags.includes(i) ? 1 : 0.45 }}
                   transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                  className={`rounded-full border px-3 py-1.5 font-mono text-xs uppercase tracking-wider ${link.tags.includes(i) ? "border-accent bg-accent/10 text-accent" : "border-line"}`}
+                  className={`relative rounded-full border px-4 py-2 font-mono text-xs uppercase tracking-wider sm:text-sm ${link.tags.includes(i) ? "border-accent bg-accent/10 text-accent shadow-[0_0_24px_-6px_var(--accent)]" : "border-line"}`}
                 >
                   {t}
                 </motion.span>
@@ -158,7 +160,7 @@ export function TasteFlow() {
               <motion.p
                 key={m}
                 animate={{ opacity: link.makes.includes(i) ? 1 : 0.4, x: link.makes.includes(i) ? 0 : 6 }}
-                className={`flex items-start gap-2 rounded-xl border px-4 py-3 transition-colors ${link.makes.includes(i) ? "border-leaf/60 bg-paper" : "border-line bg-paper/60"}`}
+                className={`flex items-start gap-2 rounded-2xl border px-5 py-4 text-base transition-colors sm:text-lg ${link.makes.includes(i) ? "border-leaf/60 bg-paper shadow-[0_14px_40px_-20px_var(--leaf)]" : "border-line bg-paper/60"}`}
               >
                 <span className="mt-0.5 text-leaf">✓</span>
                 {m}
@@ -187,7 +189,7 @@ function Column({ title, children }: { title: string; children: ReactNode }) {
 function Flow() {
   const still = useReducedMotion();
   return (
-    <div aria-hidden className="relative mx-auto h-10 w-px overflow-hidden bg-line md:h-px md:w-14">
+    <div aria-hidden className="relative mx-auto h-12 w-px overflow-hidden bg-line md:h-px md:w-20 lg:w-28">
       {!still &&
         [0, 1, 2].map((i) => (
           <motion.span

@@ -4,7 +4,7 @@ import { Bounds, Environment, Html, Lightformer, OrbitControls, useBounds } from
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
 import { ToneMappingMode } from "postprocessing";
-import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Box3, CatmullRomCurve3, Plane, Raycaster, Vector2, Vector3 } from "three";
 import type { Layout } from "@/lib/layout/schema";
 import { decorate } from "@/lib/three/decor";
@@ -43,6 +43,9 @@ type Props = {
   onProgress?: (p: number) => void;
   onEnd?: () => void;
   restartKey?: number;
+  /** Look-around only: turn slowly on its own until someone grabs it, and whether the mouse wheel zooms. */
+  autoRotate?: boolean;
+  wheelZoom?: boolean;
 };
 
 
@@ -501,8 +504,9 @@ function Explorer({ layout, level, go, onPose, onRoom }: { layout: Layout; level
 
 // Look-around view: start from above the corner of the building with a normal lens. Runs as a layout
 // effect so the camera is in place before Bounds frames the model from this direction.
-function Overview({ layout }: { layout: Layout }) {
+function Overview({ layout, autoRotate = false, wheelZoom = true }: { layout: Layout; autoRotate?: boolean; wheelZoom?: boolean }) {
   const { camera } = useThree();
+  const [spin, setSpin] = useState(autoRotate);
   const { width: W, depth: D } = layout.shell;
   const h = layout.floors.length * STOREY;
   useLayoutEffect(() => {
@@ -514,7 +518,20 @@ function Overview({ layout }: { layout: Layout }) {
     }
     camera.lookAt(W / 2, h / 3, D / 2);
   }, [camera, W, D, h]);
-  return <OrbitControls target={[W / 2, h / 3, D / 2]} maxPolarAngle={Math.PI / 2.1} minDistance={1.5} maxDistance={90} enableDamping makeDefault />;
+  return (
+    <OrbitControls
+      target={[W / 2, h / 3, D / 2]}
+      maxPolarAngle={Math.PI / 2.1}
+      minDistance={1.5}
+      maxDistance={90}
+      enableDamping
+      enableZoom={wheelZoom}
+      autoRotate={spin}
+      autoRotateSpeed={0.7}
+      onStart={() => setSpin(false)}
+      makeDefault
+    />
+  );
 }
 
 // Room names over the floor being looked at; clicking one flies the camera to that room.
@@ -622,7 +639,7 @@ export default function HouseScene(props: Props) {
       <LookCtx.Provider value={look}>
         {orbit ? (
           <Bounds fit clip observe margin={1.12} maxDuration={0.9}>
-            <Overview layout={props.layout} />
+            <Overview layout={props.layout} autoRotate={props.autoRotate} wheelZoom={props.wheelZoom} />
             {building}
             <Recenter layout={props.layout} fitKey={props.fitKey} />
             {props.cutaway && <RoomLabels layout={props.layout} level={props.upTo === "all" || props.upTo === undefined ? top : props.upTo} />}
