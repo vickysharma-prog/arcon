@@ -2,6 +2,18 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-13 (later): Timeline and greenery (B3, Q6)
+
+The budget step now also shows how long and how green. Timeline: phases from design to handover (permits and
+structure for a new build, strip-out for a fit-out; services, joinery, finishes, furniture, plants, handover),
+sized by floor area and scope, with longer lead times for premium and luxury; about 14 weeks for Vicky's house
+at premium. Greenery, 0 to 100: plants per room (the same plants the 3D places), how well the brief's plants
+suit each room's daylight (window area against floor area), how many kinds, how easy to keep, plus garden on
+the lot; a table of 27 common indoor plants with their light and care needs. Each weak room gets one tip, using
+their own plants where they suit. From Qloo: the sustainability work of brands in their taste (IKEA: circular
+design, recycled materials) and taste-ranked plant nurseries near the site. The brand filter now also requires
+a home industry: a coffee roaster with a design shelf had slipped through. 206 tests.
+
 ## 2026-10-13: Budget (B2, Q4), and any project type parked (G1)
 
 Budget step: the chosen plan costed by trade (floors and walls, electrical and lighting, kitchen, bathrooms,

@@ -39,4 +39,7 @@ test("only brands you could furnish a home from are matched", async () => {
   assert.equal(isHomeBrand(brand("Dwell", "media_brand")), false);
   assert.equal(isHomeBrand(brand("Homestyler", "service_brand")), false, "an app is not furniture");
   assert.equal(isHomeBrand(brand("Chiquelle X Swimwear", "retail_brand")), false);
+  const withIndustry = (name: string, industries: string[]) => ({ entity_id: name, name, tags: industries.map((i) => ({ tag_id: `urn:tag:industry:qloo:${i}` })) });
+  assert.equal(isHomeBrand(withIndustry("IKEA", ["retail", "home_goods", "furniture"])), true);
+  assert.equal(isHomeBrand(withIndustry("Coffee And Things", ["retail", "food_beverage", "interior_design", "publishing"])), false, "a café with a design shelf");
 });

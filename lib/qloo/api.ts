@@ -30,8 +30,17 @@ const SERVICE = "urn:tag:brand_type:qloo:service_brand";
 // ponytail: a name check for clothing labels Qloo files under home goods; a product_service check if more slip through.
 const CLOTHING = /swimwear|apparel|clothing|lingerie|fashion/i;
 
-/** A brand you could furnish a home from: not a magazine, an app or design firm, or a clothing label. */
-export const isHomeBrand = (b: Entity) => !b.tags?.some((t) => [MEDIA, SERVICE].includes(tagId(t))) && !CLOTHING.test(b.name);
+const INDUSTRY = "urn:tag:industry:qloo:";
+// Industries that make things for a home. A brand whose industries are known but include none of these (a coffee
+// roaster with a design shelf, a studio) is not one to furnish from; a brand with no industry tags is given the benefit.
+const HOME_INDUSTRY = /home|furniture|furnishing|lighting|decor|architectural_hardware|textile|kitchen|bath|flooring|rug/;
+
+/** A brand you could furnish a home from: not a magazine, an app or design firm, a café, or a clothing label. */
+export const isHomeBrand = (b: Entity) => {
+  const ids = (b.tags ?? []).map(tagId);
+  const industries = ids.filter((t) => t.startsWith(INDUSTRY)).map((t) => t.slice(INDUSTRY.length));
+  return !ids.some((t) => t === MEDIA || t === SERVICE) && !CLOTHING.test(b.name) && (!industries.length || industries.some((i) => HOME_INDUSTRY.test(i)));
+};
 
 /** Entities by id, in one call (their images, tags and properties). */
 export async function entitiesById(ids: string[]): Promise<Entity[]> {

@@ -42,7 +42,10 @@ export function greenery(layout: Layout, items: Item[], briefPlants: { name: str
       const plants = items.filter((i) => i.room === s.id && i.level === f.level && i.role === "plant").length;
       const cover = Math.min(1, (plants * M2_PER_PLANT) / area);
       // The brief's plant that suits this room best (its light first, then the easiest to keep).
-      const pick = [...known].sort((a, b) => lightFit(b, light) - lightFit(a, light) || CARE_SCORE[b.care] - CARE_SCORE[a.care])[0] ?? null;
+      // Among plants that suit the light, the one that wants the most of it: a bright room gets the monstera, not
+      // the snake plant that would live anywhere.
+      const need = (p: Plant) => ["low", "medium", "bright"].indexOf(p.light);
+      const pick = [...known].sort((a, b) => lightFit(b, light) - lightFit(a, light) || need(b) - need(a) || CARE_SCORE[b.care] - CARE_SCORE[a.care])[0] ?? null;
       const fit = pick ? lightFit(pick, light) : 0.6;
       const care = pick ? CARE_SCORE[pick.care] : 0.75;
       const score = 100 * (0.4 * cover + 0.25 * fit + 0.2 * variety + 0.15 * care);
