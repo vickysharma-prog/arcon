@@ -8,7 +8,7 @@ import { Mark } from "@/components/Logo";
 import { AnimatedMark } from "@/components/AnimatedMark";
 import { Decode } from "@/components/fx/Decode";
 import { tick } from "@/components/fx/sfx";
-import { activity, finishedProject, latestTaste, speakable, STAGES, stageReached, textOf, type Msg } from "@/lib/interview/view";
+import { activity, finishedProject, joinPicks, latestTaste, pendingChoices, speakable, STAGES, stageReached, textOf, type Msg } from "@/lib/interview/view";
 import { LANGS, langOf, STARTERS, voiceFor, type LangId } from "@/lib/interview/lang";
 import { useListen, useMicLevel, useSpeak } from "./useVoice";
 import { VoiceMode, type VoiceState } from "./VoiceMode";
@@ -25,6 +25,7 @@ export function Interview() {
   const [draft, setDraft] = useState("");
   const [lang, setLang] = useState<LangId>("en");
   const [talking, setTalking] = useState(false);
+  const [picks, setPicks] = useState<string[]>([]);
   const spoken = useRef(new Set<string>());
   const bottom = useRef<HTMLDivElement>(null);
   const greeting = langOf(lang).greeting;
@@ -79,6 +80,10 @@ export function Interview() {
   const taste = latestTaste(messages);
   const projectId = finishedProject(messages);
   const stage = stageReached(messages);
+  const offer = busy ? null : pendingChoices(messages);
+  // A new question clears what was ticked for the last one.
+  const offerKey = offer ? offer.choices.join("|") : "";
+  useEffect(() => setPicks([]), [offerKey]);
   const lastReply = textOf([...messages].reverse().find((m) => m.role === "assistant") ?? { id: "", role: "assistant", parts: [] }) || greeting;
   const voiceState: VoiceState = listen.listening ? "listening" : busy ? "thinking" : voice.speaking ? "speaking" : "idle";
 
@@ -194,6 +199,46 @@ export function Interview() {
                   ))}
               </motion.li>
             ))}
+            {offer && offer.choices.length > 0 && (
+              <li className="pl-11">
+                <div className="flex flex-wrap gap-2">
+                  {offer.choices.map((c, i) => {
+                    const on = picks.includes(c);
+                    return (
+                      <motion.button
+                        key={c}
+                        type="button"
+                        aria-pressed={offer.multi ? on : undefined}
+                        onClick={() => {
+                          tick();
+                          if (offer.multi) setPicks((p) => (p.includes(c) ? p.filter((x) => x !== c) : [...p, c]));
+                          else send(c);
+                        }}
+                        initial={still ? false : { opacity: 0, scale: 0.85 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: i * 0.05, type: "spring", stiffness: 400, damping: 22 }}
+                        whileHover={still ? undefined : { y: -2 }}
+                        className={`rounded-full border px-4 py-1.5 text-sm transition-colors ${on ? "border-accent bg-accent text-btn-ink" : "border-line bg-paper hover:border-accent hover:text-accent"}`}
+                      >
+                        {offer.multi && <span className="mr-1">{on ? "✓" : "+"}</span>}
+                        {c}
+                      </motion.button>
+                    );
+                  })}
+                  {offer.multi && (
+                    <button
+                      type="button"
+                      disabled={!picks.length}
+                      onClick={() => send(joinPicks(picks))}
+                      className="rounded-full bg-btn px-4 py-1.5 text-sm text-btn-ink transition hover:opacity-90 disabled:opacity-40"
+                    >
+                      {lang === "hi" ? "हो गया" : lang === "hinglish" ? "Ho gaya" : "Done"} →
+                    </button>
+                  )}
+                </div>
+                <p className="mt-1.5 text-xs text-ink-soft">{lang === "hi" ? "या नीचे अपना जवाब लिखें" : lang === "hinglish" ? "Ya neeche apna jawab likho" : "Or type your own answer below"}</p>
+              </li>
+            )}
             {agent.status === "submitted" && (
               <li className="flex items-center gap-3">
                 <Avatar busy />
@@ -232,7 +277,7 @@ export function Interview() {
                   }
                 }}
                 rows={2}
-                placeholder={lang === "hi" ? "लिखें, या माइक दबाकर बोलें" : lang === "hinglish" ? "Likho, ya mic dabake bolo" : "Type, or press the mic and talk"}
+                placeholder={offer?.hint ?? (lang === "hi" ? "लिखें, या माइक दबाकर बोलें" : lang === "hinglish" ? "Likho, ya mic dabake bolo" : "Type, or press the mic and talk")}
                 aria-label="Your answer"
                 className="min-h-12 flex-1 resize-none rounded-xl border border-line bg-paper px-3 py-2 outline-none transition focus:border-accent focus:shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_20%,transparent)]"
               />
@@ -307,8 +352,9 @@ export function Interview() {
   );
 }
 
+// Arcon's mark, on its own: no circle or box behind it. Its seeds grow while Arcon thinks.
 function Avatar({ busy }: { busy: boolean }) {
-  return <span className="mt-1 grid h-8 w-8 shrink-0 place-items-center rounded-full border border-line bg-paper">{busy ? <AnimatedMark size={22} /> : <Mark size={18} />}</span>;
+  return <span className="mt-1 grid h-8 w-8 shrink-0 place-items-center">{busy ? <AnimatedMark size={28} /> : <Mark size={26} />}</span>;
 }
 
 function MicIcon() {

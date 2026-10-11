@@ -12,6 +12,7 @@ export default defineEval({
     );
     turn.expectOk();
     turn.calledTool("save_living");
-    t.judge("The reply asks exactly one question, and it is about whether the bedrooms should be close together or apart (for example the kids' rooms near the parents or not).").atLeast(0.7);
+    // Project basics (new build or renovation, size) may come first; what matters is one question, and not asking about the kitchen again.
+    t.judge("The reply asks exactly one question, and does not ask again how they want the kitchen (open or closed), since they already said.").atLeast(0.7);
   },
 });

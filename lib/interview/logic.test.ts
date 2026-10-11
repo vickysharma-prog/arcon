@@ -86,3 +86,14 @@ test("site sizes outside a studio-to-hotel range are refused", () => {
   assert.match(siteSizeProblem(40, 3, "m")!, /depth of 3 m/);
   assert.match(siteSizeProblem(15, 15, "ft")!, /width of 15 ft/); // 4.6 m is too small for any room pair
 });
+
+test("a size as people say it gives width and depth, keeping what the model already sent", async () => {
+  const { sizeFrom } = await import("./logic.ts");
+  assert.deepEqual(sizeFrom("40 by 30 feet"), { width: 40, depth: 30, unit: "ft" });
+  assert.deepEqual(sizeFrom("12x9 m"), { width: 12, depth: 9, unit: "m" });
+  assert.deepEqual(sizeFrom("30 ft × 40 ft"), { width: 30, depth: 40, unit: "ft" });
+  assert.equal(sizeFrom("11 by 8 metres", 11).unit, "m", "the user's unit beats the model's guess");
+  assert.deepEqual(sizeFrom("40 by 30", 40), { width: 40, depth: 30 }, "the depth the model dropped");
+  assert.deepEqual(sizeFrom(undefined, 12, 10), { width: 12, depth: 10 });
+  assert.deepEqual(sizeFrom("a big plot"), { width: undefined, depth: undefined });
+});

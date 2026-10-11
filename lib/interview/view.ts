@@ -1,7 +1,7 @@
 // Pure helpers that turn the interviewer's message stream into what the screen shows.
 // They only read the shapes they need, so they work with eve's message type and with test data.
 
-type Part = { type: string; text?: string; toolName?: string; state?: string; output?: unknown; toolMetadata?: { eve?: { label?: string } } };
+type Part = { type: string; text?: string; toolName?: string; state?: string; input?: unknown; output?: unknown; toolMetadata?: { eve?: { label?: string } } };
 export type Msg = { id: string; role: "assistant" | "user"; parts: readonly Part[] };
 
 export type TasteView = { style: { word: string; from: string[] }[]; brands: { name: string; look: string[] }[]; count: number };
@@ -66,7 +66,8 @@ const DOING: Record<string, string> = {
 
 export function activity(m: Msg) {
   return m.parts
-    .filter((p) => p.type === "dynamic-tool")
+    // Suggested answers show as chips, not as a line of activity.
+    .filter((p) => p.type === "dynamic-tool" && p.toolName !== "offer_choices")
     .map((p) => ({
       label: p.toolMetadata?.eve?.label ?? DOING[p.toolName ?? ""] ?? "Working",
       working: !done(p) && p.state !== "output-error",
@@ -100,3 +101,24 @@ export function stageReached(messages: readonly Msg[]): number {
   const first = steps.indexOf(false);
   return first === -1 ? steps.length : first;
 }
+
+export type Choices = { choices: string[]; multi: boolean; hint: string | null };
+
+/** The answers to tap for the question just asked: from the latest message, only if it is Arcon's. */
+export function pendingChoices(messages: readonly Msg[]): Choices | null {
+  const last = messages.at(-1);
+  if (!last || last.role !== "assistant") return null;
+  for (let i = last.parts.length - 1; i >= 0; i--) {
+    const p = last.parts[i];
+    if (p.type !== "dynamic-tool" || p.toolName !== "offer_choices" || !p.input || typeof p.input !== "object") continue;
+    const inp = p.input as { choices?: unknown; multi?: unknown; hint?: unknown };
+    const choices = Array.isArray(inp.choices) ? inp.choices.filter((c): c is string => typeof c === "string" && c.trim() !== "").slice(0, 8) : [];
+    const hint = typeof inp.hint === "string" && inp.hint.trim() ? inp.hint.trim() : null;
+    if (!choices.length && !hint) return null;
+    return { choices, multi: inp.multi === true, hint };
+  }
+  return null;
+}
+
+/** Several picks as one answer: "Me, My partner and A dog". */
+export const joinPicks = (picks: string[]) => (picks.length < 2 ? (picks[0] ?? "") : `${picks.slice(0, -1).join(", ")} and ${picks.at(-1)}`);

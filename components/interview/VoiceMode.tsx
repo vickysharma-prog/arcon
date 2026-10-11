@@ -12,8 +12,9 @@ const SAYS: Record<VoiceState, string> = {
   idle: "Tap the orb to talk",
 };
 
-// Talking to Arcon: an orb that breathes when idle, swells with your voice while listening, turns its seed
-// mark while thinking and sends out waves while speaking. What you say appears live under it.
+// Talking to Arcon: the Arcon mark on its own, large, with nothing behind it. It breathes when idle, swells with
+// your voice while listening, turns while thinking and grows its seeds while speaking, with faint waves round it.
+// What you say appears live under it.
 export function VoiceMode({
   state,
   level,
@@ -62,7 +63,7 @@ export function VoiceMode({
           <motion.span
             key={i}
             aria-hidden
-            className="absolute inset-0 rounded-full border border-accent/40"
+            className="absolute inset-0 rounded-full border border-accent/25"
             animate={
               still
                 ? {}
@@ -83,19 +84,25 @@ export function VoiceMode({
         ))}
         <motion.span
           aria-hidden
-          className="absolute h-40 w-40 rounded-full bg-[radial-gradient(circle_at_35%_30%,var(--accent),var(--btn)_70%)] shadow-[0_0_80px_-10px_var(--accent)]"
-          animate={still ? {} : { scale: swell }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        />
-        <motion.span
-          aria-hidden
-          className="relative"
-          animate={still ? {} : state === "thinking" ? { rotate: 360 } : { rotate: 0 }}
-          transition={state === "thinking" ? { duration: 6, repeat: Infinity, ease: "linear" } : { duration: 0.6 }}
+          className="relative drop-shadow-[0_0_30px_var(--accent)]"
+          animate={
+            still
+              ? {}
+              : state === "thinking"
+                ? { rotate: 360, scale: 1 }
+                : state === "idle"
+                  ? { rotate: 0, scale: [1, 1.04, 1] }
+                  : { rotate: 0, scale: swell }
+          }
+          transition={
+            state === "thinking"
+              ? { rotate: { duration: 6, repeat: Infinity, ease: "linear" } }
+              : state === "idle"
+                ? { scale: { duration: 3.4, repeat: Infinity, ease: "easeInOut" } }
+                : { type: "spring", stiffness: 300, damping: 20 }
+          }
         >
-          <span className="block rounded-full bg-paper-raised/90 p-3">
-            <AnimatedMark size={64} growing={state === "thinking" || state === "speaking"} />
-          </span>
+          <AnimatedMark size={150} growing={state === "thinking" || state === "speaking"} />
         </motion.span>
       </button>
 

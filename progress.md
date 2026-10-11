@@ -2,6 +2,26 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-14 (evening): The interview, redesigned as the first impression
+
+Vicky: the interview is where people decide to stay, so it should feel alive and techy, speak English, Hindi and
+Hinglish, greet out loud, put the floor-plan upload up front, and let people tap answers instead of typing.
+- A live strip and a five-stage progress rail (project, people, how it's used, taste, design) that fills as the
+  interviewer's tools run, never out of order.
+- English / हिंदी / Hinglish: the greeting, the microphone language and the voice follow the choice; Devanagari is
+  always read in Hindi; the interviewer replies in the language and script the user writes in (Hindi eval added).
+- The greeting is spoken on arrival (the Start click allows the browser to speak).
+- Talk to Arcon: the mic opens a voice mode with the Arcon mark, large and on its own, that swells with your voice
+  (a live microphone level), turns while thinking and grows its seeds while speaking; after Arcon speaks it
+  listens again, so a conversation flows without taps.
+- Tap to answer: a new offer_choices tool gives every question its likely answers, shown as chips (multi-select
+  with Done where several apply); questions only the user can answer show an example in the box instead. One
+  question per turn. Starter chips for the first answer.
+- Floor-plan card with a blueprint that draws itself, at the top of the side column.
+- The logo appears on its own everywhere here, never on a circle or box (Vicky).
+- set_project now takes the size as the user said it ("40 by 30 feet") and recovers a dropped depth or a wrong
+  unit from those words; the evals check what is saved.
+
 ## 2026-10-14 (later): The interview crashed on the first message
 
 Vicky: typing anything in the interview broke the page. Reproduced live ("This page couldn't load", TypeError

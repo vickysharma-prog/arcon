@@ -35,6 +35,17 @@ export function siteSizeProblem(width: number | undefined, depth: number | undef
   return null;
 }
 
+/**
+ * Width and depth from a size as people say it ("40 by 30 feet", "12x9 m", "30 x 40"), keeping any the model already
+ * gave. The first number is the width, the second the depth.
+ */
+export function sizeFrom(said: string | undefined, width?: number, depth?: number): { width?: number; depth?: number; unit?: "ft" | "m" } {
+  const n = (said ?? "").match(/(\d+(?:\.\d+)?)\s*(?:ft|feet|foot|m|metres?|meters?|')?\s*(?:by|x|×|\*)\s*(\d+(?:\.\d+)?)/i);
+  // The unit the user said wins over the model's guess: "11 by 8 metres" is metres even if the model sent feet.
+  const unit = /\b(m|metres?|meters?|mtr)\b/i.test(said ?? "") ? "m" : /\b(ft|feet|foot)\b|'/i.test(said ?? "") ? "ft" : undefined;
+  return { width: width ?? (n ? Number(n[1]) : undefined), depth: depth ?? (n ? Number(n[2]) : undefined), ...(unit ? { unit } : {}) };
+}
+
 export type Candidate = { entityId: string; name: string; kind: string; detail: string; layer: 1 | 2 | 3 };
 
 // A short, human description of a Qloo match, so the user can tell two "Ace Hotel"s apart.

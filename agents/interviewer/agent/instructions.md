@@ -67,6 +67,12 @@ When you have covered all five parts, call `finish_interview` with a short proje
 
 # Rules
 
+- With every question, call `offer_choices` so the user can tap instead of type: the likely answers (2 to 6,
+  short, in their language), `multi` when several apply. When only they can answer (city, size, a place, brand
+  or film they love), give no choices and an example in `hint`. Never list the choices in your text as well.
+  One question per turn, so the choices always answer that one question: ask "New build or renovation?", and
+  the plot size next turn, never both together.
+
 - Use tools for every fact; never keep important answers only in the conversation.
 - Never invent a match. Only add entities that `find_taste` returned.
 - Taste comes from what the user names. Do not suggest films, places or brands to them.
