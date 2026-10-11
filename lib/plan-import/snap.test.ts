@@ -91,3 +91,38 @@ test("odd readings never crash: unknown kinds, tiny scraps, rooms off the edge, 
   assert.ok(layout.floors[0].spaces.every((s) => s.rect.x >= 0 && s.rect.x + s.rect.w <= 9 + 1e-9));
   assert.ok(!ids.includes("scrap"));
 });
+
+test("a real reading that drifted 50 cm off the front wall still makes a usable plan", () => {
+  // What Gemini returned for a drawn apartment on one run: everything shifted back half a metre, the hall too thin.
+  const read: ReadPlan = {
+    spaceType: "apartment", width: 11.1, depth: 8,
+    rooms: [
+      { name: "Living and Dining", kind: "living", floor: 0, x: 0, y: 0.5, w: 8, h: 3.7 },
+      { name: "Kitchen", kind: "kitchen", floor: 0, x: 8, y: 0.5, w: 3.1, h: 3.7 },
+      { name: "Entry Corridor", kind: "corridor", floor: 0, x: 0, y: 4.2, w: 11.1, h: 0.7 },
+      { name: "Bedroom 1", kind: "bedroom", floor: 0, x: 0, y: 4.9, w: 5.2, h: 3.1 },
+      { name: "Bedroom 2", kind: "bedroom", floor: 0, x: 5.2, y: 4.9, w: 4, h: 3.1 },
+      { name: "Bath", kind: "bath", floor: 0, x: 9.2, y: 4.9, w: 1.9, h: 3.1 },
+    ],
+  };
+  const { layout, problems } = snapPlan(read);
+  assert.deepEqual(problems, []);
+  const living = layout.floors[0].spaces.find((s) => s.id === "living-and-dining")!;
+  assert.equal(living.rect.y, 0, "snapped to the front wall");
+  const entry = layout.floors[0].openings.find((o) => o.id === "door-entry")!;
+  assert.notEqual(entry.between[0], "hall", "the front door leads into a real space");
+});
+
+test("a thin strip beside a room joins that room instead of becoming a hall", () => {
+  const read: ReadPlan = {
+    spaceType: "apartment", width: 10, depth: 8,
+    rooms: [
+      { name: "Living room", kind: "living", floor: 0, x: 0, y: 0, w: 10, h: 3 },
+      { name: "Hall", kind: "corridor", floor: 0, x: 0, y: 3.5, w: 10, h: 1.2 },
+      { name: "Bedroom", kind: "bedroom", floor: 0, x: 0, y: 4.7, w: 10, h: 3.3 },
+    ],
+  };
+  const { layout, problems } = snapPlan(read);
+  assert.deepEqual(problems, []);
+  assert.equal(layout.floors[0].spaces.filter((s) => s.kind === "corridor").length, 1, "no extra sliver hall");
+});

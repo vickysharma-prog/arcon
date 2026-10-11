@@ -2,6 +2,15 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-12 (evening): Bring your own plan (A4)
+
+Upload a floor plan at /start/plan; Gemini reads the rooms (tested: a drawn apartment read correctly in 4 s);
+snap joins edges, snaps drifting edges to the outside walls, folds thin strips into rooms, adds doors, windows
+and a street-side front door. A real reading that drifted 50 cm broke the first version; it is now a regression
+test. The Check your plan screen previews edits live, separates blocking problems from advice, and asks for a
+few loves for Qloo. The Plans step then shows the user's plan plus two other layouts of the same rooms.
+165+ tests passing. End-to-end run in Chrome: upload, check, design, plans, no page errors.
+
 ## 2026-10-11 to 12: Plans picked for how people live, and architect rules
 
 Vicky's direction: the three plans must be chosen for the user from their interview and taste, not one plan

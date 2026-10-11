@@ -13,6 +13,8 @@ import type { Layout } from "@/lib/layout/schema";
 import type { Project } from "@/lib/project/store";
 import { canLeave, isStep, nextStep, STEPS, type StepId } from "./steps";
 import { WalkthroughStep } from "./WalkthroughStep";
+import { CheckPlan } from "@/components/import/CheckPlan";
+import { importedOf } from "@/lib/plan-import/edits";
 
 type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null };
 
@@ -93,6 +95,11 @@ export function ProjectView({ id }: { id: string }) {
         )}
       </main>
     );
+
+  // A plan the user uploaded is checked first: rooms, size and a few loves for the styling.
+  const imported = p ? importedOf(p.interview) : null;
+  if (p && imported && !imported.confirmed)
+    return <CheckPlan id={id} imported={imported} units={p.site.units ?? "imperial"} onDone={(next) => setP(next as View)} />;
 
   // A design that hasn't been made yet waits for one click: the reveal starts on the user's cue,
   // and that click is what lets the browser play its sounds.

@@ -21,7 +21,7 @@ Where Arcon stands right now. Updated as we go (Vicky's rule): progress, context
 
 ## In progress
 
-- A4: bring your own plan (upload, AI reads it, skip the interview). Design in `private/plan.md`.
+- A4: bring your own plan. Built and working end to end (upload at /start/plan, Gemini reads it, snap cleans it, Check your plan screen, taste, then the user's plan plus two engine alternatives). Left: deploy check on the live site, show the uploaded image beside the read plan, a re-read button, PDF test.
 
 ## Next
 

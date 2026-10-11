@@ -76,6 +76,9 @@ Use metres. Put the building's front (the street side, usually the bottom of a d
 so turn the drawing in your head if the entrance is at the bottom: x runs left to right, y runs from the front
 to the back. Give each room as a rectangle (x, y, width w, depth h). For an L-shaped room, give its biggest rectangle.
 Include halls and landings as kind "corridor" and the stairs as kind "stairs", with floor 0 or 1.
+Neighbouring rooms share their walls: where two rooms meet, one's edge equals the other's. Rooms along the
+outside start exactly at 0 or end exactly at the building's width or depth. Together the rooms and halls should
+fill the whole building with no gaps.
 ${hints.width ? `The user says the building is ${hints.width} by ${hints.depth ?? "?"} ${hints.units === "imperial" ? "feet" : "metres"}.` : "If the drawing shows dimensions or a scale bar, use them and set scaleFromDrawing to true."}
 Room kinds: ${KINDS.join(", ")}.
 Ask a question only if you really can't tell something that matters (for example which floor a room is on,

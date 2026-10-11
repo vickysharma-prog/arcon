@@ -10,6 +10,8 @@ export type ReadRoom = { name: string; kind: string; floor: number; x: number; y
 export type ReadPlan = { spaceType: SpaceType; width: number; depth: number; rooms: ReadRoom[] };
 
 const SNAP = 0.35; // edges closer than this are the same wall
+const OUTER = 0.6; // an edge this close to the outside wall is the outside wall (readings often drift near the frame)
+const SLIVER = 0.9; // a gap thinner than this is a reading error, not a hall
 const DOOR = 0.9;
 const ENTRY = 1.0;
 const MIN_ROOM = 0.6;
@@ -30,7 +32,8 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(
 
 /** Joins edge positions that are within SNAP of each other (and of the outer walls) onto one value. */
 function snapper(values: number[], ends: number[]): (v: number) => number {
-  const sorted = [...values].sort((a, b) => a - b);
+  const outer = (v: number) => ends.find((e) => Math.abs(v - e) <= OUTER) ?? v;
+  const sorted = values.map(outer).sort((a, b) => a - b);
   const groups: number[][] = [];
   for (const v of sorted) {
     const g = groups.at(-1);
@@ -41,7 +44,10 @@ function snapper(values: number[], ends: number[]): (v: number) => number {
     const end = ends.find((e) => g.some((v) => Math.abs(v - e) <= SNAP));
     return { lo: g[0], hi: g[g.length - 1], at: end ?? Math.round((g.reduce((t, v) => t + v, 0) / g.length) * 20) / 20 };
   });
-  return (v) => centres.find((c) => v >= c.lo - 1e-9 && v <= c.hi + 1e-9)?.at ?? v;
+  return (raw) => {
+    const v = outer(raw);
+    return centres.find((c) => v >= c.lo - 1e-9 && v <= c.hi + 1e-9)?.at ?? v;
+  };
 }
 
 /** The floor's uncovered area as rectangles (on the grid of room edges), merged along rows. */
@@ -115,6 +121,22 @@ function buildFloor(level: number, rooms: ReadRoom[], W: number, D: number, sx: 
     const kind = ZONE[r.kind] ? r.kind : "living";
     spaces.push({ id, name: r.name, kind, zone: ZONE[kind], rect: { x: mm(x0), y: mm(y0), w: mm(x1 - x0), h: mm(y1 - y0) } });
   }
+  // A thin strip left beside a room is a misread wall position: the room takes it, when it runs the room's length.
+  for (let guard = 0; guard < 50; guard++) {
+    const thin = gaps(spaces, W, D).find((g) => Math.min(g.w, g.h) < SLIVER);
+    if (!thin) break;
+    const flat = thin.w >= thin.h;
+    const same = (a: number, b: number) => Math.abs(a - b) < 1e-6;
+    const host = spaces.find((sp) =>
+      sp.kind !== "stairs" &&
+      (flat
+        ? same(sp.rect.x, thin.x) && same(sp.rect.w, thin.w) && (same(sp.rect.y + sp.rect.h, thin.y) || same(sp.rect.y, thin.y + thin.h))
+        : same(sp.rect.y, thin.y) && same(sp.rect.h, thin.h) && (same(sp.rect.x + sp.rect.w, thin.x) || same(sp.rect.x, thin.x + thin.w))),
+    );
+    if (!host) break;
+    const r = host.rect;
+    host.rect = { x: mm(Math.min(r.x, thin.x)), y: mm(Math.min(r.y, thin.y)), w: mm(flat ? r.w : r.w + thin.w), h: mm(flat ? r.h + thin.h : r.h) };
+  }
   // Whatever the drawing left between rooms is circulation: a hall or landing.
   gaps(spaces, W, D).forEach((g, i) => spaces.push({ id: i ? `hall-${i + 1}` : "hall", name: "Hall", kind: "corridor", zone: "circulation", rect: g }));
 
@@ -146,7 +168,11 @@ function buildFloor(level: number, rooms: ReadRoom[], W: number, D: number, sx: 
   }
   if (level === 0) {
     // The front door: on the street side, into a hall or a living space.
-    const candidates = spaces.filter((s) => s.zone === "circulation" ? s.kind === "corridor" : ["living", "lounge", "dining", "reception", "retail", "counter"].includes(s.kind));
+    // Only into a space that leads somewhere: a hall wide enough to walk, or a living space with its own doors.
+    const connected = (s: Space) => openings.some((o) => o.type === "door" && o.between.includes(s.id));
+    const candidates = spaces.filter((s) =>
+      connected(s) && (s.zone === "circulation" ? s.kind === "corridor" && Math.min(s.rect.w, s.rect.h) >= SLIVER : ["living", "lounge", "dining", "reception", "retail", "counter"].includes(s.kind)),
+    );
     for (const s of candidates.sort((p, q) => rankOf(p) - rankOf(q))) {
       const f = facades(s.rect, W, D).sort((a, b) => Number(b.front) - Number(a.front))[0];
       if (!f || f.to - f.from < ENTRY + 0.2) continue;
@@ -173,6 +199,8 @@ const rankOf = (s: Space) => (s.zone === "circulation" ? 0 : s.zone === "public"
 // For a user's own plan, the building is what it is: a small powder room or a windowless study is their
 // reality, not an error. Only problems that break the model itself block it; the rest are advice.
 const ADVICE = /narrower than|smaller than|has no window|opens off the kitchen|opens into the stairs|front door opens into/;
+/** The validator's messages that stop a user's own plan being modelled (the rest are advice). */
+export const blocking = (errors: string[]) => errors.filter((e) => !ADVICE.test(e));
 
 /**
  * A Layout from what was read. `problems` must be fixed before the plan can be used (overlaps, holes, rooms
@@ -193,5 +221,5 @@ export function snapPlan(read: ReadPlan): { layout: Layout; problems: string[]; 
   const floors = levels.map((level, i) => ({ ...buildFloor(i, rooms.filter((r) => r.floor === level), W, D, sx, sy), level: i }));
   const layout: Layout = { spaceType: read.spaceType, shell: { width: W, depth: D } as Shell, floors, concept: { id: "own", name: "Your plan", why: [] } };
   const all = validate(layout);
-  return { layout, problems: all.filter((e) => !ADVICE.test(e)), advice: all.filter((e) => ADVICE.test(e)) };
+  return { layout, problems: blocking(all), advice: all.filter((e) => ADVICE.test(e)) };
 }
