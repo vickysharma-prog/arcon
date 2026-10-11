@@ -7,10 +7,20 @@ import { Logo } from "@/components/Logo";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { CountUp } from "@/components/fx/Motion";
 import { tick, transition } from "@/components/fx/sfx";
+import { INTRO_DONE } from "./Intro";
 
-// The header for the landing page: it sits clear over the hero and turns to frosted glass once the page scrolls.
+// The header for the landing page: the logo on its own at the left, the sections in a floating glass bar in the
+// middle, and the way in at the right. A highlight slides under whichever link the pointer is on.
+const LINKS = [
+  ["How it works", "#how"],
+  ["Taste", "#taste"],
+  ["Features", "#features"],
+  ["Pricing", "#pricing"],
+];
+
 export function LandingHeader() {
   const [scrolled, setScrolled] = useState(false);
+  const [hover, setHover] = useState<string | null>(null);
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 12);
     on();
@@ -18,25 +28,24 @@ export function LandingHeader() {
     return () => window.removeEventListener("scroll", on);
   }, []);
   return (
-    <header className={`sticky top-0 z-40 transition-[background,border-color] duration-300 ${scrolled ? "border-b border-line bg-paper/80 backdrop-blur-md" : "border-b border-transparent"}`}>
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-8">
-        <Link href="/" aria-label="Arcon home">
-          <Logo size={26} />
+    <header className="sticky top-0 z-40">
+      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-4 py-4 sm:px-8">
+        <Link href="/" aria-label="Arcon home" className="justify-self-start">
+          <Logo size={28} />
         </Link>
-        <nav className="hidden items-center gap-7 text-sm text-ink-soft md:flex">
-          {[
-            ["How it works", "#how"],
-            ["Taste", "#taste"],
-            ["Features", "#features"],
-            ["Pricing", "#pricing"],
-          ].map(([label, href]) => (
-            <a key={href} href={href} onClick={() => tick()} className="transition-colors hover:text-ink">
-              {label}
+        <nav
+          onMouseLeave={() => setHover(null)}
+          className={`hidden items-center gap-1 rounded-full border p-1 text-sm backdrop-blur-md transition-all duration-300 md:flex ${scrolled ? "border-line bg-paper-raised/80 shadow-[0_10px_40px_-20px_var(--accent)]" : "border-line/70 bg-paper-raised/50"}`}
+        >
+          {LINKS.map(([label, href]) => (
+            <a key={href} href={href} onMouseEnter={() => setHover(href)} onClick={() => tick()} className="relative rounded-full px-4 py-1.5 text-ink-soft transition-colors hover:text-ink">
+              {hover === href && <motion.span layoutId="nav-hover" className="absolute inset-0 rounded-full bg-accent/10 ring-1 ring-accent/30" transition={{ type: "spring", stiffness: 400, damping: 32 }} />}
+              <span className="relative">{label}</span>
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-3">
-          <Link href="/start" onClick={() => transition()} className="rounded-full bg-btn px-4 py-2 text-sm text-btn-ink transition hover:opacity-90">
+        <div className="flex items-center gap-3 justify-self-end">
+          <Link href="/start" onClick={() => transition()} className="glow-btn rounded-full px-5 py-2 text-sm">
             Sign up free
           </Link>
           <ProfileMenu />
@@ -124,12 +133,11 @@ export function Hero() {
             <Link
               href="/start"
               onClick={() => transition()}
-              className="group relative overflow-hidden rounded-full bg-btn px-7 py-3.5 text-lg text-btn-ink shadow-[0_14px_40px_-14px_var(--accent)] transition hover:opacity-95"
+              className="glow-btn group px-7 py-3.5 text-lg"
             >
-              <span aria-hidden className="absolute inset-y-0 left-0 w-1/3 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-700 group-hover:translate-x-[300%]" />
               Start designing free <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
             </Link>
-            <Link href="/start/plan" onClick={() => tick()} className="rounded-full border border-line bg-paper-raised/70 px-6 py-3.5 text-lg backdrop-blur transition hover:border-accent hover:text-accent">
+            <Link href="/start/plan" onClick={() => tick()} className="rounded-full border border-line bg-paper-raised/70 px-6 py-3.5 text-lg backdrop-blur transition hover:-translate-y-0.5 hover:border-accent hover:text-accent hover:shadow-[0_12px_36px_-14px_var(--accent)]">
               I have a floor plan
             </Link>
           </div>
@@ -168,13 +176,24 @@ const PLANTS = [
 function PlanDemo() {
   const still = useReducedMotion();
   const [on, setOn] = useState(0);
+  // Wait for the intro to leave, so the plan draws itself where the visitor can see it.
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    if (still) return;
+    if (!document.querySelector(".intro") || getComputedStyle(document.querySelector(".intro")!).display === "none") {
+      setReady(true);
+      return;
+    }
+    const go = () => setReady(true);
+    window.addEventListener(INTRO_DONE, go);
+    return () => window.removeEventListener(INTRO_DONE, go);
+  }, []);
+  useEffect(() => {
+    if (still || !ready) return;
     const t = setInterval(() => setOn((i) => (i + 1) % ROOMS.length), 2400);
     return () => clearInterval(t);
-  }, [still]);
+  }, [still, ready]);
   const draw = (delay: number, duration = 1.4) =>
-    still ? {} : { initial: { pathLength: 0, opacity: 0 }, animate: { pathLength: 1, opacity: 1 }, transition: { pathLength: { delay, duration, ease: "easeInOut" as const }, opacity: { delay, duration: 0.01 } } };
+    still ? {} : { initial: { pathLength: 0, opacity: 0 }, animate: ready ? { pathLength: 1, opacity: 1 } : {}, transition: { pathLength: { delay, duration, ease: "easeInOut" as const }, opacity: { delay, duration: 0.01 } } };
   const room = ROOMS[on];
 
   return (
@@ -226,8 +245,8 @@ function PlanDemo() {
               r="6"
               className="fill-leaf"
               initial={still ? false : { scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 0.85 }}
-              transition={{ delay: 3.2 + i * 0.12, type: "spring", stiffness: 400, damping: 14 }}
+              animate={ready || still ? { scale: 1, opacity: 0.85 } : {}}
+              transition={{ delay: 2.4 + i * 0.12, type: "spring", stiffness: 400, damping: 14 }}
               style={{ transformOrigin: `${x}px ${y}px` }}
             />
           ))}
@@ -276,5 +295,33 @@ function Readout({ label, children, tone = "text-ink" }: { label: string; childr
       <p className={`font-serif text-2xl leading-none ${tone}`}>{children}</p>
       <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.2em] text-ink-soft">{label}</p>
     </div>
+  );
+}
+
+// A soft blue light that follows the pointer across the whole page, on devices with a mouse.
+export function CursorGlow() {
+  const still = useReducedMotion();
+  const x = useMotionValue(-400);
+  const y = useMotionValue(-400);
+  const sx = useSpring(x, { stiffness: 220, damping: 28 });
+  const sy = useSpring(y, { stiffness: 220, damping: 28 });
+  const [mouse, setMouse] = useState(false);
+  useEffect(() => {
+    if (still || !matchMedia("(pointer: fine)").matches) return;
+    setMouse(true);
+    const move = (e: globalThis.PointerEvent) => {
+      x.set(e.clientX);
+      y.set(e.clientY);
+    };
+    window.addEventListener("pointermove", move, { passive: true });
+    return () => window.removeEventListener("pointermove", move);
+  }, [still, x, y]);
+  if (!mouse) return null;
+  return (
+    <motion.div
+      aria-hidden
+      className="pointer-events-none fixed left-0 top-0 z-30 h-[420px] w-[420px] rounded-full"
+      style={{ x: sx, y: sy, translateX: "-50%", translateY: "-50%", background: "radial-gradient(circle, color-mix(in srgb, var(--accent) 16%, transparent), transparent 65%)" }}
+    />
   );
 }

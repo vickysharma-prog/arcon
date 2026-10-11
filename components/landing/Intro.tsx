@@ -6,6 +6,8 @@ import { burst, chime, transition } from "@/components/fx/sfx";
 
 const SEEDS = seeds();
 const SEEN = "arcon-intro";
+/** Fired as the intro leaves, so the page can start its own animations in view of the visitor. */
+export const INTRO_DONE = "arcon:intro-done";
 
 // Runs before the overlay is painted: a visitor who saw the intro this session, or asks for less motion, skips it.
 const SKIP = `try{if(sessionStorage.getItem("${SEEN}")||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("intro-seen")}catch(e){}`;
@@ -29,6 +31,7 @@ export function Intro() {
   useEffect(() => {
     if (document.documentElement.classList.contains("intro-seen")) {
       setGone(true);
+      window.dispatchEvent(new Event(INTRO_DONE));
       return;
     }
     try {
@@ -37,6 +40,7 @@ export function Intro() {
     const timers: ReturnType<typeof setTimeout>[] = [];
     const leave = () => {
       setLeaving(true);
+      window.dispatchEvent(new Event(INTRO_DONE));
       timers.push(setTimeout(() => setGone(true), 600));
     };
     if ((navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive) {
@@ -49,7 +53,12 @@ export function Intro() {
       leave();
     };
     // The CSS fades the intro out at 9 seconds; after that a click belongs to the page, not the intro.
-    timers.push(setTimeout(() => setGone(true), 9600));
+    timers.push(
+      setTimeout(() => {
+        setGone(true);
+        window.dispatchEvent(new Event(INTRO_DONE));
+      }, 9000),
+    );
     window.addEventListener("pointerdown", enter, { once: true });
     window.addEventListener("keydown", enter, { once: true });
     return () => {

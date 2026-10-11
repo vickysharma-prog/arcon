@@ -360,7 +360,7 @@ export function Pricing() {
                 <Link
                   href="/start"
                   onClick={() => transition()}
-                  className={`mt-6 rounded-full px-5 py-2.5 text-center transition ${p.featured ? "bg-btn text-btn-ink hover:opacity-90" : "border border-line hover:border-accent hover:text-accent"}`}
+                  className={`mt-6 rounded-full px-5 py-2.5 text-center transition ${p.featured ? "glow-btn" : "border border-line hover:border-accent hover:text-accent hover:shadow-[0_10px_30px_-14px_var(--accent)]"}`}
                 >
                   {p.cta}
                 </Link>
@@ -389,7 +389,7 @@ export function FinalCall() {
           <Link
             href="/start"
             onClick={() => transition()}
-            className="group mt-10 inline-block rounded-full bg-btn px-8 py-4 text-lg text-btn-ink shadow-[0_14px_40px_-14px_var(--accent)] transition hover:opacity-95"
+            className="glow-btn group mt-10 px-8 py-4 text-lg"
           >
             Start designing free <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
           </Link>
