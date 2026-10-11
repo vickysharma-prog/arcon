@@ -2,6 +2,16 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-13 (early): Moodboard (Q2)
+
+Your style has a moodboard of real Qloo photos: what they love, then places elsewhere that share their decor
+(found with their own decor tags plus their taste; without the decor filter Qloo returned airports and museums,
+without the taste it returned generic famous hotels), then up to three matched brands (brand photos are often
+logos, so they come last). Every photo says why it's there: "Shares your vintage, boutique look · Barcelona".
+Taste building is now one shared function (profileFor) for the interviewer, plan upload and a new retaste
+script, which re-ran Vicky's two projects with the new brand filter: it dropped an interior design app, an
+architecture firm, two other service brands and a hair salon brand. 192 tests.
+
 ## 2026-10-12 (night, after the trail): Nothing in front of any door
 
 Vicky's uploaded house: the kitchen counter and hob stood right in front of the door into the master bedroom,

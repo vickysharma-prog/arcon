@@ -1,7 +1,7 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { homeBrands } from "../../../../lib/qloo/api.ts";
-import { buildProfile, layerOf } from "../../../../lib/qloo/taste.ts";
+import { layerOf } from "../../../../lib/qloo/taste.ts";
+import { profileFor } from "../../../../lib/qloo/profile.ts";
 import { addTasteSignals, updateProject } from "../../../../lib/project/store.ts";
 import { profileSummary } from "../../../../lib/interview/logic.ts";
 import { candidates, sessionProject } from "../lib/session.ts";
@@ -23,12 +23,7 @@ export default defineTool({
       added.map((e) => ({ entityId: e.entity_id, name: e.name, layer: layerOf(e), type: e.types?.[0] })),
     );
 
-    // Places and brands feed their own tags; culture reaches home brands through Qloo insights.
-    const liked = updated.taste_signals
-      .filter((s) => s.layer !== 3 && known[s.entityId])
-      .map((s) => ({ entity: known[s.entityId], layer: s.layer as 1 | 2 }));
-    const culture = updated.taste_signals.filter((s) => s.layer === 3).map((s) => s.entityId);
-    const profile = buildProfile(liked, await homeBrands(culture));
+    const profile = await profileFor(updated.taste_signals, new Map(Object.entries(known)));
     await updateProject(p.id, { taste: profile });
     return { tasteCount: updated.taste_signals.length, ...profileSummary(profile) };
   },

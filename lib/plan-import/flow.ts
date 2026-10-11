@@ -2,9 +2,10 @@ import type { LanguageModel } from "ai";
 import type { Layout, SpaceType } from "../layout/schema.ts";
 import { validate } from "../layout/validate.ts";
 import { createProject, getProject, updateProject, type Project } from "../project/store.ts";
-import { homeBrands, search } from "../qloo/api.ts";
+import { search } from "../qloo/api.ts";
+import { profileFor } from "../qloo/profile.ts";
 import { resolvePicks, type Pick } from "./taste.ts";
-import { buildProfile, layerOf } from "../qloo/taste.ts";
+import { layerOf } from "../qloo/taste.ts";
 import { planOptionsFor } from "../design/options.ts";
 import { programOf, readPlan, type Hints } from "./read.ts";
 import { blocking, snapPlan, type ReadPlan } from "./snap.ts";
@@ -74,8 +75,7 @@ export async function confirmImport(id: string, c: Confirm): Promise<Project> {
   // reaches home brands. Checked before any plan work, so a bad pick fails fast.
   const found = await resolvePicks(c.picks, search);
   const signals = found.map((e) => ({ entityId: e.entity_id, name: e.name, layer: layerOf(e), type: e.types?.[0] }));
-  const liked = found.filter((e) => layerOf(e) !== 3).map((entity) => ({ entity, layer: layerOf(entity) as 1 | 2 }));
-  const taste = buildProfile(liked, await homeBrands(found.filter((e) => layerOf(e) === 3).map((e) => e.entity_id)));
+  const taste = await profileFor(signals, new Map(found.map((e) => [e.entity_id, e])));
 
   const own: Layout = { ...layout, concept: { id: "own", name: "Your plan", summary: "The plan you uploaded, as drawn.", why: ["This is your own plan, read from the drawing you uploaded."] } };
   const program = programOf(layout);

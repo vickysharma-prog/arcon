@@ -45,8 +45,8 @@ test("every photo says why it's there, and apps, photo-less and off-style places
   assert.deepEqual(t.map((x) => [x.name, x.kind, x.caption]), [
     ["A Hotel", "loved", "You love this place"],
     ["A Film", "loved", "You love this film"],
-    ["Lamp Co", "matched", "Matched to A Film"],
     ["Casa", "kindred", "Shares your vintage, eclectic look · Barcelona"],
+    ["Lamp Co", "matched", "Matched to A Film"],
   ]);
 });
 

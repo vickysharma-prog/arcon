@@ -22,8 +22,11 @@ export function decorTags(p: Taste, n = 4): string[] {
     .map((t) => `${DECOR}${t.value}`);
 }
 
-/** Pure: the tiles, in order (loved, then matched brands, then kindred places), each with its caption. */
-export function tiles(p: Taste, found: Entity[], kindred: Entity[], max = 12): Tile[] {
+/**
+ * Pure: the tiles, each with its caption. What they love first, then places that share their look (real rooms),
+ * then a few matched brands (often only a logo, so they come last and stay few).
+ */
+export function tiles(p: Taste, found: Entity[], kindred: Entity[], max = 12, brandMax = 3): Tile[] {
   const byId = new Map(found.map((e) => [e.entity_id, e]));
   const out: Tile[] = [];
   const seen = new Set<string>();
@@ -33,13 +36,15 @@ export function tiles(p: Taste, found: Entity[], kindred: Entity[], max = 12): T
     const image = e && imageOf(e);
     if (image) push({ id: s.entityId, name: s.name, image, kind: "loved", caption: `You love this ${s.layer === 1 ? "place" : s.layer === 2 ? "brand" : kindOf(s.type)}` });
   }
+  const brandTiles: Tile[] = [];
   for (const b of p.taste?.brands ?? []) {
+    if (brandTiles.length === brandMax) break;
     const e = byId.get(b.id);
     const image = e && imageOf(e);
     // Re-checked here so projects matched before the home-brand filter don't show an app or a design firm.
     if (!image || !isHomeBrand(e)) continue;
     const via = creditOf(p, b.name).via;
-    push({ id: b.id, name: b.name, image, kind: "matched", caption: via.length ? `Matched to ${via.slice(0, 2).join(" and ")}` : "Matched to your taste" });
+    brandTiles.push({ id: b.id, name: b.name, image, kind: "matched", caption: via.length ? `Matched to ${via.slice(0, 2).join(" and ")}` : "Matched to your taste" });
   }
   const mine = new Set(decorTags(p, 8));
   for (const e of kindred) {
@@ -49,6 +54,7 @@ export function tiles(p: Taste, found: Entity[], kindred: Entity[], max = 12): T
     const city = e.properties?.geocode?.city;
     push({ id: e.entity_id, name: e.name, image, kind: "kindred", caption: `Shares your ${shared.slice(0, 2).join(", ")} look${city ? ` · ${city}` : ""}` });
   }
+  for (const t of brandTiles) push(t);
   return out.slice(0, max);
 }
 
