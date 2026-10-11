@@ -2,6 +2,21 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-14 (night): Why the interview stalled after the first answer
+
+Vicky: the live interview stopped after "A home". Ran it end to end on production and read the session stream.
+Two causes. The production model was gemini-3.1-flash-lite, which sometimes writes its tool calls out as text
+("tool_code print(default_api...)") instead of making them, so nothing was saved and no answer chips appeared.
+And the free Gemini quota ran out after a day of evals, so turns failed with "You exceeded your current quota"
+while the page showed nothing.
+
+Fixed: the interviewer now leads with a full Gemini model and falls through the others when one is out of quota,
+with lite models last. A failed or silent turn shows "Try again" in the user's language. The chat box keeps its
+size and scrolls inside, and user bubbles fit their text.
+
+Still open: every model on the key is out of quota tonight, so the full run to "See your design" waits for the
+reset (midnight Pacific, 12:30pm IST) or billing on the Google key. Evals should use a separate key.
+
 ## 2026-10-14 (evening): The interview, redesigned as the first impression
 
 Vicky: the interview is where people decide to stay, so it should feel alive and techy, speak English, Hindi and
