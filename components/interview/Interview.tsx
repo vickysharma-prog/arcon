@@ -27,7 +27,7 @@ export function Interview() {
   const [talking, setTalking] = useState(false);
   const [picks, setPicks] = useState<string[]>([]);
   const spoken = useRef(new Set<string>());
-  const bottom = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLOListElement>(null);
   const greeting = langOf(lang).greeting;
 
   useEffect(() => {
@@ -71,10 +71,26 @@ export function Interview() {
     }
   }, [busy, messages, voice, lang, talking, listen]);
 
-  // Braces matter: newer browsers return a promise from a smooth scrollIntoView, and an effect must not return it.
+  // The chat box keeps its size and scrolls inside; the page itself never moves.
   useEffect(() => {
-    bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages.length, busy]);
+    list.current?.scrollTo({ top: list.current.scrollHeight, behavior: "smooth" });
+  }, [messages, busy]);
+
+  // A turn that fails, ends without a reply, or goes quiet for 45 seconds gets a visible "Try again".
+  const [quiet, setQuiet] = useState(false);
+  useEffect(() => {
+    setQuiet(false);
+    if (!busy) return;
+    const t = setTimeout(() => setQuiet(true), 45_000);
+    return () => clearTimeout(t);
+  }, [busy, messages]);
+  const lastUser = [...messages].reverse().find((m) => m.role === "user");
+  const stuck = agent.status === "error" || quiet || (agent.status === "ready" && messages.at(-1)?.role === "user");
+  const retry = () => {
+    if (!lastUser) return;
+    setQuiet(false);
+    void agent.send(textOf(lastUser), busy ? { turnPolicy: "steer" } : undefined);
+  };
 
   const level = useMicLevel(talking && listen.listening);
   const taste = latestTaste(messages);
@@ -143,7 +159,7 @@ export function Interview() {
       </ol>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <section className="relative flex min-h-[68vh] flex-col overflow-hidden rounded-2xl border border-line bg-paper-raised shadow-[0_30px_80px_-50px_var(--accent)]">
+        <section className="relative flex h-[68vh] min-h-[420px] flex-col overflow-hidden rounded-2xl border border-line bg-paper-raised shadow-[0_30px_80px_-50px_var(--accent)]">
           <div className="flex items-center justify-between border-b border-line px-5 py-3">
             <p className="text-sm text-ink-soft">About 8 minutes. Type or talk.</p>
             <button type="button" onClick={voice.toggle} className="rounded-full border border-line px-3 py-1 text-sm text-ink-soft transition hover:border-accent hover:text-ink" aria-pressed={voice.on}>
@@ -151,7 +167,7 @@ export function Interview() {
             </button>
           </div>
 
-          <ol className="flex-1 space-y-6 overflow-y-auto px-5 py-6" aria-live="polite">
+          <ol ref={list} className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-6" aria-live="polite">
             <li className="flex gap-3">
               <Avatar busy={false} />
               <p key={lang} className="max-w-[85%] text-lg leading-relaxed">
@@ -249,8 +265,14 @@ export function Interview() {
                 </span>
               </li>
             )}
-            {agent.error && <li className="pl-11 text-sm text-accent">Something went wrong. Please try again in a moment.</li>}
-            <div ref={bottom} />
+            {stuck && lastUser && (
+              <li className="flex flex-wrap items-center gap-3 pl-11 text-sm">
+                <span className="text-ink-soft">{lang === "hi" ? "जवाब नहीं आया।" : lang === "hinglish" ? "Jawab nahi aaya." : "Arcon didn't answer that one."}</span>
+                <button type="button" onClick={retry} className="rounded-full border border-accent px-4 py-1.5 text-accent transition hover:bg-accent hover:text-btn-ink">
+                  {lang === "hi" ? "फिर से कोशिश करें" : lang === "hinglish" ? "Phir try karo" : "Try again"}
+                </button>
+              </li>
+            )}
           </ol>
 
           {projectId ? (
