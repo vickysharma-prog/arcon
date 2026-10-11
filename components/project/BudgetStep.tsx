@@ -57,9 +57,16 @@ export function BudgetStep({ id, layout, location, interview, brief, profile, lo
       <Reveal>
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-ink-soft">Budget · {market.name} · {market.currency}</p>
       </Reveal>
-      <h1 className="mt-3 font-serif text-5xl sm:text-6xl" aria-label={`${fmt(e.total.low)} to ${fmt(e.total.high)}`}>
-        <CountUp value={e.total.low} format={fmt} /> <span className="text-ink-soft">to</span> <CountUp value={e.total.high} format={fmt} />
-      </h1>
+      {/* The total waits for the tier read from their taste, so it never shows one figure and jumps to another. */}
+      {taste === null && tier === null ? (
+        <div className="mt-4 max-w-md">
+          <Scanning label="Costing your design" />
+        </div>
+      ) : (
+        <h1 className="mt-3 font-serif text-5xl sm:text-6xl" aria-label={`${fmt(e.total.low)} to ${fmt(e.total.high)}`}>
+          <CountUp value={e.total.low} format={fmt} /> <span className="text-ink-soft">to</span> <CountUp value={e.total.high} format={fmt} />
+        </h1>
+      )}
       <p className="mt-3 max-w-2xl text-ink-soft">
         {newBuild ? "Building and fitting out" : "Fitting out"} {Math.round(e.area)} m² at {TIER_NAMES[active].toLowerCase()} quality, in{" "}
         {market.currency}. An early estimate from typical {market.name} costs, not a quote: builders&apos; prices vary by about this range.
