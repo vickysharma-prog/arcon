@@ -85,7 +85,9 @@ export function Interview() {
     return () => clearTimeout(t);
   }, [busy, messages]);
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
-  const stuck = agent.status === "error" || quiet || (agent.status === "ready" && messages.at(-1)?.role === "user");
+  // A failed turn can leave an empty reply behind, so "no answer" means no words and no choices since the user spoke.
+  const lastWords = [...messages].reverse().find((m) => m.role === "user" || textOf(m));
+  const stuck = agent.status === "error" || quiet || (!busy && lastWords?.role === "user" && !pendingChoices(messages));
   const retry = () => {
     if (!lastUser) return;
     setQuiet(false);
@@ -192,7 +194,7 @@ export function Interview() {
                 ))}
               </motion.li>
             )}
-            {messages.map((m, idx) => (
+            {messages.map((m, idx) => !textOf(m) && !(m.role === "assistant" && activity(m).length) ? null : (
               <motion.li key={m.id} initial={still ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-2">
                 {m.role === "assistant" && activity(m).length > 0 && (
                   <ul className="space-y-1 pl-11 font-mono text-xs text-ink-soft">
@@ -211,7 +213,7 @@ export function Interview() {
                       <p className="max-w-[85%] whitespace-pre-wrap text-lg leading-relaxed">{textOf(m)}</p>
                     </div>
                   ) : (
-                    <p className="ml-auto max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-btn px-4 py-2 text-btn-ink">{textOf(m)}</p>
+                    <p className="ml-auto w-fit max-w-[80%] whitespace-pre-wrap rounded-2xl rounded-br-sm bg-btn px-4 py-2 text-btn-ink">{textOf(m)}</p>
                   ))}
               </motion.li>
             ))}
