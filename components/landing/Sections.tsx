@@ -404,7 +404,7 @@ export function Footer() {
     <footer className="border-t border-line">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-ink-soft sm:flex-row sm:px-8">
         <Logo size={22} />
-        <p>Taste data by Qloo · © 2026 Arcon</p>
+        <p>Taste intelligence powered by Qloo · © 2026 Arcon</p>
         <Link href="/privacy" className="hover:text-ink">
           Privacy
         </Link>

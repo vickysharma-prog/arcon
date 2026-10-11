@@ -107,7 +107,7 @@ export function Hero() {
             className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-raised/70 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-soft backdrop-blur"
           >
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-            AI architect · taste by Qloo
+            AI architect · Powered by Qloo
           </motion.p>
           <h1 className="mt-6 font-serif text-5xl leading-[1.05] sm:text-6xl lg:text-7xl">
             Spaces designed around
