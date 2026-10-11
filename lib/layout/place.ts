@@ -4,10 +4,10 @@ import type { Floor, Layout, Opening, Program, ProgramRoom, Shell, Space } from 
 // so every room opens onto the hall and keeps one outside wall for its window.
 // ponytail: rectangles in a rectangular shell; add L-shapes and courtyards when the shape editor lands.
 
-const HALL = 1.2; // corridor depth, m
-const STAIR_RUN = 3.0; // stairs length along the hall, m
-const DOOR = 0.9;
-const ENTRY = 1.0;
+export const HALL = 1.2; // corridor depth, m
+export const STAIR_RUN = 3.0; // stairs length along the hall, m
+export const DOOR = 0.9;
+export const ENTRY = 1.0;
 const MIN_STRIP = 2.4;
 
 const minSide = (kind: string) => (kind === "bath" ? 1.5 : kind === "storage" ? 1.2 : 2.1);
@@ -24,7 +24,7 @@ export const VARIANTS: Variant[] = [
 const sum = (rooms: ProgramRoom[]) => rooms.reduce((t, r) => t + r.area, 0);
 
 // Split a strip of the given length among rooms in proportion to area, keeping every room at least its minimum width.
-function widths(rooms: ProgramRoom[], length: number): number[] {
+export function widths(rooms: ProgramRoom[], length: number): number[] {
   const min = rooms.map((r) => minSide(r.kind));
   if (min.reduce((a, b) => a + b, 0) > length + 1e-9)
     throw new Error(`${rooms.length} rooms don't fit along ${length.toFixed(1)} m`);
@@ -65,7 +65,7 @@ function sides(rooms: ProgramRoom[], v: Variant): [ProgramRoom[], ProgramRoom[]]
 }
 
 // Depth of the front strip. Every floor shares it, so the hall and stairs stack.
-function frontDepth(rooms: ProgramRoom[], D: number, v: Variant): number {
+export function frontDepth(rooms: ProgramRoom[], D: number, v: Variant): number {
   const room = D - HALL;
   if (room < 2 * MIN_STRIP) throw new Error(`a ${D.toFixed(1)} m deep shell is too shallow for rooms on both sides`);
   const [pub, priv] = sides(rooms, v);
@@ -76,7 +76,7 @@ function frontDepth(rooms: ProgramRoom[], D: number, v: Variant): number {
   return Math.min(Math.max((room * sum(frontRooms)) / sum(rooms), lo), hi);
 }
 
-function placeFloor(level: number, rooms: ProgramRoom[], shell: Shell, stairs: boolean, v: Variant, front: number): Floor {
+export function placeFloor(level: number, rooms: ProgramRoom[], shell: Shell, stairs: boolean, v: Variant, front: number): Floor {
   const { width: W, depth: D } = shell;
   const [pub, priv] = sides(rooms, v);
   const [frontRooms, backRooms] = v.publicSide === "front" ? [pub, priv] : [priv, pub];
@@ -146,7 +146,7 @@ function placeFloor(level: number, rooms: ProgramRoom[], shell: Shell, stairs: b
 }
 
 // Swap x and y: used to lay a deep shell out sideways so the hall runs along its long side.
-function transpose(layout: Layout, shell: Shell): Layout {
+export function transpose(layout: Layout, shell: Shell): Layout {
   return {
     ...layout,
     shell,

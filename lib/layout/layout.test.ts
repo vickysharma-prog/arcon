@@ -37,6 +37,14 @@ test("the validator catches overlaps, unreachable rooms and missing windows", ()
   assert.match(errors, /living has no window/);
 });
 
+test("the validator catches a hole in the floor", () => {
+  const layout = structuredClone(place(TEMPLATES.apartment, DEFAULT_SHELLS.apartment));
+  const floor = layout.floors[0];
+  floor.spaces = floor.spaces.filter((s) => s.id !== "bed-2");
+  floor.openings = floor.openings.filter((o) => !o.between.includes("bed-2"));
+  assert.ok(validate(layout).some((e) => /leaving a hole/.test(e)));
+});
+
 test("a shell too shallow for two rows of rooms is refused", () => {
   assert.throws(() => place(TEMPLATES.apartment, { width: 12, depth: 5 }), /too shallow/);
 });

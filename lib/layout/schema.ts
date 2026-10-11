@@ -42,6 +42,8 @@ export const Space = z.object({
   kind: z.string(), // room kinds plus "corridor" and "stairs"
   zone: z.union([Zone, z.literal("circulation")]),
   rect: Rect,
+  /** Overrides whether the room opens into its neighbours, e.g. a closed kitchen for someone who asked for one. */
+  open: z.boolean().optional(),
 });
 export type Space = z.infer<typeof Space>;
 
@@ -68,5 +70,7 @@ export const Layout = z.object({
   spaceType: SpaceType,
   shell: Shell,
   floors: z.array(Floor).min(1),
+  /** The layout idea behind this option, and why it fits this client (quoting their answers or loves). */
+  concept: z.object({ id: z.string(), name: z.string(), why: z.array(z.string()) }).optional(),
 });
 export type Layout = z.infer<typeof Layout>;

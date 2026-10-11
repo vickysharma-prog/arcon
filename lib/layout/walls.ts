@@ -5,7 +5,7 @@ import type { Floor, Opening, Shell, Space } from "./schema.ts";
 // bedrooms, baths and offices stay enclosed. Door records stay, so the layout validator is unchanged.
 
 const OPEN_KINDS = new Set(["living", "dining", "kitchen", "lounge", "reception", "retail", "counter", "corridor"]);
-export const isOpen = (s: Space) => OPEN_KINDS.has(s.kind) && (s.zone === "public" || s.zone === "circulation");
+export const isOpen = (s: Space) => s.open ?? (OPEN_KINDS.has(s.kind) && (s.zone === "public" || s.zone === "circulation"));
 
 const EPS = 1e-6;
 export type Piece = { axis: "x" | "z"; at: number; from: number; to: number; exterior: boolean; open: boolean };

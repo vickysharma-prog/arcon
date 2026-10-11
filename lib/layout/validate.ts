@@ -44,6 +44,10 @@ function checkFloor(layout: Layout, floor: Floor, errors: string[]) {
       if (overlapArea(floor.spaces[i].rect, floor.spaces[j].rect) > EPS)
         errors.push(`${at}: ${floor.spaces[i].id} overlaps ${floor.spaces[j].id}`);
 
+  // Rooms must fill the floor: a gap is a hole in the building with no walls around it.
+  const covered = floor.spaces.reduce((t, s) => t + s.rect.w * s.rect.h, 0);
+  if (Math.abs(covered - width * depth) > 1e-3) errors.push(`${at}: rooms cover ${covered.toFixed(1)} of ${(width * depth).toFixed(1)} m², leaving a hole`);
+
   for (const o of floor.openings) {
     for (const id of o.between) {
       const r = id === "outside" ? shell : byId.get(id)?.rect;
@@ -81,7 +85,8 @@ export function validate(layout: Layout): string[] {
   if (layout.floors.length > 1) {
     const stairs = layout.floors.map((f) => f.spaces.find((s) => s.kind === "stairs")?.rect);
     const [a, b] = stairs;
-    if (!a || !b || a.x !== b.x || a.y !== b.y || a.w !== b.w || a.h !== b.h)
+    const same = (p: number, q: number) => Math.abs(p - q) < EPS;
+    if (!a || !b || !same(a.x, b.x) || !same(a.y, b.y) || !same(a.w, b.w) || !same(a.h, b.h))
       errors.push("stairs don't line up between floors");
   }
   return errors;
