@@ -103,10 +103,21 @@ export function walkPlan(layout: Layout): Walk {
     const y = floor.level * STOREY + EYE;
     const byId = new Map(floor.spaces.map((s) => [s.id, s]));
     const corridor = floor.spaces.find((s) => s.kind === "corridor");
-    const doors = floor.openings
-      .filter((o) => o.type === "door" && o.id !== "door-entry" && o.id !== "door-stairs")
-      .map((o) => ({ o, room: byId.get(o.between[0])!, via: byId.get(o.between[1])! }))
-      .filter((d) => d.room && d.via && onTour(d.room));
+    // One visit per room, through its best way in: from a hall first, then from the living area. Open-plan
+    // rooms have several "doors" to their neighbours, and visiting each one replayed the same room.
+    const rank = (via: Space) => (via.zone === "circulation" ? 0 : via.zone === "public" ? 1 : 2);
+    const best = new Map<string, { o: Opening; room: Space; via: Space }>();
+    for (const o of floor.openings) {
+      if (o.type !== "door" || o.id === "door-entry" || o.id === "door-stairs") continue;
+      for (const [r, v] of [[o.between[0], o.between[1]], [o.between[1], o.between[0]]]) {
+        const room = byId.get(r);
+        const via = byId.get(v);
+        if (!room || !via || !onTour(room)) continue;
+        const had = best.get(room.id);
+        if (!had || rank(via) < rank(had.via)) best.set(room.id, { o, room, via });
+      }
+    }
+    const doors = [...best.values()];
     // Visit rooms in order along the hall, from the entrance end.
     const along = (o: Opening) => (corridor && corridor.rect.w >= corridor.rect.h ? o.x : o.y);
     const fromEnd = entry.axis === "y" ? (entry.x === 0 ? 1 : -1) : entry.y === 0 ? 1 : -1;
@@ -138,3 +149,37 @@ export function walkPlan(layout: Layout): Walk {
 }
 
 export const walkPath = (layout: Layout): Point[] => walkPlan(layout).path;
+
+export type StepBox = { x: number; z: number; w: number; d: number; y: number; h: number };
+
+/**
+ * A turning stair inside its stairwell: the first flight runs beside the hall up to a landing at the far end,
+ * the second runs back up to the floor above. Each box is a solid block from the floor up to its tread.
+ * `door` is the stairwell's door, which says which side the hall is on.
+ */
+export function stairBoxes(rect: { x: number; y: number; w: number; h: number }, door: Opening | undefined, storey = STOREY): StepBox[] {
+  // Run along the side the door is on; the hall side is where the door is.
+  const alongX = door ? door.axis === "x" : rect.w >= rect.h;
+  const run = alongX ? rect.w : rect.h;
+  const across = alongX ? rect.h : rect.w;
+  const hallAtFar = door ? (alongX ? Math.abs(door.y - (rect.y + rect.h)) < 1e-6 : Math.abs(door.x - (rect.x + rect.w)) < 1e-6) : true;
+  const flight = Math.min(1.1, across / 2);
+  const landing = Math.min(1.0, run * 0.3);
+  const steps = 8;
+  const treads = (run - landing) / steps;
+  const rise = storey / (2 * steps + 1);
+  // Local frame: u along the run (0 = the end by the door), v across (0 = the hall side).
+  const doorU = door ? (alongX ? door.x - rect.x : door.y - rect.y) : 0;
+  const startAtLow = doorU < run / 2;
+  const box = (u0: number, u1: number, v0: number, v1: number, top: number): StepBox => {
+    const [a0, a1] = startAtLow ? [u0, u1] : [run - u1, run - u0];
+    const [b0, b1] = hallAtFar ? [across - v1, across - v0] : [v0, v1];
+    const [x0, x1, z0, z1] = alongX ? [rect.x + a0, rect.x + a1, rect.y + b0, rect.y + b1] : [rect.x + b0, rect.x + b1, rect.y + a0, rect.y + a1];
+    return { x: (x0 + x1) / 2, z: (z0 + z1) / 2, w: x1 - x0, d: z1 - z0, y: 0, h: top };
+  };
+  const out: StepBox[] = [];
+  for (let i = 0; i < steps; i++) out.push(box(i * treads, (i + 1) * treads, 0, flight, (i + 1) * rise));
+  out.push(box(run - landing, run, 0, across, (steps + 1) * rise));
+  for (let i = 0; i < steps; i++) out.push(box(run - landing - (i + 1) * treads, run - landing - i * treads, across - flight, across, (steps + 2 + i) * rise));
+  return out;
+}

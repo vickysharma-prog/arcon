@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { doorClearance, furnish } from "./furniture.ts";
+import { doorClearance, furnish, missingEssentials } from "./furniture.ts";
+import { doorIsOpen, wallPieces } from "../layout/walls.ts";
 import { planOptions } from "../layout/place.ts";
 import { buildingShell } from "../layout/footprint.ts";
 import { DEFAULT_SHELLS, TEMPLATES } from "../layout/templates.ts";
@@ -23,7 +24,7 @@ test("nothing blocks the space in front of a door", () => {
       const f = layout.floors[it.level];
       const door = f.openings.find((o) => o.type === "door" && o.between[0] === it.room);
       if (!door) continue;
-      const c = doorClearance(door, f.spaces.find((s) => s.id === it.room)!);
+      const c = doorClearance(door, f.spaces.find((s) => s.id === it.room)!, doorIsOpen(door, wallPieces(f, layout.shell)));
       const clear = Math.abs(it.x - c.x) * 2 >= it.w + c.w - 1e-9 || Math.abs(it.z - c.z) * 2 >= it.d + c.d - 1e-9;
       assert.ok(clear, `${it.room}/${it.name} blocks its door`);
     }
@@ -72,4 +73,8 @@ test("the sofa faces the TV, and pieces face into their room", () => {
 test("a green-leaning taste gets more plants", () => {
   const count = (lush: boolean) => furnish(house, { lush }).filter((i) => i.name === "plant").length;
   assert.ok(count(true) > count(false));
+});
+
+test("every room in every template plan gets its essentials: a bed, a sofa and TV, a dining table, a toilet", () => {
+  for (const layout of layouts) assert.deepEqual(missingEssentials(layout), [], layout.spaceType);
 });

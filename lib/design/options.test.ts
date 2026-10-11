@@ -9,7 +9,8 @@ import { voiceProblems } from "../voice.ts";
 import type { Profile } from "../qloo/taste.ts";
 
 const house = TEMPLATES.house;
-const shell = buildingShell(house, DEFAULT_SHELLS.house);
+// Roomy enough that all four layout concepts fit, so the ranking alone decides which three show.
+const shell = { width: 13, depth: 8.4 };
 const tag = (value: string, weight: number, name: string) => ({ family: "ambience" as const, value, weight, sources: [{ entityId: name, name, layer: 1 as const }] });
 const taste = (...tags: ReturnType<typeof tag>[]): Profile => ({ tags, brands: [] });
 const ids = (who: Parameters<typeof planOptionsFor>[2]) => planOptionsFor(house, shell, who).map((l) => l.concept!.id);

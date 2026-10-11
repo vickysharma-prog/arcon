@@ -10,7 +10,7 @@ import type { Layout } from "@/lib/layout/schema";
 import { decorate } from "@/lib/three/decor";
 import { furnish } from "@/lib/three/furniture";
 import { blockers, step } from "@/lib/three/explore";
-import { buildSlabs, buildWalls, EYE, onTour, STOREY, walkPlan, WALL_H, type Glass, type Slab, type WallBox } from "@/lib/three/geometry";
+import { buildSlabs, buildWalls, EYE, onTour, stairBoxes, STOREY, walkPlan, WALL_H, type Glass, type Slab, type WallBox } from "@/lib/three/geometry";
 import { look as lookOf, luminance, mix, scheme, type Look, type Scheme } from "@/lib/three/materials";
 import { LookCtx, Model } from "./models";
 import { planks, tiled, tiles } from "./textures";
@@ -62,7 +62,7 @@ function Building({ layout, colors, look, cutaway = false, upTo = "all" }: { lay
     .map((w) => ({ ...w, y1: Math.min(w.y1, cutAt(w.level)), cut: w.y1 > cutAt(w.level) }));
   const glass = built.glass.filter((g) => shown(g.level) && g.y0 < cutAt(g.level)).map((g) => ({ ...g, y1: Math.min(g.y1, cutAt(g.level)) }));
   const allSlabs = useMemo(() => buildSlabs(layout), [layout]);
-  const slabs = allSlabs.filter((s) => shown(s.level));
+  const slabs = allSlabs.filter((s) => shown(s.level) && !(s.kind === "stairs" && s.level > 0));
   const allItems = useMemo(() => [...furnish(layout, { lush: look.lush }), ...decorate(layout)], [layout, look.lush]);
   const items = allItems
     .filter((i) => shown(i.level))
@@ -150,29 +150,18 @@ function Building({ layout, colors, look, cutaway = false, upTo = "all" }: { lay
           </group>
         );
       })}
-      {/* stairs */}
+      {/* a turning stair in its stairwell: a flight beside the hall, a landing, a flight back up */}
       {layout.floors.length > 1 &&
         layout.floors[0].spaces
           .filter((s) => s.kind === "stairs")
-          .map((s) => {
-            const steps = 16;
-            const along = s.rect.w >= s.rect.h;
-            return Array.from({ length: steps }, (_, i) => {
-              const t = (i + 0.5) / steps;
-              const pos: [number, number, number] = along
-                ? [s.rect.x + t * s.rect.w, ((i + 1) * STOREY) / steps / 2, s.rect.y + s.rect.h / 2]
-                : [s.rect.x + s.rect.w / 2, ((i + 1) * STOREY) / steps / 2, s.rect.y + t * s.rect.h];
-              const size: [number, number, number] = along
-                ? [s.rect.w / steps, ((i + 1) * STOREY) / steps, s.rect.h * 0.9]
-                : [s.rect.w * 0.9, ((i + 1) * STOREY) / steps, s.rect.h / steps];
-              return (
-                <mesh key={`st-${s.id}-${i}`} position={pos} castShadow receiveShadow>
-                  <boxGeometry args={size} />
-                  <meshStandardMaterial color={colors.wood} roughness={0.6} />
-                </mesh>
-              );
-            });
-          })}
+          .flatMap((s) =>
+            stairBoxes(s.rect, layout.floors[0].openings.find((o) => o.id === "door-stairs")).map((b, i) => (
+              <mesh key={`st-${s.id}-${i}`} position={[b.x, b.h / 2, b.z]} castShadow receiveShadow>
+                <boxGeometry args={[b.w, b.h, b.d]} />
+                <meshStandardMaterial color={colors.wood} roughness={0.6} />
+              </mesh>
+            )),
+          )}
       {/* roof with a small overhang, lifted off in the cutaway view */}
       {!cutaway && upTo === "all" && (
         <mesh position={[W / 2, top + 0.15, D / 2]} castShadow>
@@ -499,12 +488,31 @@ function Overview({ layout }: { layout: Layout }) {
 }
 
 // Room names over the floor being looked at; clicking one flies the camera to that room.
-function RoomLabels({ layout, level, fitKey }: { layout: Layout; level: number; fitKey?: number }) {
+// "Whole house": fly back to the starting corner, at a distance that fits the whole building in view.
+// Always mounted inside Bounds, whether or not the inside is showing.
+function Recenter({ layout, fitKey }: { layout: Layout; fitKey?: number }) {
+  const api = useBounds();
+  const { camera } = useThree();
+  const done = useRef(0);
+  useEffect(() => {
+    if (!fitKey || fitKey === done.current) return;
+    done.current = fitKey;
+    const { width: W, depth: D } = layout.shell;
+    const h = layout.floors.length * STOREY;
+    const span = Math.max(W, D);
+    const target: [number, number, number] = [W / 2, h / 3, D / 2];
+    const dir = new Vector3(span * 1.05, h + span * 0.95 - h / 3, span * 1.25).normalize();
+    const radius = 0.5 * Math.hypot(W, D, h);
+    const fov = "fov" in camera ? (camera.fov * Math.PI) / 180 : Math.PI / 4;
+    const dist = (radius / Math.sin(fov / 2)) * 1.08;
+    api.to({ position: [target[0] + dir.x * dist, target[1] + dir.y * dist, target[2] + dir.z * dist], target });
+  }, [fitKey, api, camera, layout]);
+  return null;
+}
+
+function RoomLabels({ layout, level }: { layout: Layout; level: number }) {
   const api = useBounds();
   const floor = layout.floors.find((f) => f.level === level);
-  useEffect(() => {
-    if (fitKey) api.refresh().clip().fit();
-  }, [fitKey, api]);
   if (!floor) return null;
   const y = level * STOREY;
   return (
@@ -586,7 +594,8 @@ export default function HouseScene(props: Props) {
           <Bounds fit clip observe margin={1.12} maxDuration={0.9}>
             <Overview layout={props.layout} />
             {building}
-            {props.cutaway && <RoomLabels layout={props.layout} level={props.upTo === "all" || props.upTo === undefined ? top : props.upTo} fitKey={props.fitKey} />}
+            <Recenter layout={props.layout} fitKey={props.fitKey} />
+            {props.cutaway && <RoomLabels layout={props.layout} level={props.upTo === "all" || props.upTo === undefined ? top : props.upTo} />}
           </Bounds>
         ) : props.mode === "explore" ? (
           <>

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildSlabs, buildWalls, DOOR_H, EYE, onTour, SILL, STOREY, walkPath, walkPlan, WALL_H } from "./geometry.ts";
+import { buildSlabs, buildWalls, DOOR_H, EYE, onTour, SILL, stairBoxes, STOREY, walkPath, walkPlan, WALL_H } from "./geometry.ts";
 import { place } from "../layout/place.ts";
 import { DEFAULT_SHELLS, TEMPLATES } from "../layout/templates.ts";
 import type { Layout } from "../layout/schema.ts";
@@ -109,4 +109,31 @@ test("the tour skips small utility rooms and pauses at every room it shows", () 
   assert.ok(!path.some((p) => p[0] > x + 0.2 && p[0] < x + w - 0.2 && p[2] > y + 0.2 && p[2] < y + h - 0.2 && p[1] === EYE), "no detour into the powder room");
   const toured = layout.floors.flatMap((f) => f.spaces.filter(onTour));
   assert.equal(stops.length, toured.length);
+});
+
+test("the turning stair climbs a full storey inside its stairwell", () => {
+  const rect = { x: 7.8, y: 0, w: 3, h: 3.2 };
+  const door = { id: "door-stairs", type: "door" as const, between: ["stairs", "hall"] as [string, string], x: 9.3, y: 3.2, axis: "x" as const, width: 0.9 };
+  const boxes = stairBoxes(rect, door);
+  const top = Math.max(...boxes.map((b) => b.h));
+  assert.ok(Math.abs(top - STOREY) < 1e-9, `top ${top}`);
+  for (const b of boxes) {
+    assert.ok(b.x - b.w / 2 >= rect.x - 1e-9 && b.x + b.w / 2 <= rect.x + rect.w + 1e-9, "inside on x");
+    assert.ok(b.z - b.d / 2 >= rect.y - 1e-9 && b.z + b.d / 2 <= rect.y + rect.h + 1e-9, "inside on z");
+  }
+  // The first step is on the hall side, by the door.
+  const first = boxes[0];
+  assert.ok(first.z > rect.y + rect.h / 2, "first flight beside the hall");
+});
+
+test("the walk visits every room once, open plan or not", async () => {
+  const { CONCEPT_IDS, placeConcept } = await import("../layout/concepts.ts");
+  for (const c of CONCEPT_IDS) {
+    const l = placeConcept(TEMPLATES.house, { width: 13, depth: 8.4 }, c)!;
+    const { stops } = walkPlan(l);
+    const tour = l.floors.flatMap((f) => f.spaces.filter(onTour));
+    assert.equal(stops.length, tour.length, `${c}: ${stops.length} stops for ${tour.length} rooms`);
+    const keys = stops.map((p) => p.map((v) => v.toFixed(2)).join(","));
+    assert.equal(new Set(keys).size, keys.length, `${c}: a stop repeats`);
+  }
 });

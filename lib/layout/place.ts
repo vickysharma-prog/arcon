@@ -10,7 +10,7 @@ export const DOOR = 0.9;
 export const ENTRY = 1.0;
 const MIN_STRIP = 2.4;
 
-const minSide = (kind: string) => (kind === "bath" ? 1.5 : kind === "storage" ? 1.2 : 2.1);
+const minSide = (kind: string) => (kind === "bath" ? 1.5 : kind === "storage" ? 1.2 : kind === "bedroom" || kind === "guest-room" ? 2.6 : 2.1);
 const NO_WINDOW = new Set(["storage", "closet", "server"]);
 
 export type Variant = { publicSide: "front" | "back"; mirror: boolean; serviceWithPublic: boolean };
@@ -83,50 +83,28 @@ export function placeFloor(level: number, rooms: ProgramRoom[], shell: Shell, st
   const hallY = front;
   const backY = front + HALL;
 
-  // The entrance is at one end of the hall and the stairs at the other.
+  // The hall runs the full length, so every room opens straight onto it. The stairs sit in their own
+  // stairwell (a turning stair with a landing) at the far end of the front strip, entered from the hall,
+  // so no room ever opens into the stairs. The entrance is at the other end of the hall.
   const entryAtLeft = !v.mirror;
-  const hallX0 = stairs && !entryAtLeft ? STAIR_RUN : 0;
-  const hallX1 = stairs && entryAtLeft ? W - STAIR_RUN : W;
-
-  const spaces: Space[] = [{ id: "hall", name: "Hall", kind: "corridor", zone: "circulation", rect: { x: hallX0, y: hallY, w: hallX1 - hallX0, h: HALL } }];
-  if (stairs)
-    spaces.push({ id: "stairs", name: "Stairs", kind: "stairs", zone: "circulation", rect: { x: entryAtLeft ? W - STAIR_RUN : 0, y: hallY, w: STAIR_RUN, h: HALL } });
+  const hall: Space = { id: "hall", name: "Hall", kind: "corridor", zone: "circulation", rect: { x: 0, y: hallY, w: W, h: HALL } };
+  const spaces: Space[] = [hall];
+  const well = stairs ? { x: entryAtLeft ? W - STAIR_RUN : 0, y: 0, w: STAIR_RUN, h: front } : null;
+  if (well) spaces.push({ id: "stairs", name: "Stairs", kind: "stairs", zone: "circulation", rect: well });
 
   const openings: Opening[] = [];
-  const circulation = spaces.slice();
-  // The circulation space sharing the most wall with a room spanning x..x+w.
-  const doorTo = (x: number, w: number) =>
-    circulation
-      .map((s) => ({ s, lo: Math.max(x, s.rect.x), hi: Math.min(x + w, s.rect.x + s.rect.w) }))
-      .sort((a, b) => b.hi - b.lo - (a.hi - a.lo))[0];
-
-  const strip = (list: ProgramRoom[], y: number, h: number, isFront: boolean) => {
+  const strip = (list: ProgramRoom[], x0: number, length: number, y: number, h: number, isFront: boolean) => {
     const ordered = v.mirror ? [...list].reverse() : [...list];
-    const ws = new Map(ordered.map((r, i) => [r.id, widths(ordered, W)[i]]));
-    // A narrow room that lands where the hall meets the stairs has no wall wide enough for a door.
-    // Slide it one place away from the stairs until every room has one.
-    for (let tries = 0; tries < ordered.length; tries++) {
-      let x = 0;
-      const bad = ordered.findIndex((r) => {
-        const c = doorTo(x, ws.get(r.id)!);
-        x += ws.get(r.id)!;
-        return c.hi - c.lo < DOOR;
-      });
-      if (bad === -1) break;
-      const to = entryAtLeft ? bad - 1 : bad + 1;
-      if (to < 0 || to >= ordered.length) break;
-      [ordered[bad], ordered[to]] = [ordered[to], ordered[bad]];
-    }
-    let x = 0;
-    ordered.forEach((r) => {
-      const w = ws.get(r.id)!;
+    const ws = widths(ordered, length);
+    let x = x0;
+    ordered.forEach((r, i) => {
+      const w = ws[i];
       spaces.push({ id: r.id, name: r.name, kind: r.kind, zone: r.zone, rect: { x, y, w, h } });
-
-      const wallY = isFront ? y + h : y;
-      const circ = doorTo(x, w);
-      if (circ.hi - circ.lo >= DOOR)
-        openings.push({ id: `door-${r.id}`, type: "door", between: [r.id, circ.s.id], x: (circ.lo + circ.hi) / 2, y: wallY, axis: "x", width: DOOR });
-
+      // Doors sit near the corner on the side you arrive from, as an architect would place them, so the
+      // rest of the wall is free for a bed, a sofa or a desk.
+      const dw = Math.min(DOOR, w - 0.2);
+      const dx = entryAtLeft ? x + 0.1 + dw / 2 : x + w - 0.1 - dw / 2;
+      openings.push({ id: `door-${r.id}`, type: "door", between: [r.id, "hall"], x: dx, y: isFront ? y + h : y, axis: "x", width: dw });
       if (!NO_WINDOW.has(r.kind)) {
         const win = r.kind === "bath" ? 0.6 : Math.min(w * 0.5, 2.4);
         openings.push({ id: `win-${r.id}`, type: "window", between: [r.id, "outside"], x: x + w / 2, y: isFront ? 0 : D, axis: "x", width: win });
@@ -134,11 +112,10 @@ export function placeFloor(level: number, rooms: ProgramRoom[], shell: Shell, st
       x += w;
     });
   };
-  strip(frontRooms, 0, front, true);
-  strip(backRooms, backY, D - backY, false);
+  strip(frontRooms, well && !entryAtLeft ? STAIR_RUN : 0, W - (well ? STAIR_RUN : 0), 0, front, true);
+  strip(backRooms, 0, W, backY, D - backY, false);
 
-  if (stairs)
-    openings.push({ id: "door-stairs", type: "door", between: ["stairs", "hall"], x: entryAtLeft ? W - STAIR_RUN : STAIR_RUN, y: hallY + HALL / 2, axis: "y", width: DOOR });
+  if (well) openings.push({ id: "door-stairs", type: "door", between: ["stairs", "hall"], x: well.x + STAIR_RUN / 2, y: hallY, axis: "x", width: DOOR });
   if (level === 0)
     openings.push({ id: "door-entry", type: "door", between: ["hall", "outside"], x: entryAtLeft ? 0 : W, y: hallY + HALL / 2, axis: "y", width: ENTRY });
 

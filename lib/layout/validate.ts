@@ -3,7 +3,10 @@ import type { Floor, Layout, Opening, Rect, Space } from "./schema.ts";
 const EPS = 1e-6;
 
 // Smallest allowed side of a space, in metres.
-const MIN_SIDE: Record<string, number> = { bath: 1.5, corridor: 0.9, stairs: 0.9, storage: 1.2 };
+// A bedroom needs a bed (2 m long) plus the swing of its door, so 2.6 m is its narrowest usable side.
+const MIN_SIDE: Record<string, number> = { bath: 1.5, corridor: 0.9, stairs: 0.9, storage: 1.2, bedroom: 2.6, "guest-room": 2.6 };
+// Smallest usable floor area, in m², for rooms people sleep in.
+const MIN_AREA: Record<string, number> = { bedroom: 7, "guest-room": 7 };
 const minSide = (kind: string) => MIN_SIDE[kind] ?? 2.1;
 
 // Rooms that don't need a window.
@@ -37,6 +40,7 @@ function checkFloor(layout: Layout, floor: Floor, errors: string[]) {
       errors.push(`${at}: ${s.id} is outside the shell`);
     if (Math.min(r.w, r.h) < minSide(s.kind) - EPS)
       errors.push(`${at}: ${s.id} is narrower than ${minSide(s.kind)} m`);
+    if (r.w * r.h < (MIN_AREA[s.kind] ?? 0) - EPS) errors.push(`${at}: ${s.id} is smaller than ${MIN_AREA[s.kind]} m²`);
   }
 
   for (let i = 0; i < floor.spaces.length; i++)
@@ -54,6 +58,24 @@ function checkFloor(layout: Layout, floor: Floor, errors: string[]) {
       if (!r) errors.push(`${at}: ${o.id} joins unknown space ${id}`);
       else if (!onEdge(o, r)) errors.push(`${at}: ${o.id} is not on a wall of ${id}`);
     }
+  }
+
+  // Stairs are reached from a hall or landing; a room whose only door opens into the stairs can't be used.
+  for (const o of floor.openings) {
+    if (o.type !== "door") continue;
+    const [a, b] = o.between.map((id) => byId.get(id));
+    if (!a || !b) continue;
+    const stairsTo = a.kind === "stairs" ? b : b.kind === "stairs" ? a : null;
+    if (stairsTo && stairsTo.zone !== "circulation") errors.push(`${at}: ${stairsTo.id} opens into the stairs`);
+  }
+
+  // Nobody reaches a bedroom, bath or office through the kitchen.
+  const PRIVATE = new Set(["bedroom", "guest-room", "bath", "office"]);
+  for (const o of floor.openings) {
+    if (o.type !== "door") continue;
+    const [a, b] = o.between.map((id) => byId.get(id));
+    if (a && b && ((PRIVATE.has(a.kind) && b.kind === "kitchen") || (PRIVATE.has(b.kind) && a.kind === "kitchen")))
+      errors.push(`${at}: ${PRIVATE.has(a.kind) ? a.id : b.id} opens off the kitchen`);
   }
 
   // Two openings can't share the same stretch of wall: a window over the front door is no door at all.

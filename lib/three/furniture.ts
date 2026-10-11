@@ -1,5 +1,6 @@
 import type { Layout, Opening, Space } from "../layout/schema.ts";
 import { STOREY } from "./geometry.ts";
+import { doorIsOpen, wallPieces } from "../layout/walls.ts";
 
 // Furniture and plants for each room. This file decides what goes where; the 3D view draws each piece
 // from its name (a sofa gets a seat, back, arms and cushions; a kitchen counter gets a sink, hob and fridge).
@@ -23,7 +24,14 @@ type Piece = { name: string; fx: number; fz: number; w: number; d: number; h: nu
 
 const bed = (fx = 0.5): Piece[] => [
   { name: "rug", fx, fz: 0.42, w: 2.6, d: 1.9, h: 0.015, role: "accent" },
-  { name: "bed", fx, fz: 0, w: 2.7, d: 2.05, h: 1.1, role: "textile", or: { name: "bed", fx, fz: 0, w: 2.4, d: 1.9, h: 1.1, role: "textile" } },
+  {
+    name: "bed", fx, fz: 0, w: 2.7, d: 2.05, h: 1.1, role: "textile",
+    // Queen with side tables, then a double with tables, a double alone, and a single for a box room.
+    or: {
+      name: "bed", fx, fz: 0, w: 2.4, d: 1.9, h: 1.1, role: "textile",
+      or: { name: "bed", fx, fz: 0, w: 1.5, d: 2.0, h: 1.1, role: "textile", or: { name: "bed", fx, fz: 0, w: 1.0, d: 2.0, h: 1.1, role: "textile" } },
+    },
+  },
 ];
 const wardrobe: Piece = { name: "wardrobe", fx: 0.96, fz: 0.72, w: 1.5, d: 0.6, h: 2.2, role: "wood", face: [-1, 0] };
 
@@ -32,10 +40,20 @@ const SETS: Record<string, Piece[]> = {
   "guest-room": [...bed(0.45), wardrobe, { name: "desk", fx: 0.1, fz: 0.75, w: 1.1, d: 0.55, h: 0.75, role: "wood", face: [1, 0] }],
   living: [
     { name: "rug", fx: 0.5, fz: 0.42, w: 2.8, d: 2.0, h: 0.015, role: "accent" },
-    { name: "sofa", fx: 0.5, fz: 0.15, w: 2.3, d: 0.95, h: 0.85, role: "textile" },
+    {
+      name: "sofa", fx: 0.5, fz: 0.15, w: 2.3, d: 0.95, h: 0.85, role: "textile",
+      or: { name: "sofa", fx: 0.5, fz: 0.15, w: 1.6, d: 0.9, h: 0.85, role: "textile" },
+    },
     { name: "coffee table", fx: 0.5, fz: 0.42, w: 1.1, d: 0.6, h: 0.42, role: "wood" },
     { name: "armchair", fx: 0.86, fz: 0.42, w: 0.85, d: 0.85, h: 0.85, role: "accent", face: [-1, 0] },
-    { name: "media unit", fx: 0.5, fz: 0.95, w: 1.9, d: 0.42, h: 1.4, role: "wood", face: [0, -1] },
+    {
+      name: "media unit", fx: 0.5, fz: 0.95, w: 1.9, d: 0.42, h: 1.4, role: "wood", face: [0, -1],
+      // A narrower unit beside the door, then a wall-mounted TV on a side wall.
+      or: {
+        name: "media unit", fx: 0.5, fz: 0.95, w: 1.3, d: 0.4, h: 1.3, role: "wood", face: [0, -1],
+        or: { name: "media unit", fx: 0.96, fz: 0.45, w: 1.2, d: 0.4, h: 1.3, role: "wood", face: [-1, 0] },
+      },
+    },
     { name: "floor lamp", fx: 0.1, fz: 0.1, w: 0.4, d: 0.4, h: 1.6, role: "metal" },
     { name: "bookshelf", fx: 0.04, fz: 0.62, w: 0.9, d: 0.35, h: 1.9, role: "wood", face: [1, 0] },
   ],
@@ -53,16 +71,29 @@ const SETS: Record<string, Piece[]> = {
     },
   ],
   dining: [
-    { name: "dining set", fx: 0.5, fz: 0.5, w: 2.0, d: 2.0, h: 2.8, role: "wood" },
+    {
+      name: "dining set", fx: 0.5, fz: 0.5, w: 2.0, d: 2.0, h: 2.8, role: "wood",
+      // Six seats, then four, then a table for two, so a dining room never ends up empty.
+      or: {
+        name: "dining set", fx: 0.5, fz: 0.55, w: 1.6, d: 1.6, h: 2.8, role: "wood",
+        or: { name: "dining set", fx: 0.5, fz: 0.4, w: 1.3, d: 1.3, h: 2.8, role: "wood" },
+      },
+    },
     { name: "sideboard", fx: 0.5, fz: 0.04, w: 1.6, d: 0.45, h: 0.8, role: "wood" },
   ],
   bath: [
     { name: "vanity", fx: 0.28, fz: 0.08, w: 0.9, d: 0.5, h: 1.9, role: "wood" },
     { name: "shower", fx: 0.8, fz: 0.25, w: 0.95, d: 0.95, h: 2.1, role: "base" },
-    { name: "toilet", fx: 0.8, fz: 0.75, w: 0.42, d: 0.68, h: 0.8, role: "base", face: [-1, 0] },
+    {
+      name: "toilet", fx: 0.8, fz: 0.75, w: 0.42, d: 0.68, h: 0.8, role: "base", face: [-1, 0],
+      or: { name: "toilet", fx: 0.2, fz: 0.75, w: 0.42, d: 0.68, h: 0.8, role: "base", face: [1, 0] },
+    },
   ],
   office: [
-    { name: "desk", fx: 0.5, fz: 0.1, w: 1.5, d: 0.7, h: 0.75, role: "wood" },
+    {
+      name: "desk", fx: 0.5, fz: 0.1, w: 1.5, d: 0.7, h: 0.75, role: "wood",
+      or: { name: "desk", fx: 0.2, fz: 0.1, w: 1.1, d: 0.6, h: 0.75, role: "wood" },
+    },
     { name: "office chair", fx: 0.5, fz: 0.3, w: 0.6, d: 0.6, h: 1.05, role: "metal", face: [0, -1] },
     { name: "bookshelf", fx: 0.9, fz: 0.75, w: 0.9, d: 0.35, h: 1.9, role: "wood", face: [-1, 0] },
     { name: "rug", fx: 0.5, fz: 0.3, w: 1.6, d: 1.2, h: 0.015, role: "accent" },
@@ -116,8 +147,9 @@ export function orient(room: Space, door: Opening | undefined) {
 const overlaps = (a: { x: number; z: number; w: number; d: number }, b: { x: number; z: number; w: number; d: number }) =>
   Math.abs(a.x - b.x) * 2 < a.w + b.w && Math.abs(a.z - b.z) * 2 < a.d + b.d;
 
-export function doorClearance(door: Opening, room: Space) {
-  const into = 0.85;
+/** The space a door needs kept clear inside the room: 0.85 m for a real door, 0.6 m to walk through an open-plan gap. */
+export function doorClearance(door: Opening, room: Space, open = false) {
+  const into = open ? 0.6 : 0.85;
   const cx = room.rect.x + room.rect.w / 2;
   const cz = room.rect.y + room.rect.h / 2;
   if (door.axis === "x") return { x: door.x, z: door.y + (cz > door.y ? into / 2 : -into / 2), w: door.width + 0.4, d: into };
@@ -140,11 +172,12 @@ export function furnish(layout: Layout, { lush = false } = {}): Item[] {
   const items: Item[] = [];
   for (const floor of layout.floors) {
     const base = floor.level * STOREY;
+    const pieces = wallPieces(floor, layout.shell);
     for (const room of floor.spaces.filter((s) => s.zone !== "circulation")) {
       const door = floor.openings.find((o) => o.type === "door" && o.between[0] === room.id);
       const { origin, u, v, W, D } = orient(room, door);
       // Keep the door's swing clear: 0.85 m into the room, a little wider than the door.
-      const clear = door ? doorClearance(door, room) : null;
+      const clear = door ? doorClearance(door, room, doorIsOpen(door, pieces)) : null;
       const place = (p: Piece): void => {
         const [fu, fv] = p.face ?? [0, 1];
         const sideways = fu !== 0;
@@ -175,4 +208,25 @@ export function furnish(layout: Layout, { lush = false } = {}): Item[] {
     }
   }
   return items;
+}
+
+// What makes a room usable: a living room needs somewhere to sit and a TV, a dining room a table, and so on.
+export const ESSENTIALS: Record<string, string[]> = {
+  living: ["sofa", "media unit"],
+  dining: ["dining set"],
+  bedroom: ["bed"],
+  "guest-room": ["bed"],
+  kitchen: ["kitchen run"],
+  bath: ["toilet"],
+  office: ["desk"],
+};
+
+/** The essentials each room is missing, as "room-id: piece". Empty means every room is usable. */
+export function missingEssentials(layout: Layout, items: Item[] = furnish(layout)): string[] {
+  const out: string[] = [];
+  for (const f of layout.floors)
+    for (const room of f.spaces)
+      for (const need of ESSENTIALS[room.kind] ?? [])
+        if (!items.some((i) => i.room === room.id && i.level === f.level && i.name === need)) out.push(`${room.id}: ${need}`);
+  return out;
 }
