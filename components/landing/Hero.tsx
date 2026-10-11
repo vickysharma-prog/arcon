@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
+import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from "motion/react";
 import { useEffect, useState, type PointerEvent } from "react";
 import { Logo } from "@/components/Logo";
 import { ProfileMenu } from "@/components/ProfileMenu";
@@ -61,10 +61,6 @@ const WORDS = ["who you are", "what you love", "how you live", "how you work"];
 export function Hero() {
   const still = useReducedMotion();
   const [word, setWord] = useState(0);
-  const px = useMotionValue(0.5);
-  const py = useMotionValue(0.5);
-  const rotY = useSpring(useTransform(px, [0, 1], [-7, 7]), { stiffness: 120, damping: 18 });
-  const rotX = useSpring(useTransform(py, [0, 1], [6, -6]), { stiffness: 120, damping: 18 });
 
   useEffect(() => {
     if (still) return;
@@ -78,8 +74,6 @@ export function Hero() {
     const y = (e.clientY - r.top) / r.height;
     e.currentTarget.style.setProperty("--mx", `${x * 100}%`);
     e.currentTarget.style.setProperty("--my", `${y * 100}%`);
-    px.set(x);
-    py.set(y);
   };
 
   return (
@@ -144,7 +138,7 @@ export function Hero() {
           <p className="mt-5 text-sm text-ink-soft">English, हिंदी or Hinglish · type or talk · no account needed</p>
         </div>
 
-        <motion.div style={still ? undefined : { rotateX: rotX, rotateY: rotY, transformPerspective: 1200 }} initial={still ? false : { opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
+        <motion.div initial={still ? false : { opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
           <Showcase />
         </motion.div>
       </div>
