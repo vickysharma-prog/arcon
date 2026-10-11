@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatedMark } from "@/components/AnimatedMark";
 import { Decode, TypeLog } from "@/components/fx/Decode";
 import { processingLog } from "@/lib/design/log";
@@ -19,6 +19,9 @@ import { creditOf, sayCredit, styleWords, tasteTrail } from "@/lib/design/trail"
 import { TasteTrail } from "./TasteTrail";
 import { Moodboard } from "./Moodboard";
 import { BudgetStep } from "./BudgetStep";
+import { choicesOf, type Ticked } from "@/lib/green/improve";
+
+const greenTicked = (interview: Record<string, unknown> | null | undefined): Ticked => (Array.isArray(interview?.green) ? (interview.green as Ticked) : []);
 
 type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null };
 
@@ -29,6 +32,9 @@ export function ProjectView({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   const [work, setWork] = useState(0);
   const [step, setStepState] = useState<StepId>("brief");
+  // One object per saved list, so the 3D only re-furnishes when the plants actually change.
+  const green = p?.interview?.green;
+  const extraPlants = useMemo(() => choicesOf(greenTicked({ green })).extra, [green]);
   const [choosing, setChoosing] = useState<number | null>(null);
   const [started, setStarted] = useState(false);
   const key = `arcon-step-${id}`;
@@ -153,6 +159,7 @@ export function ProjectView({ id }: { id: string }) {
           {step === "walkthrough" && (
             <WalkthroughStep
               layout={p.options[p.chosen_option ?? 0]}
+              extraPlants={extraPlants}
               brief={p.brief}
               taste={p.taste}
               title={p.title}
@@ -171,6 +178,8 @@ export function ProjectView({ id }: { id: string }) {
               brief={p.brief}
               profile={p.taste}
               lot={p.site.width && p.site.depth ? { width: p.site.width, depth: p.site.depth } : null}
+              ticked={greenTicked(p.interview)}
+              onTicked={(t) => setP((old) => (old ? { ...old, interview: { ...old.interview, green: t } } : old))}
             />
           )}
           {step === "drawings" && <Coming title="Your drawings" text="Plans you can download and share with your architect or builder." />}

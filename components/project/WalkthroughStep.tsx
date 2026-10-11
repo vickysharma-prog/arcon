@@ -19,9 +19,9 @@ const HouseScene = dynamic(() => import("@/components/three/HouseScene"), {
 });
 
 export function WalkthroughStep({
-  layout, brief, taste, title, option = 0, planName, changePlan, next,
+  layout, brief, taste, title, option = 0, planName, changePlan, next, extraPlants,
 }: {
-  layout: Layout; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null;
+  layout: Layout; extraPlants?: Record<string, number>; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null;
   /** Which of the three plan options this is, and a way back to pick another. */
   option?: number; planName?: string; changePlan?: () => void;
   next?: { label: string; go: () => void };
@@ -99,6 +99,7 @@ export function WalkthroughStep({
       <div ref={box} className={`relative mt-3 overflow-hidden border-line bg-paper-raised ${full ? "h-screen" : "h-[calc(100svh-218px)] min-h-[340px] rounded-2xl border"}`}>
         <HouseScene
           layout={layout}
+          extraPlants={extraPlants}
           brief={brief}
           taste={taste}
           fitKey={fitKey}

@@ -733,6 +733,14 @@ export function Model({ it, k }: { it: Item; k: Scheme }) {
     case "plant":
       body = <Plant w={w} h={h} k={k} />;
       break;
+    case "wall plant":
+      body = (
+        <>
+          <B p={[0, -0.02, 0]} s={[w + 0.1, 0.03, d]} c={k.wood} f={{ r: 0.5 }} />
+          <Plant w={w} h={h} k={k} />
+        </>
+      );
+      break;
     case "feature wall":
       body = <FeatureWall w={w} d={d} h={h} />;
       break;

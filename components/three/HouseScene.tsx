@@ -20,6 +20,8 @@ export type Mode = "walk" | "explore" | "orbit";
 
 type Props = {
   layout: Layout;
+  /** Plants the client added to raise the greenery score, by room id. */
+  extraPlants?: Record<string, number>;
   /** Look-around only: lift the roof off, and show floors up to this level ("all" keeps every floor). */
   cutaway?: boolean;
   upTo?: number | "all";
@@ -51,7 +53,7 @@ function wallGeom(w: WallBox | Glass, thick: number) {
     : { position: [w.at, y, mid] as const, size: [thick, h, len] as const };
 }
 
-function Building({ layout, colors, look, cutaway = false, upTo = "all" }: { layout: Layout; colors: Scheme; look: Look; cutaway?: boolean; upTo?: number | "all" }) {
+function Building({ layout, colors, look, cutaway = false, upTo = "all", extraPlants }: { layout: Layout; colors: Scheme; look: Look; cutaway?: boolean; upTo?: number | "all"; extraPlants?: Record<string, number> }) {
   const shown = (level: number) => upTo === "all" || level <= upTo;
   // Show inside cuts the top floor's walls at 1.4 m, like an architect's section, so every room reads from above.
   const topShown = upTo === "all" ? (layout.floors.at(-1)?.level ?? 0) : upTo;
@@ -63,7 +65,7 @@ function Building({ layout, colors, look, cutaway = false, upTo = "all" }: { lay
   const glass = built.glass.filter((g) => shown(g.level) && g.y0 < cutAt(g.level)).map((g) => ({ ...g, y1: Math.min(g.y1, cutAt(g.level)) }));
   const allSlabs = useMemo(() => buildSlabs(layout), [layout]);
   const slabs = allSlabs.filter((s) => shown(s.level) && !(s.kind === "stairs" && s.level > 0));
-  const allItems = useMemo(() => [...furnish(layout, { lush: look.lush }), ...decorate(layout)], [layout, look.lush]);
+  const allItems = useMemo(() => [...furnish(layout, { lush: look.lush, extraPlants }), ...decorate(layout)], [layout, look.lush, extraPlants]);
   const items = allItems
     .filter((i) => shown(i.level))
     .flatMap((it) => {
@@ -577,7 +579,7 @@ export default function HouseScene(props: Props) {
   const orbit = props.mode === "orbit";
   const top = props.layout.floors.at(-1)?.level ?? 0;
   const building = (
-    <Building layout={props.layout} colors={colors} look={look} cutaway={orbit && props.cutaway} upTo={orbit ? props.upTo : "all"} />
+    <Building layout={props.layout} colors={colors} look={look} cutaway={orbit && props.cutaway} upTo={orbit ? props.upTo : "all"} extraPlants={props.extraPlants} />
   );
   return (
     <Canvas

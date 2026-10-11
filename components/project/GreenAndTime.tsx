@@ -6,16 +6,32 @@ import type { Brief } from "@/lib/design/brief";
 import type { Profile } from "@/lib/qloo/taste";
 import type { Tier } from "@/lib/budget/costs";
 import { timeline } from "@/lib/budget/timeline";
-import { greenery } from "@/lib/green/score";
+import { choicesOf, fixes, scoreWith, type Ticked } from "@/lib/green/improve";
 import type { EcoBrand, Nursery } from "@/lib/green/eco";
-import { furnish } from "@/lib/three/furniture";
 import { look } from "@/lib/three/materials";
 
-type Props = { id: string; layout: Layout; brief: Brief | null; taste: Profile | null; lot: Shell | null; tier: Tier; newBuild: boolean; said: string[] };
+type Props = {
+  id: string;
+  layout: Layout;
+  brief: Brief | null;
+  taste: Profile | null;
+  lot: Shell | null;
+  tier: Tier;
+  newBuild: boolean;
+  said: string[];
+  /** Greenery changes ticked so far, and where to report a new list (the 3D reads it). */
+  ticked: Ticked;
+  onTicked: (t: Ticked) => void;
+};
+
+/** A Google Maps search for a place: opens the map on any device, no key needed. */
+export const mapsLink = (name: string, address: string) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([name, address].filter(Boolean).join(", "))}`;
 
 // How long it takes, and how green it is: a phase chart, then the greenery score with one tip per room, the eco
 // brands in their taste and plant nurseries near the site.
-export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, said }: Props) {
+export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, said, ticked, onTicked }: Props) {
+  const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const [eco, setEco] = useState<{ brands: EcoBrand[]; nurseries: Nursery[] } | null>(null);
   useEffect(() => {
     let live = true;
@@ -29,8 +45,17 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
   }, [id]);
 
   const t = useMemo(() => timeline(layout, tier, newBuild), [layout, tier, newBuild]);
-  // The same furniture the 3D shows, so the plants counted are the plants you see.
-  const g = useMemo(() => greenery(layout, furnish(layout, { lush: look(brief, taste).lush }), brief?.plants ?? [], lot), [layout, brief, taste, lot]);
+  // The same furniture the 3D shows (with any plants they added), so the plants counted are the plants you see.
+  const input = useMemo(() => ({ layout, briefPlants: brief?.plants ?? [], lot, lush: look(brief, taste).lush }), [layout, brief, taste, lot]);
+  const g = useMemo(() => scoreWith(input, choicesOf(ticked)), [input, ticked]);
+  const open = useMemo(() => fixes(input, ticked), [input, ticked]);
+  const save = (next: Ticked) => {
+    onTicked(next);
+    setSaving("saving");
+    fetch(`/api/projects/${id}/green`, { method: "POST", body: JSON.stringify({ ticked: next }) })
+      .then((r) => setSaving(r.ok ? "saved" : "failed"))
+      .catch(() => setSaving("failed"));
+  };
   const months = Math.round((t.weeks / 4.35) * 2) / 2;
 
   return (
@@ -91,6 +116,38 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
           ))}
         </ul>
 
+        {(open.length > 0 || ticked.length > 0) && (
+          <div className="mt-6">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className="font-serif text-xl">Ways to raise your score</h3>
+              <p className="text-xs text-ink-soft" aria-live="polite">
+                {saving === "saving" ? "Saving…" : saving === "saved" ? "Saved: the walkthrough shows these plants" : saving === "failed" ? "Couldn't save. Try again." : "Tick a change to add it to your design."}
+              </p>
+            </div>
+            <ul className="mt-2 space-y-2 text-sm">
+              {ticked.map((f) => (
+                <li key={f.id}>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-leaf/40 bg-leaf/5 p-3">
+                    <input type="checkbox" checked onChange={() => save(ticked.filter((x) => x.id !== f.id))} className="mt-0.5 h-4 w-4 accent-[var(--leaf)]" />
+                    <span className="flex-1">{f.label}</span>
+                    <span className="text-xs text-leaf">added</span>
+                  </label>
+                </li>
+              ))}
+              {open.map((f) => (
+                <li key={f.id}>
+                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line p-3 transition hover:border-leaf/60">
+                    <input type="checkbox" checked={false} onChange={() => save([...ticked, { id: f.id, label: f.label, change: f.change }])} className="mt-0.5 h-4 w-4 accent-[var(--leaf)]" />
+                    <span className="flex-1">{f.label}</span>
+                    <span className="tabular-nums text-leaf">+{f.gain >= 1 ? Math.round(f.gain) : "<1"}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+            {!open.length && g.score < 100 && <p className="mt-2 text-xs text-ink-soft">That's all this plan has room for: the rest would need more floor or window space.</p>}
+          </div>
+        )}
+
         {eco && (eco.brands.length > 0 || eco.nurseries.length > 0) && (
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             {eco.brands.length > 0 && (
@@ -114,8 +171,11 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
                 <ul className="mt-2 space-y-2 text-sm">
                   {eco.nurseries.map((n) => (
                     <li key={n.name}>
-                      <span className="font-medium">{n.name}</span>
-                      {n.address && <p className="text-ink-soft">{n.address}</p>}
+                      <a href={mapsLink(n.name, n.address)} target="_blank" rel="noopener noreferrer" className="group block rounded-lg p-1 -m-1 hover:bg-paper">
+                        <span className="font-medium group-hover:underline">{n.name}</span>
+                        {n.address && <p className="text-ink-soft">{n.address}</p>}
+                        <span className="text-xs text-leaf">Open in Google Maps ↗</span>
+                      </a>
                     </li>
                   ))}
                 </ul>

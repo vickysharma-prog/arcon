@@ -2,6 +2,18 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-13 (evening): Raise the greenery score, and it changes the design
+
+Vicky: show ways to improve the score, let the user tick them, and change the plan so it means something.
+The greenery card now lists changes with the points each adds (worked out by applying it and scoring again):
+more plants in a room (floor spots first, then wall shelves above the furniture when the floor is full), a plant
+that suits a room's light and is easy to keep, a new kind of plant, planting along the garden edge. Ticking saves
+the change to the project and the walkthrough places the plants; unticking undoes exactly that change. Tested:
+ticking every suggestion takes the house, apartment, café and office templates and Vicky's plan to 100, each tick
+raising the score. A suggestion worth under a point is still offered (rounding had hidden the last ones). Every
+nursery links to Google Maps. Local searches now step out from a neighbourhood to its city, because Qloo found no
+nurseries for "Koregaon Park, Pune" but three for "Pune". Vicky's plan projects are set to Koregaon Park, Pune.
+
 ## 2026-10-13 (later): Timeline and greenery (B3, Q6)
 
 The budget step now also shows how long and how green. Timeline: phases from design to handover (permits and

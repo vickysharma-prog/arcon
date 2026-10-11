@@ -165,6 +165,19 @@ const PLANT: Piece = {
 // A taste that leans green (gardens, botanical places) gets a second, smaller plant in the opposite corner.
 const LUSH_PLANT: Piece = { name: "plant", fx: 0.06, fz: 0.92, w: 0.45, d: 0.45, h: 0.9, role: "plant" };
 
+// Plants the client added to raise the greenery score: every corner, then the middle of each wall, so each one
+// finds the next free spot. The usual plant above is untouched, so a design without additions stays the same.
+const SPOTS: [number, number][] = [[0.94, 0.08], [0.06, 0.08], [0.94, 0.92], [0.06, 0.92], [0.5, 0.06], [0.06, 0.5], [0.94, 0.5], [0.5, 0.94]];
+// When the floor is full (a bedroom with its bed and wardrobe), a plant goes on a wall shelf above the furniture.
+const SHELVES: [number, number, [number, number]][] = [
+  [0.25, 0.02, [0, 1]], [0.75, 0.02, [0, 1]], [0.02, 0.3, [1, 0]], [0.98, 0.3, [-1, 0]],
+  [0.02, 0.7, [1, 0]], [0.98, 0.7, [-1, 0]], [0.25, 0.98, [0, -1]], [0.75, 0.98, [0, -1]],
+];
+const EXTRA_PLANT: Piece = chain([
+  ...SPOTS.map(([fx, fz]) => ({ name: "plant", fx, fz, w: 0.45, d: 0.45, h: 1.0, role: "plant" as const })),
+  ...SHELVES.map(([fx, fz, face]) => ({ name: "wall plant", fx, fz, w: 0.4, d: 0.25, h: 0.45, role: "plant" as const, lift: 1.75, face })),
+]);
+
 // The room's "back" is the wall facing its door, so furniture sits against it and the door stays clear.
 type Frame = { origin: number[]; u: number[]; v: number[]; W: number; D: number };
 
@@ -215,12 +228,13 @@ function slideClear(box: Box, clear: Box, room: Space, alongZ: boolean): Box | n
 }
 
 // Pieces that stand with their back to a wall, so it must be a real wall, not an open-plan edge.
-const AGAINST_WALL = new Set(["bookshelf", "wardrobe", "media unit", "sideboard", "kitchen run", "shelving", "vanity", "washer", "mirror", "wall screen", "bed"]);
+const AGAINST_WALL = new Set(["bookshelf", "wardrobe", "media unit", "sideboard", "kitchen run", "shelving", "vanity", "washer", "mirror", "wall screen", "bed", "wall plant"]);
 // Tall pieces that would cover a window. (A kitchen run is fine: the sink goes under the window.)
 const TALL = new Set(["bookshelf", "wardrobe", "media unit", "shelving", "mirror", "wall screen"]);
 const SILL_HEIGHT = 0.9;
 
-export function furnish(layout: Layout, { lush = false } = {}): Item[] {
+/** `extraPlants`: plants added to rooms (by room id) to raise the greenery score. */
+export function furnish(layout: Layout, { lush = false, extraPlants = {} as Record<string, number> } = {}): Item[] {
   const items: Item[] = [];
   for (const floor of layout.floors) {
     const base = floor.level * STOREY;
@@ -256,6 +270,7 @@ export function furnish(layout: Layout, { lush = false } = {}): Item[] {
       const furnishAs = ({ origin, u, v, W, D }: Frame): Item[] => {
       const roomItems: Item[] = [];
       const placed: Box[] = [];
+      const shelves: Box[] = [];
       const place = (p: Piece): void => {
         const [fu, fv] = p.face ?? [0, 1];
         const sideways = fu !== 0;
@@ -285,13 +300,15 @@ export function furnish(layout: Layout, { lush = false } = {}): Item[] {
         // A piece backed against a wall needs a solid wall there, clear of windows if it's tall.
         if (AGAINST_WALL.has(p.name) && !wallOk(box, dx, dz, (p.lift ?? 0) + p.h > SILL_HEIGHT && TALL.has(p.name))) return p.or && place(p.or);
         // Nothing stands inside anything else (a rug lies under things, so it doesn't count).
-        if (p.name !== "rug" && placed.some((q) => overlaps(box, q))) return p.or && place(p.or);
-        if (p.name !== "rug") placed.push(box);
+        // A wall plant hangs above the furniture, so it only has to miss other wall plants.
+        const high = p.name === "wall plant";
+        if (p.name !== "rug" && (high ? shelves : placed).some((q) => overlaps(box, q))) return p.or && place(p.or);
+        if (p.name !== "rug") (high ? shelves : placed).push(box);
         roomItems.push({ room: room.id, name: p.name, ...box, y: base + (p.lift ?? 0), h: p.h, lw, ld, rot: Math.atan2(dx, dz), role: p.role, level: floor.level });
       };
       // A powder room, WC or restroom is a half bath: toilet and basin, no shower.
       const half = room.kind === "bath" && /powder|wc|restroom|toilet/i.test(room.name);
-      for (const p of [...setFor(room, layout.spaceType, W, D).filter((q) => !(half && q.name === "shower")), PLANT, ...(lush ? [LUSH_PLANT] : [])]) place(p);
+      for (const p of [...setFor(room, layout.spaceType, W, D).filter((q) => !(half && q.name === "shower")), PLANT, ...(lush ? [LUSH_PLANT] : []), ...Array<Piece>(extraPlants[room.id] ?? 0).fill(EXTRA_PLANT)]) place(p);
       return roomItems;
       };
       const needs = essentialsFor(room.kind, layout.spaceType);
