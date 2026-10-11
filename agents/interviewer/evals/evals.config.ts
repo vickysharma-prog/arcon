@@ -5,8 +5,9 @@ const google = createGoogleGenerativeAI({ apiKey: process.env.GOOGLE_GENERATIVE_
 
 export default defineEvalConfig({
   timeoutMs: 180_000,
-  // The free Gemini tier allows only a few requests a minute, so evals run one at a time
-  // and the judge uses a different model from the agent, with its own quota.
+  // The free Gemini tier allows only a few requests a minute, so evals run one at a time and the judge uses
+  // Flash-Lite, whose quota is separate from the agent's (a Flash judge used up the app's daily quota).
+  // Flash-Lite sometimes scores a correct reply 0: read the reply before trusting a judge failure.
   maxConcurrency: 1,
   judge: { model: google.decisionModel("gemini-3.1-flash-lite") },
 });

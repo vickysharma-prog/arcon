@@ -84,9 +84,11 @@ function band(
   const rest = rooms.filter((r) => !living.includes(r)).sort((a, b) => b.area - a.area);
   let near = [...living];
   let far: ProgramRoom[] = [];
-  // Fill the far row toward its share of the depth, biggest rooms first; one lone room spans the full depth.
+  // Fill the far row toward its share of the depth, biggest rooms first: a room goes there only if that brings
+  // the row closer to its share, so a big room never lands in a shallow row. One lone room spans the full depth.
   const farShare = livingAt === "front" ? (D - split) / D : split / D;
-  for (const r of rest) (sum(far) < sum(rooms) * farShare ? far : near).push(r);
+  const target = sum(rooms) * farShare;
+  for (const r of rest) (Math.abs(sum(far) + r.area - target) < Math.abs(sum(far) - target) ? far : near).push(r);
   if (!near.length) [near, far] = [far.slice(0, 1), far.slice(1)];
   // Keep the kitchen away from the wings, so bedrooms and baths open off the living or dining area instead.
   const awayFromWings = (row: ProgramRoom[]) => {

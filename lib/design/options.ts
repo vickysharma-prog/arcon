@@ -1,6 +1,7 @@
 import { CONCEPT_IDS, placeConcept, type ConceptId, type Tweaks } from "../layout/concepts.ts";
 import type { Layout, Program, Shell } from "../layout/schema.ts";
 import { HOME_TYPES, livingOf, type Living } from "../interview/living.ts";
+import { runningOf } from "../interview/running.ts";
 import type { Profile } from "../qloo/taste.ts";
 
 // The three plans a client sees: the layout concepts that fit how they live, best first, each with the reasons
@@ -103,6 +104,25 @@ export function rank(who: Who): Scored[] {
   if (living.outlook === "garden") add("hall-garden", 2.5, `${quoted(said.outlook, "You want the living room to face the garden")}, so it opens onto the back.`);
   if (living.outlook === "street") add("hall-street", 2, `${quoted(said.outlook, "You like the living room to face the street")}, so it sits at the front.`);
 
+  // How a business runs: the café's service and kitchen, the office's way of working, the shop's display.
+  const run = home ? {} : runningOf(who.interview);
+  const rs = run.said ?? {};
+  if (run.service === "takeaway") add("hall-street", 2.5, `${quoted(rs.service, "Most customers take away")}, so the counter faces the street and the queue never crosses the seats.`);
+  if (run.service === "both") add("hall-street", 1, `${quoted(rs.service, "Some customers stay and some take away")}, so the counter sits by the door with the seats beyond it.`);
+  if (run.service === "dine-in") add("great-room", 2.5, `${quoted(rs.service, "Most customers sit down")}, so the seating is one open room.`);
+  if (run.kitchen === "full") add("split", 1.5, `${quoted(rs.kitchen, "You cook full meals")}, so the kitchen has its own end, with its heat and noise away from the seats.`);
+  if (run.kitchen === "prep") add("great-room", 1, `${quoted(rs.kitchen, "You only make coffee and light food")}, so prep happens behind the counter in the main room.`);
+  if (run.outdoor) add("hall-garden", 2.5, `${quoted(rs.outdoor, "You want seating outside")}, so the guest spaces open onto the back.`);
+  if (run.work === "together") add("great-room", 3, `${quoted(rs.work, "Your team works together most of the day")}, so the workspace is one open floor.`);
+  if (run.work === "focus") add("split", 3, `${quoted(rs.work, "Your team does focused work")}, so the desks and focus rooms sit in wings on either side, away from reception and the meeting room.`);
+  if (run.work === "mixed") {
+    add("split", 1.5, `${quoted(rs.work, "Your team works both alone and together")}, so there's an open middle and quiet ends.`);
+    add("great-room", 1);
+  }
+  if (run.visitors) add("hall-street", 2, `${quoted(rs.visitors, "Clients come in")}, so reception and the meeting room are by the front door and visitors never walk through the team.`);
+  if (run.display === "browse") add("great-room", 2.5, `${quoted(rs.display, "Customers like to wander and browse")}, so the shop floor is one open space.`);
+  if (run.display === "showcase") add("hall-street", 2.5, `${quoted(rs.display, "You show a few pieces off")}, so the display faces the street window.`);
+
   if (social.weight > 0) add("great-room", Math.min(2, social.weight * 0.5), `${social.who} lean lively and social, so ${openSpace}.`);
   if (quiet.weight > 0) add("split", Math.min(2, quiet.weight * 0.5), `${quiet.who} lean calm and intimate, so ${privateRooms}.`);
   if (outdoor.weight > 0) add("hall-garden", Math.min(1.5, outdoor.weight * 0.5), `${outdoor.who} lean toward the outdoors, so ${toGarden}.`);
@@ -118,6 +138,12 @@ export function adjust(program: Program, who: Who): { program: Program; tweaks: 
   if (living.workVisitors && rooms.some((r) => r.kind === "office" && r.zone === "private")) {
     rooms = rooms.map((r) => (r.kind === "office" && r.zone === "private" ? { ...r, zone: "public" as const } : r));
     why.push(`${quoted(living.said?.workVisitors, "Clients come to your home office")}, so the office is near the front door, away from the bedrooms.`);
+  }
+  // Visitors to an office go to the meeting room, so it belongs with the rooms by the front door.
+  const run = runningOf(who.interview);
+  if (run.visitors && rooms.some((r) => r.kind === "meeting" && r.zone !== "public")) {
+    rooms = rooms.map((r) => (r.kind === "meeting" ? { ...r, zone: "public" as const } : r));
+    why.push(`${quoted(run.said?.visitors, "Clients come in")}, so the meeting room is near the front door.`);
   }
   return { program: { ...program, rooms }, tweaks: { closedKitchen: living.kitchen === "closed" }, why };
 }

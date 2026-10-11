@@ -10,8 +10,8 @@ export default defineTool({
     "Record what is being designed and the site: the kind of space, the plot or floor size, the number of floors and the location. Call it whenever the user gives any of these; omit what you don't know yet.",
   inputSchema: z.object({
     spaceType: SpaceType.optional().describe("house, apartment, office, cafe (also restaurants), hotel, shop (also showrooms) or studio"),
-    width: z.number().positive().optional().describe("street-side width of the plot or floor"),
-    depth: z.number().positive().optional().describe("front-to-back depth of the plot or floor"),
+    width: z.number().positive().optional().describe("street-side width of the plot or floor: the first number in '40 by 60'"),
+    depth: z.number().positive().optional().describe("front-to-back depth of the plot or floor: the second number in '40 by 60'. Always send it with width when the user gave both"),
     unit: z.enum(["ft", "m"]).default("ft").describe("unit the user gave the size in"),
     floors: z.number().int().min(1).max(2).optional(),
     location: z.string().optional().describe("city and state or country, or a ZIP code"),

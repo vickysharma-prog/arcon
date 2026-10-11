@@ -6,6 +6,7 @@ import { TEMPLATES } from "../layout/templates.ts";
 import { validate } from "../layout/validate.ts";
 import { buildingShell } from "../layout/footprint.ts";
 import type { Project } from "../project/store.ts";
+import { runningOf, runningSizes } from "../interview/running.ts";
 
 export const KINDS = [
   "living", "kitchen", "dining", "bedroom", "bath", "office", "laundry", "storage", "closet",
@@ -70,6 +71,7 @@ export function templateFor(spaceType: SpaceType, floors: number): Program {
 export function programPrompt(p: Project, floors: number): string {
   const shell = `${(p.site.width ?? 0).toFixed(1)} m wide by ${(p.site.depth ?? 0).toFixed(1)} m deep`;
   const example = templateFor(p.space_type ?? "house", floors).rooms.map((r) => ({ name: r.name, kind: r.kind, area: r.area, zone: r.zone, floor: r.floor }));
+  const sizes = runningSizes(p.space_type, runningOf(p.interview));
   return `List the rooms this project needs.
 
 Project: a ${p.space_type} on a site ${shell}, ${floors} floor(s) (floor 0 is the ground floor).
@@ -83,7 +85,9 @@ Rules:
 - Areas are in square metres. Size rooms for how these people live, not to fill the site: the building is sized to its rooms and the rest of the site becomes garden.
 - zone: "public" for shared and guest-facing rooms, "private" for bedrooms and focused work, "service" for baths, laundry, storage and kitchens in businesses.
 - Every floor must have at least two rooms. Put a home's bedrooms upstairs when there are two floors.
-- No corridors or stairs: the layout adds them.`;
+- No corridors or stairs: the layout adds them.${sizes.length ? `
+How they run it, so size the rooms from this:
+${sizes.map((l) => `- ${l}`).join("\n")}` : ""}`;
 }
 
 export type ProgramResult = { program: Program; options: Layout[]; source: "model" | "template" };

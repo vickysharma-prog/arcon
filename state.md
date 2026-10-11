@@ -21,6 +21,7 @@ Where Arcon stands right now. Updated as we go (Vicky's rule): progress, context
 
 ## In progress
 
+- A5: how a business runs. Built: save_running tool, ranking with the user's words, program sizing, evals.
 - A4: bring your own plan. Built and working end to end (upload at /start/plan, Gemini reads it, snap cleans it, Check your plan screen, taste, then the user's plan plus two engine alternatives). Checked live end to end (upload, check, design, plans) and with a PDF. Taste questions: all three required, each looked up by kind and shown to the user before use. Later polish: show the uploaded image beside the read plan (needs file storage).
 
 ## Next

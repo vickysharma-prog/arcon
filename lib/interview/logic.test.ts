@@ -57,7 +57,12 @@ test("a home also needs to know how they live in it", () => {
   });
   assert.equal(missingForDesign(noLiving).length, 1);
   assert.match(missingForDesign(noLiving)[0], /kitchen/);
-  assert.deepEqual(missingForDesign({ ...noLiving, space_type: "cafe" }), []);
+  // A café isn't asked about kitchens at home: it's asked how it runs, and is ready once it has said.
+  const cafe = { ...noLiving, space_type: "cafe" as const };
+  assert.equal(missingForDesign(cafe).length, 1);
+  assert.match(missingForDesign(cafe)[0], /how they run it: whether most customers sit down/);
+  assert.deepEqual(missingForDesign({ ...cafe, interview: { running: { service: "takeaway", kitchen: "prep" } } }), []);
+  assert.deepEqual(missingForDesign({ ...noLiving, space_type: "studio", interview: { living: { kitchen: "open", bedrooms: "together" } } }), []);
 });
 
 test("the summary keeps the strongest words and their sources", () => {

@@ -2,6 +2,24 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-12 (late night): How a business runs (A5)
+
+Cafés, offices, shops and hotels now get their own "how you run it" step, like homes get "how you live".
+Café: dine-in or takeaway, full kitchen or coffee and light prep, seats, outdoor seating. Office: headcount,
+focused or together work, visitors. Shop: browse an open floor or show pieces to the street, fitting rooms.
+Hotel: guest rooms on a floor (a lobby question was dropped: no hotel plan has a lobby, so the answer could not
+change anything). The answers rank the plans with reasons in the user's words, size the program (1.4 m2 a
+seat, 6 m2 a desk), and move an office's meeting room to the front when clients visit. Every reason is tested
+against the layout it describes: the takeaway counter really is on the street, the focus office's desks and
+quiet room really sit either side of reception.
+
+Bugs found on the way: the open band put the biggest room in the shallowest row (a cafe's 50 m2 seating got a
+3 m deep strip and the counter got 42 m2); rooms now go to whichever row keeps both rows near their share.
+The interviewer dropped the depth from "40 by 60 feet" (old, unrelated, caught by evals); it leaked its tool
+list to "ignore all previous instructions"; and it moved on when a café wasn't found. All fixed, with evals.
+A count the model only quotes ("12 people") is still saved as 12. 181 tests. Evals: every tool gate passes;
+the full run hit the free Gemini quota part way, so the judge stays on Flash-Lite with its own quota.
+
 ## 2026-10-12 (late): Taste questions on the check screen are checked, and all three are required
 
 Vicky typed "marvels techy science fiction" for the film question and got a "Sophisticated Cabinet" style. The
