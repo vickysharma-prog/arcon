@@ -112,7 +112,9 @@ body {
 @keyframes intro-out {
   to { opacity: 0; visibility: hidden; transform: scale(1.04); }
 }
-.intro { animation: intro-out 0.6s cubic-bezier(0.7, 0, 0.3, 1) 2.3s forwards; }
+/* Without scripts, or if nobody taps, the intro still fades out on its own. */
+.intro { animation: intro-out 0.6s cubic-bezier(0.7, 0, 0.3, 1) 9s forwards; }
+.intro.intro-leaving { animation: intro-out 0.55s cubic-bezier(0.7, 0, 0.3, 1) forwards; }
 .intro-seed { opacity: 0; animation: intro-seed 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) forwards; }
 .intro-letter { opacity: 0; display: inline-block; animation: intro-letter 0.6s ease-out forwards; }
 .intro-bar { width: 0; animation: intro-bar 1.9s cubic-bezier(0.6, 0, 0.2, 1) 0.2s forwards; }
