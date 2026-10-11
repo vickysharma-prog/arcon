@@ -19,6 +19,8 @@ import { creditOf, sayCredit, styleWords, tasteTrail } from "@/lib/design/trail"
 import { TasteTrail } from "./TasteTrail";
 import { Moodboard } from "./Moodboard";
 import { BudgetStep } from "./BudgetStep";
+import { HudCard, Reveal } from "@/components/fx/Motion";
+import { tick } from "@/components/fx/sfx";
 import { choicesOf, type Ticked } from "@/lib/green/improve";
 
 const greenTicked = (interview: Record<string, unknown> | null | undefined): Ticked => (Array.isArray(interview?.green) ? (interview.green as Ticked) : []);
@@ -251,6 +253,13 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
   const words = styleWords(p);
   const chosen = p.chosen_option !== null ? p.options?.[p.chosen_option] : null;
   const stagger = (delay: number) => ({ initial: still ? false : "hidden", animate: "show", variants: rise, transition: { duration: 0.6, delay } }) as const;
+  const [copied, setCopied] = useState<string | null>(null);
+  const copy = (hex: string) => {
+    tick();
+    void navigator.clipboard?.writeText(hex).catch(() => {});
+    setCopied(hex);
+    setTimeout(() => setCopied((c) => (c === hex ? null : c)), 1400);
+  };
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-10 pt-2">
       <motion.p {...stagger(0)} className="text-sm uppercase tracking-widest text-ink-soft">
@@ -263,19 +272,31 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
         {b.summary}
       </motion.p>
       {words.length > 0 && (
-        <motion.ul {...stagger(0.6)} className="mt-5 flex flex-wrap gap-2" aria-label="The words your style is made of">
-          {words.map((w) => (
-            <li key={w.word} className="rounded-full border border-line bg-paper-raised px-3 py-1 text-sm">
+        <ul className="mt-5 flex flex-wrap gap-2" aria-label="The words your style is made of">
+          {words.map((w, i) => (
+            <motion.li
+              key={w.word}
+              initial={still ? false : { opacity: 0, scale: 0.6, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: "spring", stiffness: 380, damping: 22, delay: 0.6 + i * 0.08 }}
+              whileHover={still ? undefined : { y: -2 }}
+              className="rounded-full border border-line bg-paper-raised px-3 py-1 text-sm transition-colors hover:border-accent"
+            >
               {w.word} <span className="text-ink-soft">· {w.from[0] ? (w.from[0].loved ? w.from[0].name : sayCredit(w.from[0])) : ""}</span>
-            </li>
+            </motion.li>
           ))}
-        </motion.ul>
+        </ul>
       )}
 
       <ul className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {b.palette.map((c, i) => (
-          <motion.li key={c.hex + c.name} {...stagger(0.8 + i * 0.12)} className="overflow-hidden rounded-xl border border-line bg-paper-raised">
-            <motion.div className="h-28" style={{ background: c.hex }} initial={still ? false : { scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ delay: 0.8 + i * 0.12, duration: 0.5 }} />
+          <motion.li key={c.hex + c.name} {...stagger(0.8 + i * 0.12)} whileHover={still ? undefined : { y: -6 }} className="overflow-hidden rounded-xl border border-line bg-paper-raised transition-shadow hover:shadow-[0_14px_40px_-20px_var(--accent)]">
+            <button type="button" onClick={() => copy(c.hex)} className="group relative block h-28 w-full" aria-label={`Copy ${c.name}, ${c.hex}`}>
+              <motion.span className="absolute inset-0 origin-bottom" style={{ background: c.hex }} initial={still ? false : { scaleY: 0 }} animate={{ scaleY: 1 }} transition={{ delay: 0.8 + i * 0.12, duration: 0.5 }} />
+              <span className="absolute bottom-2 left-2 rounded bg-black/45 px-1.5 py-0.5 font-mono text-[11px] uppercase text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                {copied === c.hex ? "Copied" : c.hex}
+              </span>
+            </button>
             <div className="p-3 text-sm">
               <p className="font-medium">{c.name}</p>
               <p className="text-ink-soft">{c.role}</p>
@@ -285,12 +306,12 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
         ))}
       </ul>
 
-      <motion.div {...stagger(1.4)}>
+      <Reveal>
         <Moodboard id={p.id} />
-      </motion.div>
+      </Reveal>
 
       <div className="mt-10 grid gap-6 md:grid-cols-3">
-        <motion.section {...stagger(1.6)} className="rounded-2xl border border-line bg-paper-raised p-5">
+        <HudCard className="p-5">
           <h2 className="font-serif text-2xl">Materials</h2>
           <ul className="mt-3 space-y-3 text-sm">
             {b.materials.map((m) => (
@@ -300,8 +321,8 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
               </li>
             ))}
           </ul>
-        </motion.section>
-        <motion.section {...stagger(1.8)} className="rounded-2xl border border-line bg-paper-raised p-5">
+        </HudCard>
+        <HudCard className="p-5" delay={0.08}>
           <h2 className="font-serif text-2xl">Light</h2>
           <p className="mt-3 text-sm">{b.lighting.mood}</p>
           {b.lighting.from.length > 0 && <p className="mt-1 text-xs text-ink-soft">From {credit(b.lighting.from)}</p>}
@@ -310,8 +331,8 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
               <li key={f}>{f}</li>
             ))}
           </ul>
-        </motion.section>
-        <motion.section {...stagger(2.0)} className="rounded-2xl border border-line bg-paper-raised p-5">
+        </HudCard>
+        <HudCard className="p-5" delay={0.16}>
           <h2 className="font-serif text-2xl">Plants in every room</h2>
           <ul className="mt-3 space-y-2 text-sm">
             {b.plants.map((pl) => (
@@ -320,11 +341,11 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
               </li>
             ))}
           </ul>
-        </motion.section>
+        </HudCard>
       </div>
 
       {p.taste && p.taste.brands.length > 0 && (
-        <motion.section {...stagger(2.3)} className="mt-10">
+        <Reveal className="mt-10">
           <h2 className="font-serif text-2xl">Brands that match your taste</h2>
           <ul className="mt-3 flex flex-wrap gap-2">
             {p.taste.brands.slice(0, 8).map((br) => (
@@ -334,12 +355,12 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
               </li>
             ))}
           </ul>
-        </motion.section>
+        </Reveal>
       )}
 
-      <motion.div {...stagger(2.5)}>
+      <Reveal>
         <TasteTrail trail={tasteTrail(p, b, chosen)} />
-      </motion.div>
+      </Reveal>
     </main>
   );
 }

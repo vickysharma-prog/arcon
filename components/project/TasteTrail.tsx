@@ -1,11 +1,12 @@
 import { sayCredit, type Credit, type Trail } from "@/lib/design/trail";
+import { Bar as Grow, HudCard } from "@/components/fx/Motion";
 
 // Where the design came from: each thing the user loves and what it gave, the brands Qloo matched to them,
 // and every choice with its source. Built only from evidence, so an empty part is simply left out.
 
 const Bar = ({ value, max }: { value: number; max: number }) => (
   <span aria-hidden className="ml-2 inline-block h-1.5 w-16 rounded-full bg-line align-middle">
-    <span className="block h-1.5 rounded-full bg-btn" style={{ width: `${Math.max(8, Math.round((value / (max || 1)) * 100))}%` }} />
+    <Grow pct={Math.max(8, Math.round((value / (max || 1)) * 100))} className="h-1.5 bg-gradient-to-r from-btn to-accent" />
   </span>
 );
 
@@ -20,8 +21,9 @@ export function TasteTrail({ trail }: { trail: Trail }) {
       <p className="mt-1 text-sm text-ink-soft">What each thing you love gave this design, read through Qloo&apos;s taste graph.</p>
 
       <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {trail.loves.map((l) => (
-          <li key={l.name} className="rounded-2xl border border-line bg-paper-raised p-4 text-sm">
+        {trail.loves.map((l, i) => (
+          <li key={l.name}>
+          <HudCard className="h-full p-4 text-sm" delay={i * 0.08}>
             <p className="font-medium">{l.name}</p>
             <p className="text-xs uppercase tracking-wider text-ink-soft">{l.kind}</p>
             {l.gave.length > 0 && <p className="mt-2">Gave: {l.gave.join(", ")}</p>}
@@ -36,6 +38,7 @@ export function TasteTrail({ trail }: { trail: Trail }) {
               </ul>
             )}
             {!l.gave.length && !l.led.length && <p className="mt-2 text-ink-soft">Shaped the overall match.</p>}
+          </HudCard>
           </li>
         ))}
       </ul>

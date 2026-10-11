@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { HudCard, Reveal, Ring, Scanning } from "@/components/fx/Motion";
+import { ok, tick } from "@/components/fx/sfx";
 import type { Layout, Shell } from "@/lib/layout/schema";
 import type { Brief } from "@/lib/design/brief";
 import type { Profile } from "@/lib/qloo/taste";
@@ -32,6 +35,7 @@ export const mapsLink = (name: string, address: string) =>
 // brands in their taste and plant nurseries near the site.
 export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, said, ticked, onTicked }: Props) {
   const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const still = useReducedMotion();
   const [eco, setEco] = useState<{ brands: EcoBrand[]; nurseries: Nursery[] } | null>(null);
   useEffect(() => {
     let live = true;
@@ -50,6 +54,8 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
   const g = useMemo(() => scoreWith(input, choicesOf(ticked)), [input, ticked]);
   const open = useMemo(() => fixes(input, ticked), [input, ticked]);
   const save = (next: Ticked) => {
+    if (next.length > ticked.length) ok();
+    else tick();
     onTicked(next);
     setSaving("saving");
     fetch(`/api/projects/${id}/green`, { method: "POST", body: JSON.stringify({ ticked: next }) })
@@ -60,7 +66,8 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
 
   return (
     <>
-      <section className="mt-8 rounded-2xl border border-line bg-paper-raised p-5" aria-labelledby="timeline">
+      <HudCard className="mt-8 p-5">
+      <section aria-labelledby="timeline">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="timeline" className="font-serif text-2xl">Timeline</h2>
           <p className="text-sm text-ink-soft">
@@ -73,24 +80,29 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
             <li key={ph.id} className="grid grid-cols-[minmax(0,11rem)_1fr] items-center gap-3 text-sm">
               <span title={ph.note}>{ph.name}</span>
               <div className="relative h-6 rounded-full bg-line/50" aria-label={`Week ${ph.start + 1} to ${ph.start + ph.weeks}`}>
-                <div
-                  className="absolute top-0 h-6 rounded-full bg-btn px-2 text-xs leading-6 text-btn-ink"
-                  style={{ left: `${(ph.start / t.weeks) * 100}%`, width: `${(ph.weeks / t.weeks) * 100}%` }}
+                <motion.div
+                  className="absolute top-0 h-6 origin-left rounded-full bg-gradient-to-r from-btn to-accent px-2 text-xs leading-6 text-btn-ink"
+                  style={{ left: `${(ph.start / t.weeks) * 100}%` }}
+                  initial={still ? false : { width: 0, opacity: 0 }}
+                  whileInView={{ width: `${(ph.weeks / t.weeks) * 100}%`, opacity: 1 }}
+                  animate={{ width: `${(ph.weeks / t.weeks) * 100}%` }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6, delay: 0.1 + t.phases.indexOf(ph) * 0.09, ease: [0.16, 1, 0.3, 1] }}
                 >
                   {ph.weeks}w
-                </div>
+                </motion.div>
               </div>
             </li>
           ))}
         </ol>
         <p className="mt-3 text-xs text-ink-soft">Typical durations for this size and quality. Permits and deliveries vary most.</p>
       </section>
+      </HudCard>
 
-      <section className="mt-8 rounded-2xl border border-line bg-paper-raised p-5" aria-labelledby="green">
+      <HudCard className="mt-8 p-5" delay={0.05}>
+      <section aria-labelledby="green">
         <div className="flex flex-wrap items-center gap-4">
-          <div className="grid h-20 w-20 place-items-center rounded-full border-4 border-leaf" aria-hidden>
-            <span className="font-serif text-3xl text-leaf">{g.score}</span>
-          </div>
+          <Ring value={g.score} />
           <div>
             <h2 id="green" className="font-serif text-2xl">Greenery: {g.score} out of 100</h2>
             <p className="text-sm text-ink-soft">
@@ -101,8 +113,15 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
           </div>
         </div>
         <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {g.rooms.map((r) => (
-            <li key={r.id} className="rounded-xl border border-line p-3 text-sm">
+          {g.rooms.map((r, i) => (
+            <motion.li
+              key={r.id}
+              className="rounded-xl border border-line p-3 text-sm transition-colors hover:border-leaf/60"
+              initial={still ? false : { opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 + i * 0.05 }}
+            >
               <div className="flex justify-between gap-2">
                 <span className="font-medium">{r.name}</span>
                 <span className="tabular-nums text-leaf">{r.score}</span>
@@ -112,7 +131,7 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
                 {r.pick ? ` · ${r.pick.name.toLowerCase()}` : ""}
               </p>
               {r.tip && <p className="mt-1">{r.tip}</p>}
-            </li>
+            </motion.li>
           ))}
         </ul>
 
@@ -125,31 +144,38 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
               </p>
             </div>
             <ul className="mt-2 space-y-2 text-sm">
+              <AnimatePresence initial={false}>
               {ticked.map((f) => (
-                <li key={f.id}>
+                <motion.li key={f.id} layout={!still} initial={still ? false : { opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, x: 20 }}>
                   <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-leaf/40 bg-leaf/5 p-3">
                     <input type="checkbox" checked onChange={() => save(ticked.filter((x) => x.id !== f.id))} className="mt-0.5 h-4 w-4 accent-[var(--leaf)]" />
                     <span className="flex-1">{f.label}</span>
                     <span className="text-xs text-leaf">added</span>
                   </label>
-                </li>
+                </motion.li>
               ))}
               {open.map((f) => (
-                <li key={f.id}>
+                <motion.li key={f.id} layout={!still} initial={still ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }}>
                   <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line p-3 transition hover:border-leaf/60">
                     <input type="checkbox" checked={false} onChange={() => save([...ticked, { id: f.id, label: f.label, change: f.change }])} className="mt-0.5 h-4 w-4 accent-[var(--leaf)]" />
                     <span className="flex-1">{f.label}</span>
                     <span className="tabular-nums text-leaf">+{f.gain >= 1 ? Math.round(f.gain) : "<1"}</span>
                   </label>
-                </li>
+                </motion.li>
               ))}
+              </AnimatePresence>
             </ul>
             {!open.length && g.score < 100 && <p className="mt-2 text-xs text-ink-soft">That's all this plan has room for: the rest would need more floor or window space.</p>}
           </div>
         )}
 
+        {!eco && (
+          <div className="mt-6">
+            <Scanning label="Finding eco brands in your taste and nurseries near you" />
+          </div>
+        )}
         {eco && (eco.brands.length > 0 || eco.nurseries.length > 0) && (
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <Reveal className="mt-6 grid gap-6 md:grid-cols-2">
             {eco.brands.length > 0 && (
               <div>
                 <h3 className="font-serif text-xl">Brands in your taste that care</h3>
@@ -181,9 +207,10 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
                 </ul>
               </div>
             )}
-          </div>
+          </Reveal>
         )}
       </section>
+      </HudCard>
     </>
   );
 }

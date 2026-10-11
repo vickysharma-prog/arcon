@@ -169,3 +169,8 @@ export function roomBell() {
   tone(659.25, 600, { type: "sine", gain: 0.07 });
   setTimeout(() => tone(987.77, 700, { type: "sine", gain: 0.05 }), 90);
 }
+
+// A tiny click for toggles and choices.
+export function tick() {
+  tone(1500, 22, { type: "sine", gain: 0.04 });
+}
