@@ -8,7 +8,7 @@ import { marketOf, type Tier } from "../budget/costs.ts";
 import { tasteTier, type PriceSignal } from "../budget/tier.ts";
 import { creditOf } from "../design/trail.ts";
 import { closeness } from "../plan-import/taste.ts";
-import { alternatives, brandFor, PIECES, piecesOf, priceEach, type BrandInfo, type Line } from "./list.ts";
+import { alternatives, brandFor, cityParts, closestTo, isStoreOf, PIECES, piecesOf, priceEach, TIER_LEVEL, type BrandInfo, type Line } from "./list.ts";
 
 // Builds the shopping list from Qloo: the brands in their taste with what each makes and its price level, each
 // piece's best brand, cheaper and dearer rivals from the brand's own competitor tags, and furniture stores near the
@@ -33,7 +33,18 @@ export function brandInfo(e: Entity, p: Pick<Project, "taste_signals" | "taste">
     loved: c.loved,
     via: c.via,
     affinity: p.taste?.brands.find((b) => b.id === e.entity_id)?.affinity ?? (c.loved ? 1 : 0),
+    instagram: (e.properties as { external?: { instagram?: { id?: string } } } | undefined)?.external?.instagram?.id,
   };
+}
+
+/** The brand's store in their city, checked by name and address, or null. One or two cached searches. */
+async function storeNear(brand: string, location: string | null | undefined) {
+  for (const city of location ? cityParts(location) : []) {
+    const found = await search(`${brand} ${city}`, 5, "urn:entity:place").catch(() => []);
+    const hit = found.find((e) => isStoreOf(brand, { name: e.name, address: e.properties?.address }, city));
+    if (hit) return { name: hit.name, address: hit.properties?.address ?? city };
+  }
+  return null;
 }
 const rivalNames = (e: Entity) => [...tagsOf(e, "competitor_brand"), ...tagsOf(e, "similar_brand")].map((t) => t.name).filter(Boolean);
 
@@ -75,9 +86,19 @@ export async function shoppingFor(p: Project, tierOverride?: Tier): Promise<Shop
     const brand = brandFor(piece.piece, brands, tier);
     // Rivals from the brand's own competitor tags, plus other brands in their taste that make the same piece.
     const makers = brands.filter((b) => b.id !== brand?.id && brandFor(piece.piece, [b], tier));
-    const alt = brand ? alternatives(brand, [...(await rivalsOf(brand)), ...makers]) : { cheaper: null, dearer: null };
-    lines.push({ ...piece, label: PIECES[piece.piece].label, each: priceEach(piece.piece, tier, market), brand, ...alt });
+    const pool = brand ? [brand, ...(await rivalsOf(brand)), ...makers] : [];
+    // The pick is whichever is nearest their tier, so a budget tier gets a budget brand; a brand they named, or
+    // the first choice, wins a close call.
+    const pick = pool.length ? closestTo(pool, TIER_LEVEL[tier], brand!) : null;
+    const alt = pick ? alternatives(pick, pool) : { cheaper: null, dearer: null };
+    lines.push({ ...piece, label: PIECES[piece.piece].label, each: priceEach(piece.piece, tier, market), brand: pick, ...alt });
   }
+
+  // Every brand shown gets its store checked, so a link never opens a different shop.
+  const shown = new Map<string, BrandInfo>();
+  for (const l of lines) for (const b of [l.brand, l.cheaper, l.dearer]) if (b) shown.set(b.id, b);
+  await Promise.all([...shown.values()].map(async (b) => (b.store = await storeNear(b.name, p.site.location))));
+  for (const l of lines) for (const k of ["brand", "cheaper", "dearer"] as const) if (l[k]) l[k] = shown.get(l[k]!.id)!;
 
   const stores = p.site.location
     ? (await localStores(p.taste_signals.map((s) => s.entityId), p.site.location, "urn:tag:category:place:furniture_store", 5).catch(() => [])).map((e) => ({

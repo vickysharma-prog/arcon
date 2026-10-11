@@ -6,7 +6,39 @@ import type { Market, Tier } from "../budget/costs.ts";
 // rough price at their quality tier. Fitted work (kitchen runs, baths) is in the budget's kitchen and bath lines.
 
 /** What a brand is, for choosing: its price level (1 to 4), what it makes, and how it reached them. */
-export type BrandInfo = { id: string; name: string; image?: string; level?: number; products: string[]; loved: boolean; via: string[]; affinity: number };
+export type BrandInfo = {
+  id: string;
+  name: string;
+  image?: string;
+  level?: number;
+  products: string[];
+  loved: boolean;
+  via: string[];
+  affinity: number;
+  /** A store of this brand checked to be in their city, and the brand's official Instagram handle. */
+  store?: { name: string; address: string } | null;
+  instagram?: string;
+};
+
+const WORD = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/[^a-z0-9]+/).filter((w) => w && w !== "the" && w !== "and");
+
+/**
+ * Whether a place is this brand's store in this city: every word of the brand in the place's name ("west elm",
+ * "Roche Bobois - Mumbai"), and the city in its address. "Ethan Allen Hwy" BBQ in Connecticut is neither.
+ */
+export function isStoreOf(brand: string, place: { name: string; address?: string }, city: string): boolean {
+  const name = WORD(place.name);
+  const brandWords = WORD(brand);
+  const cityWords = WORD(city);
+  const addr = WORD(place.address ?? "");
+  return brandWords.length > 0 && brandWords.every((w) => name.includes(w)) && cityWords.length > 0 && cityWords.every((w) => addr.includes(w) || name.includes(w));
+}
+
+/** The parts of a location that could be its city, most specific first: "Koregaon Park, Pune, India" -> Koregaon Park, Pune. */
+export const cityParts = (location: string) => {
+  const parts = location.split(",").map((x) => x.trim()).filter(Boolean);
+  return parts.length > 2 ? parts.slice(0, -1) : parts.slice(0, 2).filter((p) => !/^[A-Z]{2}$/.test(p));
+};
 
 type Piece = { label: string; usd: number; makes: RegExp };
 // Typical mid-range US prices per piece (2025-26 retail), and words in a brand's product tags that mean it makes it.
@@ -81,4 +113,10 @@ export function alternatives(brand: BrandInfo, rivals: BrandInfo[]): { cheaper: 
   const cheaper = priced.filter((r) => r.level! < lvl).sort((a, b) => b.level! - a.level!)[0] ?? null;
   const dearer = priced.filter((r) => r.level! > lvl).sort((a, b) => a.level! - b.level!)[0] ?? null;
   return { cheaper, dearer };
+}
+
+/** From brands that make a piece, the one whose price level is nearest `want`; loved brands and `first` win close calls. */
+export function closestTo(pool: BrandInfo[], want: number, first: BrandInfo): BrandInfo {
+  const cost = (b: BrandInfo) => Math.abs((b.level ?? 2) - want) - (b.loved ? 0.6 : 0) - (b.id === first.id ? 0.4 : 0);
+  return [...pool].sort((a, b) => cost(a) - cost(b))[0];
 }

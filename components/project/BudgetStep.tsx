@@ -13,6 +13,9 @@ import { GreenAndTime } from "./GreenAndTime";
 import type { Ticked } from "@/lib/green/improve";
 
 type Props = {
+  /** The tier the client picked, shared with the shopping list; null means their taste's tier. */
+  tier: Tier | null;
+  onTier: (t: Tier) => void;
   id: string;
   layout: Layout;
   location: string | null | undefined;
@@ -26,9 +29,9 @@ type Props = {
 
 // What the chosen plan will cost: a range for the whole job, by trade and by room, at a quality tier read from the
 // price of what they love. The tier can be changed; the estimate follows at once.
-export function BudgetStep({ id, layout, location, interview, brief, profile, lot, ticked, onTicked }: Props) {
+export function BudgetStep({ tier, onTier, id, layout, location, interview, brief, profile, lot, ticked, onTicked }: Props) {
   const [taste, setTaste] = useState<{ tier: Tier; signals: PriceSignal[] } | null>(null);
-  const [tier, setTier] = useState<Tier | null>(null);
+  const setTier = onTier;
   const [marketId, setMarketId] = useState<string | null>(null);
 
   useEffect(() => {

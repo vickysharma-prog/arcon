@@ -20,6 +20,7 @@ import { TasteTrail } from "./TasteTrail";
 import { Moodboard } from "./Moodboard";
 import { BudgetStep } from "./BudgetStep";
 import { ShoppingStep } from "./ShoppingStep";
+import type { Tier } from "@/lib/budget/costs";
 import { HudCard, Reveal } from "@/components/fx/Motion";
 import { tick } from "@/components/fx/sfx";
 import { choicesOf, type Ticked } from "@/lib/green/improve";
@@ -36,6 +37,8 @@ export function ProjectView({ id }: { id: string }) {
   const [work, setWork] = useState(0);
   const [step, setStepState] = useState<StepId>("brief");
   const still = useReducedMotion();
+  // The quality tier the client picks on the budget or the shopping list; null keeps their taste's tier.
+  const [tier, setTier] = useState<Tier | null>(null);
   // One object per saved list, so the 3D only re-furnishes when the plants actually change.
   const green = p?.interview?.green;
   const extraPlants = useMemo(() => choicesOf(greenTicked({ green })).extra, [green]);
@@ -180,6 +183,7 @@ export function ProjectView({ id }: { id: string }) {
               extraPlants={extraPlants}
               projectId={p.id}
               location={p.site.location}
+              tier={tier}
               brief={p.brief}
               taste={p.taste}
               title={p.title}
@@ -191,6 +195,8 @@ export function ProjectView({ id }: { id: string }) {
           )}
           {step === "budget" && p.options?.[p.chosen_option ?? 0] && (
             <BudgetStep
+              tier={tier}
+              onTier={setTier}
               id={p.id}
               layout={p.options[p.chosen_option ?? 0]}
               location={p.site.location}
@@ -202,7 +208,7 @@ export function ProjectView({ id }: { id: string }) {
               onTicked={(t) => setP((old) => (old ? { ...old, interview: { ...old.interview, green: t } } : old))}
             />
           )}
-          {step === "shop" && <ShoppingStep id={p.id} location={p.site.location} />}
+          {step === "shop" && <ShoppingStep id={p.id} location={p.site.location} tier={tier} onTier={setTier} />}
           {step === "drawings" && <Coming title="Your drawings" text="Plans you can download and share with your architect or builder." />}
           {step === "workspace" && <Coming title="Make it yours" text="Ask for any change and watch the plan, 3D model and budget update." />}
         </motion.div>

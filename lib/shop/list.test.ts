@@ -60,3 +60,24 @@ test("a brand's tags become its price level and what it makes; a matched brand s
   assert.deepEqual(info.products, ["lighting_fixtures"]);
   assert.deepEqual([info.loved, info.via, info.affinity], [false, ["A Film"], 0.8]);
 });
+
+test("a store only counts if it is the brand's and in their city", async () => {
+  const { isStoreOf, cityParts } = await import("./list.ts");
+  assert.ok(isStoreOf("West Elm", { name: "west elm", address: "1011 W 5th St #100 Austin, TX 78703" }, "Austin"));
+  assert.ok(isStoreOf("Roche Bobois", { name: "Roche Bobois - Mumbai", address: "Lodha Signet, Senapati Bapat Marg, Mumbai" }, "Mumbai"));
+  assert.ok(!isStoreOf("Ethan Allen", { name: "Hoodoo Brown BBQ", address: "967 Ethan Allen Hwy Ridgefield, CT" }, "Pune"), "a road named after the brand");
+  assert.ok(!isStoreOf("IKEA", { name: "IKEA Goyang", address: "Goyang-si, Gyeonggi-do" }, "Pune"), "the brand, but another city");
+  assert.ok(!isStoreOf("Buster + Punch", { name: "Punch Bar", address: "Pune" }, "Pune"), "only part of the name");
+  assert.deepEqual(cityParts("Koregaon Park, Pune, India"), ["Koregaon Park", "Pune"]);
+  assert.deepEqual(cityParts("Austin, TX"), ["Austin"]);
+  assert.deepEqual(cityParts("Pune"), ["Pune"]);
+});
+
+test("the tier picks the brand: a budget tier gets a budget brand, a brand they love wins a close call", async () => {
+  const { closestTo } = await import("./list.ts");
+  const lux = b("Lux", 4, []), mid = b("Mid", 2, []), loved = b("Loved", 3, [], true);
+  assert.equal(closestTo([lux, mid], 1, lux).name, "Mid");
+  assert.equal(closestTo([lux, mid], 4, lux).name, "Lux");
+  assert.equal(closestTo([lux, mid, loved], 3, lux).name, "Loved");
+  assert.equal(closestTo([mid, b("Also mid", 2, [])], 2, mid).name, "Mid", "the first choice wins a tie");
+});

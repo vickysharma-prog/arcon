@@ -15,6 +15,14 @@ them. On Vicky's plan: bed from Ethan Allen ($$$, or IKEA $$, or Roche Bobois $$
 (or Safavieh $$), sofa from IKEA (she loves it; or West Elm $$$); stores Home Centre and Nilkamal in Pune. The
 first build takes about 15 s of Qloo look-ups, cached after. In the walkthrough, clicking any piece you can buy
 opens a card with its brand, why, price and alternatives. 216 tests.
+Vicky found brand links opening the wrong place: a Maps search for "Ethan Allen, Pune" lands on whatever Maps
+guesses, since there is no Ethan Allen in Pune. Now each brand's store is checked: a place counts only if every
+word of the brand is in its name and the city is in its address ("Ethan Allen Hwy" BBQ in Connecticut fails,
+"West Elm Pune" passes). A checked store links to that store; otherwise the brand's official Instagram (Qloo
+carries the handle; it has no websites); otherwise no link. The shopping list has the same tier picker as the
+budget, shared between the two and the 3D card, and the tier now picks the brand: each piece goes to the brand
+nearest the tier among those that make it and their rivals (essential and mid: IKEA beds and Safavieh rugs;
+luxury: Roche Bobois and Poliform), with loved brands winning close calls. 222 tests.
 
 ## 2026-10-13 (night): Motion pass (M1)
 
