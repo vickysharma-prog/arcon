@@ -78,3 +78,44 @@ test("the tier is the average of what they love, and mid-range when nothing says
   assert.equal(tierFrom([{ name: "Ace", level: 3, says: "" }, { name: "IKEA", level: 2, says: "" }]).tier, "premium");
   assert.equal(tierFrom([{ name: "IKEA", level: 2, says: "" }, { name: "Diner", level: 1, says: "" }]).tier, "mid");
 });
+
+test("every market has its own researched rates, rising with each tier", async () => {
+  const { RATES } = await import("./rates.ts");
+  for (const m of MARKETS) {
+    const r = RATES[m.id];
+    assert.ok(r && r.sources.length > 0, `${m.id} has sources`);
+    for (const k of ["floor", "paint", "power", "kitchen", "bath", "build"] as const)
+      assert.ok(r.essential[k] < r.mid[k] && r.mid[k] < r.premium[k] && r.premium[k] < r.luxury[k], `${m.id} ${k} rises with the tier`);
+  }
+});
+
+test("mid-range results land inside published ranges for each market", () => {
+  const apt = plan("apartment"); // about 89 m2, a 2-bed flat
+  const mid = (loc: string) => {
+    const m = marketOf(loc);
+    const e = estimate(apt, "mid", m, false, loc);
+    return (e.total.low + e.total.high) / 2;
+  };
+  // Published whole-home figures for a similar flat (sources in rates.ts):
+  const between = (v: number, lo: number, hi: number, what: string) => assert.ok(v >= lo && v <= hi, `${what}: ${Math.round(v)} not in ${lo}-${hi}`);
+  between(mid("Singapore"), 40000, 80000, "Singapore 4-room renovation S$40k-80k");
+  between(mid("Dubai"), 130000, 270000, "Dubai mid fit-out AED 150-275/sq ft");
+  between(mid("Pune") / (apt.floors[0].spaces.reduce((a, s) => a + s.rect.w * s.rect.h, 0) * 10.764), 800, 1800, "Pune mid ₹800-1,800/sq ft");
+});
+
+test("the region moves the price: London above Manchester, Mumbai above Pune, Brooklyn above Austin", () => {
+  const h = plan("house");
+  const at = (loc: string) => estimate(h, "mid", marketOf(loc), false, loc).total.high;
+  assert.ok(at("London") > at("Manchester"));
+  assert.ok(at("Mumbai") > at("Pune"));
+  assert.ok(at("Brooklyn, NY") > at("Austin, TX"));
+  assert.equal(estimate(h, "mid", marketOf("London"), false, "London").region, "London");
+});
+
+test("a new build doesn't count floors, wiring and baths twice", () => {
+  const h = plan("house");
+  const e = estimate(h, "mid", marketOf("Munich"), true, "Munich");
+  assert.equal(e.byCategory.finishes, undefined);
+  assert.equal(e.byCategory.bath, undefined);
+  assert.ok(e.byCategory.construction! > 0 && e.byCategory.kitchen! > 0);
+});

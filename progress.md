@@ -2,6 +2,20 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-14: Real cost tables for every market and tier (B2b)
+
+Vicky reminded me of the decision: research each target market's own prices, not scale US rates. The budget now
+reads lib/budget/rates.ts: for the US, UK, Canada, Australia, Germany, UAE, Singapore and India, in local currency,
+six trades (flooring, paint, wiring and lighting, kitchen, bathroom, new build per m2) at four tiers each, from
+published 2025-26 guides that give budget, mid-range and high-end bands (Cost vs Value, Angi, HomeAdvisor,
+Checkatrade, MyBuilder, HomeStars, Ontario builders, What's The Damage, DuoTax, AMK, MyHammer, VPB, Bayut, Knight
+Frank, MoneySmart, Qanvast, EdgeProp, BeyondWalls, JK Cement and others). Every figure names its source in the code;
+the few no guide covered are marked "derived". Regions move the price: US Northeast/West/Midwest/South (HomeGuide),
+London/South East/North, Toronto-Vancouver-Calgary, Sydney, Munich, Mumbai/Delhi/Bengaluru/Pune. A new build's rate
+now covers floors, wiring and baths instead of counting them twice. Checked against published whole-home figures:
+a 2-bed flat comes to S$63k in Singapore (published S$40-80k), AED 216k in Dubai (AED 144-263k), about ₹1,300 per
+sq ft in Pune (₹800-1,800). Furniture follows each market's retail level (India about 40% of US prices).
+
 ## 2026-10-14 (early): Shopping list, and click a 3D piece to see its brand (B4, Q5)
 
 A new Shopping list step after the budget. It lists what the 3D actually places that you would buy (furniture,

@@ -49,7 +49,8 @@ export function BudgetStep({ tier, onTier, id, layout, location, interview, brie
   const newBuild = (interview?.project as { newBuild?: boolean } | undefined)?.newBuild === true;
   const said = Object.values((interview?.budget ?? {}) as Record<string, unknown>).filter((v) => typeof v === "string" || typeof v === "number");
   const active = tier ?? taste?.tier ?? "mid";
-  const e = useMemo(() => estimate(layout, active, market, newBuild), [layout, active, market, newBuild]);
+  // The region (London, Mumbai, the US Northeast) counts only when costing the site's own market.
+  const e = useMemo(() => estimate(layout, active, market, newBuild, marketId ? null : location), [layout, active, market, newBuild, marketId, location]);
   const cats = (Object.entries(e.byCategory) as [Category, number][]).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
   const top = Math.max(...cats.map(([, v]) => v));
   const fmt = (v: number) => money(v, market);
@@ -58,7 +59,7 @@ export function BudgetStep({ tier, onTier, id, layout, location, interview, brie
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-12 pt-2">
       <Reveal>
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-ink-soft">Budget · {market.name} · {market.currency}</p>
+        <p className="font-mono text-xs uppercase tracking-[0.3em] text-ink-soft">Budget · {e.region ? `${e.region} · ` : ""}{market.name} · {market.currency}</p>
       </Reveal>
       {/* The total waits for the tier read from their taste, so it never shows one figure and jumps to another. */}
       {taste === null && tier === null ? (
