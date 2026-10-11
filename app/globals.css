@@ -85,3 +85,13 @@ body {
   .arcon-scan::after { display: none; }
   .arcon-draw { animation: none; stroke-dashoffset: 0; }
 }
+
+/* Light running along a card's edges on hover (HudCard). */
+@keyframes edge {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(300%); }
+}
+@keyframes edge-back {
+  from { transform: translateX(100%); }
+  to { transform: translateX(-300%); }
+}

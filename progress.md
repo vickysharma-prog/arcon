@@ -10,7 +10,13 @@ trade), a greenery ring that fills, bars and timeline phases that grow in turn, 
 that close in on hover and a light scan line when they first show, and a scanning loader while Qloo is read.
 The tier highlight slides between tiers; colour swatches lift on hover and copy their hex on click; style words
 pop in one by one; moodboard photos zoom on hover; ticked greenery changes slide into place with a soft sound.
-Everything shows its final state at once for reduced motion. Below-the-fold sections now animate when seen,
+Everything shows its final state at once for reduced motion. Vicky's follow-ups, same night: the greenery checklist is
+now compact (added changes fold into one line with Show and Undo all; three open suggestions, the rest behind
+Show more; Add all applies them one after another so none clash); a leaf sways in the score ring and springs up
+when the score changes; the blueprint corner marks are gone, replaced by light running along a card's edges on
+hover; moving between steps plays a brighter sound (the old low whoosh sat below what laptop speakers play, and
+a paused audio context dropped it) with a scan line sweeping down the screen; the budget total waits for the
+taste tier instead of showing mid-range and jumping. Below-the-fold sections now animate when seen,
 not on a timer. Checked live; Vicky's plan, with all eight greenery changes ticked, scores 100.
 
 ## 2026-10-13 (evening): Raise the greenery score, and it changes the design

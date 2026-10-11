@@ -66,3 +66,14 @@ export function fixes(input: Input, ticked: Ticked): Fix[] {
     .filter((f) => f.gain > 0.05)
     .sort((a, b) => b.gain - a.gain);
 }
+
+/** Every change at once: the best open change, again and again, until none is left (so two never clash). */
+export function addAll(input: Input, ticked: Ticked, max = 40): Ticked {
+  let out = ticked;
+  for (let i = 0; i < max; i++) {
+    const next = fixes(input, out)[0];
+    if (!next) break;
+    out = [...out, { id: next.id, label: next.label, change: next.change }];
+  }
+  return out;
+}

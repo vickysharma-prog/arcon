@@ -69,8 +69,24 @@ export function Ring({ value, size = 88, stroke = 7 }: { value: number; size?: n
           transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
         />
       </svg>
-      <span className="absolute font-serif text-3xl text-leaf" aria-hidden>
-        <CountUp value={value} />
+      <span className="absolute flex flex-col items-center leading-none text-leaf" aria-hidden>
+        {/* A leaf that sways, and springs up again whenever the score changes. */}
+        <motion.svg
+          key={Math.round(value)}
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          className="mb-0.5 origin-bottom"
+          initial={still ? false : { scale: 0.3, opacity: 0 }}
+          animate={still ? { scale: 1, opacity: 1 } : { scale: 1, opacity: 1, rotate: [0, -8, 6, -4, 0] }}
+          transition={still ? undefined : { scale: { type: "spring", stiffness: 300, damping: 14 }, opacity: { duration: 0.3 }, rotate: { duration: 3.2, repeat: Infinity, ease: "easeInOut", delay: 0.6 } }}
+        >
+          <path d="M5 21c0-9 6-15 15-16-1 9-7 15-15 16Z" fill="currentColor" opacity="0.9" />
+          <path d="M5 21C9 15 13 11 18 7" stroke="var(--paper-raised)" strokeWidth="1.4" fill="none" strokeLinecap="round" />
+        </motion.svg>
+        <span className="font-serif text-3xl">
+          <CountUp value={value} />
+        </span>
       </span>
     </div>
   );
@@ -91,16 +107,13 @@ export function Bar({ pct, delay = 0, className = "h-1.5 bg-btn" }: { pct: numbe
   );
 }
 
-/** A card with blueprint corner marks that close in on hover, and a light scan line across it when it first shows. */
+/** A card with light running along its top and bottom edges on hover, and a scan line across it when it first shows. */
 export function HudCard({ children, className = "", delay = 0 }: { children: ReactNode; className?: string; delay?: number }) {
   const still = useReducedMotion();
-  const corner = "pointer-events-none absolute h-3 w-3 border-accent/70 transition-all duration-300 group-hover:h-5 group-hover:w-5";
   return (
     <Reveal delay={delay} className={`group relative overflow-hidden rounded-2xl border border-line bg-paper-raised transition-shadow duration-300 hover:shadow-[0_0_0_1px_var(--accent),0_12px_40px_-18px_var(--accent)] ${className}`}>
-      <span aria-hidden className={`${corner} left-2 top-2 border-l border-t`} />
-      <span aria-hidden className={`${corner} right-2 top-2 border-r border-t`} />
-      <span aria-hidden className={`${corner} bottom-2 left-2 border-b border-l`} />
-      <span aria-hidden className={`${corner} bottom-2 right-2 border-b border-r`} />
+      <span aria-hidden className="pointer-events-none absolute left-0 top-0 h-px w-1/3 bg-gradient-to-r from-transparent via-accent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 animate-[edge_2.4s_linear_infinite] motion-reduce:animate-none" />
+      <span aria-hidden className="pointer-events-none absolute bottom-0 right-0 h-px w-1/3 bg-gradient-to-r from-transparent via-accent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 animate-[edge-back_2.4s_linear_infinite] motion-reduce:animate-none" />
       {!still && (
         <motion.span
           aria-hidden

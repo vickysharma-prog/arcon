@@ -9,7 +9,7 @@ import type { Brief } from "@/lib/design/brief";
 import type { Profile } from "@/lib/qloo/taste";
 import type { Tier } from "@/lib/budget/costs";
 import { timeline } from "@/lib/budget/timeline";
-import { choicesOf, fixes, scoreWith, type Ticked } from "@/lib/green/improve";
+import { addAll, choicesOf, fixes, scoreWith, type Ticked } from "@/lib/green/improve";
 import type { EcoBrand, Nursery } from "@/lib/green/eco";
 import { look } from "@/lib/three/materials";
 
@@ -36,6 +36,8 @@ export const mapsLink = (name: string, address: string) =>
 export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, said, ticked, onTicked }: Props) {
   const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const still = useReducedMotion();
+  const [showDone, setShowDone] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const [eco, setEco] = useState<{ brands: EcoBrand[]; nurseries: Nursery[] } | null>(null);
   useEffect(() => {
     let live = true;
@@ -143,28 +145,68 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
                 {saving === "saving" ? "Saving…" : saving === "saved" ? "Saved: the walkthrough shows these plants" : saving === "failed" ? "Couldn't save. Try again." : "Tick a change to add it to your design."}
               </p>
             </div>
-            <ul className="mt-2 space-y-2 text-sm">
-              <AnimatePresence initial={false}>
-              {ticked.map((f) => (
-                <motion.li key={f.id} layout={!still} initial={still ? false : { opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, x: 20 }}>
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-leaf/40 bg-leaf/5 p-3">
-                    <input type="checkbox" checked onChange={() => save(ticked.filter((x) => x.id !== f.id))} className="mt-0.5 h-4 w-4 accent-[var(--leaf)]" />
-                    <span className="flex-1">{f.label}</span>
-                    <span className="text-xs text-leaf">added</span>
-                  </label>
-                </motion.li>
-              ))}
-              {open.map((f) => (
-                <motion.li key={f.id} layout={!still} initial={still ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }}>
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line p-3 transition hover:border-leaf/60">
-                    <input type="checkbox" checked={false} onChange={() => save([...ticked, { id: f.id, label: f.label, change: f.change }])} className="mt-0.5 h-4 w-4 accent-[var(--leaf)]" />
-                    <span className="flex-1">{f.label}</span>
-                    <span className="tabular-nums text-leaf">+{f.gain >= 1 ? Math.round(f.gain) : "<1"}</span>
-                  </label>
-                </motion.li>
-              ))}
-              </AnimatePresence>
-            </ul>
+            {ticked.length > 0 && (
+              <div className="mt-2 rounded-xl border border-leaf/40 bg-leaf/5 text-sm">
+                <div className="flex flex-wrap items-center gap-3 px-3 py-2">
+                  <span className="text-leaf">✓</span>
+                  <span className="flex-1">
+                    {ticked.length} change{ticked.length === 1 ? "" : "s"} added to your design
+                  </span>
+                  <button type="button" onClick={() => setShowDone((v) => !v)} className="text-xs text-ink-soft underline-offset-2 hover:underline" aria-expanded={showDone}>
+                    {showDone ? "Hide" : "Show"}
+                  </button>
+                  <button type="button" onClick={() => save([])} className="text-xs text-ink-soft underline-offset-2 hover:underline">
+                    Undo all
+                  </button>
+                </div>
+                <AnimatePresence initial={false}>
+                  {showDone && (
+                    <motion.ul initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-leaf/30">
+                      {ticked.map((f) => (
+                        <li key={f.id}>
+                          <label className="flex cursor-pointer items-center gap-3 px-3 py-1.5 hover:bg-leaf/10">
+                            <input type="checkbox" checked onChange={() => save(ticked.filter((x) => x.id !== f.id))} className="h-4 w-4 accent-[var(--leaf)]" />
+                            <span className="flex-1">{f.label}</span>
+                          </label>
+                        </li>
+                      ))}
+                    </motion.ul>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+            {open.length > 0 && (
+              <ul className="mt-2 divide-y divide-line rounded-xl border border-line text-sm">
+                <AnimatePresence initial={false}>
+                  {(showAll ? open : open.slice(0, 3)).map((f) => (
+                    <motion.li key={f.id} layout={!still} initial={still ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -16 }}>
+                      <label className="flex cursor-pointer items-center gap-3 px-3 py-2 transition-colors hover:bg-leaf/5">
+                        <input type="checkbox" checked={false} onChange={() => save([...ticked, { id: f.id, label: f.label, change: f.change }])} className="h-4 w-4 accent-[var(--leaf)]" />
+                        <span className="flex-1">{f.label}</span>
+                        <span className="tabular-nums text-leaf">+{f.gain >= 1 ? Math.round(f.gain) : "<1"}</span>
+                      </label>
+                    </motion.li>
+                  ))}
+                </AnimatePresence>
+              </ul>
+            )}
+            {open.length > 0 && (
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <motion.button
+                  type="button"
+                  whileTap={still ? undefined : { scale: 0.95 }}
+                  onClick={() => save(addAll(input, ticked))}
+                  className="rounded-full bg-leaf px-4 py-1.5 text-sm text-paper transition hover:opacity-90"
+                >
+                  Add all
+                </motion.button>
+                {open.length > 3 && (
+                  <button type="button" onClick={() => setShowAll((v) => !v)} className="text-sm text-ink-soft underline-offset-2 hover:underline" aria-expanded={showAll}>
+                    {showAll ? "Show fewer" : `Show ${open.length - 3} more`}
+                  </button>
+                )}
+              </div>
+            )}
             {!open.length && g.score < 100 && <p className="mt-2 text-xs text-ink-soft">That's all this plan has room for: the rest would need more floor or window space.</p>}
           </div>
         )}

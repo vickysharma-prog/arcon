@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatedMark } from "@/components/AnimatedMark";
 import { Decode, TypeLog } from "@/components/fx/Decode";
 import { processingLog } from "@/lib/design/log";
-import { chime, preload, startProcessing, whoosh } from "@/components/fx/sfx";
+import { chime, preload, startProcessing, transition as stepSound } from "@/components/fx/sfx";
 import { PlanSvg } from "@/components/plan/PlanSvg";
 import type { Brief } from "@/lib/design/brief";
 import { compare, sayClaim } from "@/lib/design/compare";
@@ -34,6 +34,7 @@ export function ProjectView({ id }: { id: string }) {
   const [error, setError] = useState<string | null>(null);
   const [work, setWork] = useState(0);
   const [step, setStepState] = useState<StepId>("brief");
+  const still = useReducedMotion();
   // One object per saved list, so the 3D only re-furnishes when the plants actually change.
   const green = p?.interview?.green;
   const extraPlants = useMemo(() => choicesOf(greenTicked({ green })).extra, [green]);
@@ -42,7 +43,7 @@ export function ProjectView({ id }: { id: string }) {
   const key = `arcon-step-${id}`;
 
   const setStep = (s: StepId) => {
-    whoosh();
+    stepSound();
     setStepState(s);
     try {
       sessionStorage.setItem(key, s);
@@ -147,13 +148,27 @@ export function ProjectView({ id }: { id: string }) {
           </div>
         </div>
       )}
+      {/* A scan line sweeps down the screen as each step arrives. */}
+      <AnimatePresence>
+        {!still && (
+          <motion.div
+            key={`scan-${step}`}
+            aria-hidden
+            className="pointer-events-none fixed inset-x-0 top-0 z-40 h-24 bg-gradient-to-b from-transparent via-accent/20 to-transparent"
+            initial={{ y: "-10vh", opacity: 1 }}
+            animate={{ y: "110vh", opacity: 0.6 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.7, ease: [0.4, 0, 0.2, 1] }}
+          />
+        )}
+      </AnimatePresence>
       <AnimatePresence mode="wait">
         <motion.div
           key={step}
-          initial={{ opacity: 0, x: 40 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -40 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
+          initial={still ? false : { opacity: 0, y: 18, filter: "blur(8px)" }}
+          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+          exit={still ? undefined : { opacity: 0, y: -12, filter: "blur(6px)" }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="flex-1"
         >
           {step === "brief" && <BriefStep p={p} brief={p.brief} />}

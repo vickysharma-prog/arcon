@@ -7,6 +7,7 @@
 const KEY = "arcon-sound";
 let ctx: AudioContext | null = null;
 let out: AudioNode | null = null; // master output: a compressor keeps louder blips clean
+let gestured = false; // the page has had a click or key press, so sound is allowed
 
 export function soundOn(): boolean {
   try {
@@ -37,12 +38,18 @@ function audio(): AudioContext | null {
     out = comp;
   }
   if (ctx.state === "suspended") void ctx.resume().catch(() => {});
-  return ctx.state === "running" ? ctx : null;
+  // A context the browser paused (after the tab was in the background) still takes sounds once the user has
+  // interacted: they play as it resumes, instead of being dropped. Before any interaction, stay silent.
+  if (ctx.state === "running" || (ctx.state === "suspended" && gestured)) return ctx;
+  return null;
 }
 
 // Wake the audio context on the first user gesture anywhere on the page.
 if (typeof window !== "undefined") {
-  const wake = () => audio();
+  const wake = () => {
+    gestured = true;
+    audio();
+  };
   window.addEventListener("pointerdown", wake, { passive: true });
   window.addEventListener("keydown", wake);
 }
@@ -173,4 +180,12 @@ export function roomBell() {
 // A tiny click for toggles and choices.
 export function tick() {
   tone(1500, 22, { type: "sine", gain: 0.04 });
+}
+
+// Moving between design steps: a bright rising sweep with two data blips, made to carry on laptop speakers
+// (the older low whoosh sat under what small speakers can play).
+export function transition() {
+  tone(320, 240, { type: "triangle", gain: 0.09, to: 1500 });
+  setTimeout(() => tone(1800, 40, { type: "square", gain: 0.03 }), 120);
+  setTimeout(() => tone(2400, 50, { type: "square", gain: 0.025 }), 175);
 }

@@ -48,3 +48,9 @@ test("added plants really appear in the furniture the 3D draws, on the floor or 
   assert.ok(plants({ [room]: 2 }) >= plants({}) + 2);
   assert.ok(furnish(i.layout, { extraPlants: { [room]: 4 } }).some((x) => x.room === room && x.name === "wall plant"), "a full bedroom gets wall shelves");
 });
+
+test("add all takes a plan to 100 in one go", async () => {
+  const { addAll } = await import("./improve.ts");
+  const i = input("apartment");
+  assert.equal(scoreWith(i, choicesOf(addAll(i, []))).score, 100);
+});
