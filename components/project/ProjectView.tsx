@@ -19,6 +19,7 @@ import { creditOf, sayCredit, styleWords, tasteTrail } from "@/lib/design/trail"
 import { TasteTrail } from "./TasteTrail";
 import { Moodboard } from "./Moodboard";
 import { BudgetStep } from "./BudgetStep";
+import { ShoppingStep } from "./ShoppingStep";
 import { HudCard, Reveal } from "@/components/fx/Motion";
 import { tick } from "@/components/fx/sfx";
 import { choicesOf, type Ticked } from "@/lib/green/improve";
@@ -199,6 +200,7 @@ export function ProjectView({ id }: { id: string }) {
               onTicked={(t) => setP((old) => (old ? { ...old, interview: { ...old.interview, green: t } } : old))}
             />
           )}
+          {step === "shop" && <ShoppingStep id={p.id} location={p.site.location} />}
           {step === "drawings" && <Coming title="Your drawings" text="Plans you can download and share with your architect or builder." />}
           {step === "workspace" && <Coming title="Make it yours" text="Ask for any change and watch the plan, 3D model and budget update." />}
         </motion.div>

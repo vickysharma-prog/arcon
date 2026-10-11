@@ -4,6 +4,7 @@ export const STEPS = [
   { id: "plans", label: "Plans" },
   { id: "walkthrough", label: "Walkthrough" },
   { id: "budget", label: "Budget" },
+  { id: "shop", label: "Shopping list" },
   { id: "drawings", label: "Drawings" },
   { id: "workspace", label: "Make changes" },
 ] as const;

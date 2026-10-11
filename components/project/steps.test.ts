@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { canLeave, isStep, nextStep, STEPS } from "./steps.ts";
 
 test("steps run in the agreed order", () => {
-  assert.deepEqual(STEPS.map((s) => s.id), ["brief", "plans", "walkthrough", "budget", "drawings", "workspace"]);
+  assert.deepEqual(STEPS.map((s) => s.id), ["brief", "plans", "walkthrough", "budget", "shop", "drawings", "workspace"]);
 });
 
 test("next moves forward and stops at the workspace", () => {
