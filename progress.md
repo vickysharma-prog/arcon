@@ -2,6 +2,19 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-14 (late night): The landing page
+
+Vicky: the home page should open with the logo and a tech sound, explain what Arcon does, show pricing and a way
+to sign up, and feel like an AI product. Built it: a logo intro (seeds grow, the name resolves, a scan line runs),
+then a hero whose floor plan draws itself and lights each room with the taste behind it. Below that sit how it
+works, a taste flow showing what you say, what Qloo reads and what Arcon designs, the features, who it's for,
+pricing from the plan, and a closing call. The header is the logo on its own with the sections in a floating bar;
+buttons glow, and a blue light follows the mouse. "Powered by Qloo" sits in the intro, hero and footer.
+
+Browsers block sound until a click, so a first-time visitor taps to enter and that tap plays the boot sound;
+anyone arriving from inside the app hears it at once. Sign up and every pricing button open the interview as a
+guest until accounts land (D1). Checked at desktop and phone width: no sideways scroll, no console errors.
+
 ## 2026-10-14 (night): Why the interview stalled after the first answer
 
 Vicky: the live interview stopped after "A home". Ran it end to end on production and read the session stream.
