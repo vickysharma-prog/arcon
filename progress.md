@@ -2,6 +2,17 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-13 (night): Motion pass (M1)
+
+Vicky: the style and budget pages looked like a plain dashboard. Added a small motion kit (components/fx/Motion):
+sections that rise and sharpen into view as they scroll in, numbers that count up (the budget total, every
+trade), a greenery ring that fills, bars and timeline phases that grow in turn, cards with blueprint corner marks
+that close in on hover and a light scan line when they first show, and a scanning loader while Qloo is read.
+The tier highlight slides between tiers; colour swatches lift on hover and copy their hex on click; style words
+pop in one by one; moodboard photos zoom on hover; ticked greenery changes slide into place with a soft sound.
+Everything shows its final state at once for reduced motion. Below-the-fold sections now animate when seen,
+not on a timer. Checked live; Vicky's plan, with all eight greenery changes ticked, scores 100.
+
 ## 2026-10-13 (evening): Raise the greenery score, and it changes the design
 
 Vicky: show ways to improve the score, let the user tick them, and change the plan so it means something.
