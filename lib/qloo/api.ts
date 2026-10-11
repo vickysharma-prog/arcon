@@ -75,15 +75,29 @@ export async function homeBrands(likedIds: string[], take = 25): Promise<Entity[
   return brands.filter(isHomeBrand);
 }
 
+/**
+ * Wider and wider ways to say a place: "Koregaon Park, Pune, India", then "Pune, India". Qloo finds nothing for
+ * many neighbourhood names, so a search steps out to the city. It never steps out to a country alone.
+ */
+export function placesToTry(location: string): string[] {
+  const parts = location.split(",").map((x) => x.trim()).filter(Boolean);
+  const last = parts.length > 2 ? parts.length - 2 : parts.length - 1;
+  return Array.from({ length: Math.max(1, last + 1) }, (_, i) => parts.slice(i).join(", ")).filter(Boolean);
+}
+
 // Stores near a location, ranked by taste (e.g. furniture stores in "Austin, TX").
-export function localStores(likedIds: string[], location: string, categoryTag = "urn:tag:category:place:furniture_store", take = 8) {
-  return insights({
-    "filter.type": "urn:entity:place",
-    "filter.tags": categoryTag,
-    "filter.location.query": location,
-    "signal.interests.entities": likedIds.join(",") || undefined,
-    take,
-  });
+export async function localStores(likedIds: string[], location: string, categoryTag = "urn:tag:category:place:furniture_store", take = 8) {
+  for (const place of placesToTry(location)) {
+    const found = await insights({
+      "filter.type": "urn:entity:place",
+      "filter.tags": categoryTag,
+      "filter.location.query": place,
+      "signal.interests.entities": likedIds.join(",") || undefined,
+      take,
+    });
+    if (found.length) return found;
+  }
+  return [];
 }
 
 // Taste affinity per geohash in an area, for designing a hotel, café or shop for its neighbourhood.

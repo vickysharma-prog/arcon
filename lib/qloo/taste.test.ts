@@ -43,3 +43,12 @@ test("only brands you could furnish a home from are matched", async () => {
   assert.equal(isHomeBrand(withIndustry("IKEA", ["retail", "home_goods", "furniture"])), true);
   assert.equal(isHomeBrand(withIndustry("Coffee And Things", ["retail", "food_beverage", "interior_design", "publishing"])), false, "a café with a design shelf");
 });
+
+test("a neighbourhood steps out to its city, never to a country alone", async () => {
+  const { placesToTry } = await import("./api.ts");
+  assert.deepEqual(placesToTry("Koregaon Park, Pune, India"), ["Koregaon Park, Pune, India", "Pune, India"]);
+  assert.deepEqual(placesToTry("Koregaon Park, Pune"), ["Koregaon Park, Pune", "Pune"]);
+  assert.deepEqual(placesToTry("Austin, TX"), ["Austin, TX", "TX"]);
+  assert.deepEqual(placesToTry("Pune"), ["Pune"]);
+  assert.deepEqual(placesToTry("Bandra West, Mumbai, Maharashtra, India"), ["Bandra West, Mumbai, Maharashtra, India", "Mumbai, Maharashtra, India", "Maharashtra, India"]);
+});
