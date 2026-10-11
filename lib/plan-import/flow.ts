@@ -3,6 +3,7 @@ import type { Layout, SpaceType } from "../layout/schema.ts";
 import { validate } from "../layout/validate.ts";
 import { createProject, getProject, updateProject, type Project } from "../project/store.ts";
 import { homeBrands, search } from "../qloo/api.ts";
+import { resolvePicks, type Pick } from "./taste.ts";
 import { buildProfile, layerOf } from "../qloo/taste.ts";
 import { planOptionsFor } from "../design/options.ts";
 import { programOf, readPlan, type Hints } from "./read.ts";
@@ -46,7 +47,7 @@ export async function importPlan(guestId: string, data: Uint8Array, mediaType: s
   });
 }
 
-export type Confirm = { edits: Edit[]; answers?: Record<string, string>; size?: { width: number; depth: number }; loves: string[]; title?: string };
+export type Confirm = { edits: Edit[]; answers?: Record<string, string>; size?: { width: number; depth: number }; picks: Pick[]; title?: string };
 
 /**
  * Check: apply the user's corrections (and size, if they gave one), build their taste from what they love,
@@ -69,8 +70,9 @@ export async function confirmImport(id: string, c: Confirm): Promise<Project> {
   const problems = blocking(validate(layout));
   if (problems.length) throw new Error(`The plan still needs fixing: ${problems.slice(0, 3).join("; ")}`);
 
-  // Their taste, from what they named: places and brands feed style tags, films and music reach home brands.
-  const found = (await Promise.all(c.loves.map((n) => n.trim()).filter(Boolean).slice(0, 5).map((n) => search(n, 1)))).map((r) => r[0]).filter(Boolean);
+  // Their taste, from the three things they picked: the place and brand feed style tags, the film or music
+  // reaches home brands. Checked before any plan work, so a bad pick fails fast.
+  const found = await resolvePicks(c.picks, search);
   const signals = found.map((e) => ({ entityId: e.entity_id, name: e.name, layer: layerOf(e), type: e.types?.[0] }));
   const liked = found.filter((e) => layerOf(e) !== 3).map((entity) => ({ entity, layer: layerOf(entity) as 1 | 2 }));
   const taste = buildProfile(liked, await homeBrands(found.filter((e) => layerOf(e) === 3).map((e) => e.entity_id)));

@@ -13,6 +13,8 @@ const KIND: Record<string, string> = {
   "urn:entity:book": "book",
   "urn:entity:podcast": "podcast",
   "urn:entity:video_game": "game",
+  "urn:entity:videogame": "game",
+  "urn:entity:album": "album",
   "urn:entity:place": "place",
   "urn:entity:destination": "destination",
   "urn:entity:brand": "brand",

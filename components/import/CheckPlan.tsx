@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { Candidate } from "@/lib/interview/logic";
 import { Decode } from "@/components/fx/Decode";
 import { PlanSvg } from "@/components/plan/PlanSvg";
 import { validate } from "@/lib/layout/validate";
 import { applyEdits, plainProblem, rescale, type Imported } from "@/lib/plan-import/edits";
 import { blocking, snapPlan } from "@/lib/plan-import/snap";
+import { SLOTS, type Pick, type SlotId } from "@/lib/plan-import/taste";
 
 const KINDS: [string, string][] = [
   ["living", "Living room"], ["kitchen", "Kitchen"], ["dining", "Dining"], ["bedroom", "Bedroom"], ["bath", "Bathroom"],
@@ -25,7 +27,7 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
   const [width, setWidth] = useState(String(toUser(imported.read.width)));
   const [depth, setDepth] = useState(String(toUser(imported.read.depth)));
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [loves, setLoves] = useState(["", "", ""]);
+  const [picks, setPicks] = useState<Partial<Record<SlotId, Pick>>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +43,8 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
   const problems = blocking(all);
   const advice = all.filter((e) => !problems.includes(e));
   const rooms = layout.floors.flatMap((f) => f.spaces.filter((s) => s.zone !== "circulation").map((s) => ({ ...s, level: f.level })));
-  const ready = problems.length === 0 && loves.some((l) => l.trim());
+  const picked = SLOTS.filter((s) => picks[s.id]).length;
+  const ready = problems.length === 0 && picked === SLOTS.length;
 
   const send = async () => {
     setBusy(true);
@@ -53,7 +56,7 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
           edits: Object.entries(edits).map(([rid, e]) => ({ id: rid, ...e })),
           answers,
           size: resized ? size : undefined,
-          loves: loves.filter((l) => l.trim()),
+          picks: SLOTS.map((s) => picks[s.id]),
         }),
       });
       const body = await res.json();
@@ -163,11 +166,8 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
           <section>
             <h2 className="font-serif text-2xl">What do you love?</h2>
             <p className="mt-1 text-sm text-ink-soft">We style your plan from these, through Qloo's taste data.</p>
-            {["A hotel, café or restaurant you love", "A brand whose things you love using", "A film, show or music you love"].map((label, i) => (
-              <label key={label} className="mt-3 block">
-                <span className="text-sm">{label}</span>
-                <input value={loves[i]} onChange={(e) => setLoves((l) => l.map((v, j) => (j === i ? e.target.value : v)))} className="mt-1 w-full rounded-xl border border-line bg-paper-raised px-3 py-2" />
-              </label>
+            {SLOTS.map((slot) => (
+              <TasteQuestion key={slot.id} slot={slot} onPick={(p) => setPicks((all) => ({ ...all, [slot.id]: p ?? undefined }))} />
             ))}
           </section>
 
@@ -175,9 +175,78 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
           <button onClick={() => void send()} disabled={!ready || busy} className="w-full rounded-full bg-btn px-8 py-3 text-lg text-btn-ink transition hover:opacity-90 disabled:opacity-40">
             {busy ? "Getting your design ready…" : "Design with my plan"}
           </button>
-          {!ready && !busy && <p className="text-center text-sm text-ink-soft">{problems.length ? "Fix the plan first." : "Name at least one thing you love."}</p>}
+          {!ready && !busy && <p className="text-center text-sm text-ink-soft">{problems.length ? "Fix the plan first." : `Answer all three, and check each match (${picked} of 3 done).`}</p>}
         </div>
       </div>
     </main>
+  );
+}
+
+type Look = { matches: Candidate[]; hint: string | null } | { error: string };
+
+// One taste question: what the user types is looked up in Qloo as they pause, and they see what it matched.
+// The closest match of the right kind is used unless they pick another; a vague answer is asked again.
+function TasteQuestion({ slot, onPick }: { slot: (typeof SLOTS)[number]; onPick: (p: Pick | null) => void }) {
+  const [text, setText] = useState("");
+  const [look, setLook] = useState<Look | null>(null);
+  const [chosen, setChosen] = useState<Candidate | null>(null);
+  const q = text.trim();
+
+  useEffect(() => {
+    setLook(null);
+    setChosen(null);
+    onPick(null);
+    if (q.length < 2) return;
+    let live = true;
+    const t = setTimeout(async () => {
+      const res = await fetch(`/api/taste?slot=${slot.id}&q=${encodeURIComponent(q)}`).catch(() => null);
+      const body: Look = res ? await res.json().catch(() => ({ error: "Couldn't look that up." })) : { error: "Couldn't look that up. Check your connection." };
+      if (!live) return;
+      setLook(body);
+      if ("matches" in body && body.matches[0]) choose(body.matches[0]);
+    }, 600);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, slot.id]);
+
+  const choose = (c: Candidate) => {
+    setChosen(c);
+    onPick({ slot: slot.id, id: c.entityId, name: c.name });
+  };
+  const describe = (c: Candidate) => [c.kind, c.detail].filter(Boolean).join(" · ");
+
+  return (
+    <div className="mt-3">
+      <label className="block">
+        <span className="text-sm">{slot.label}</span>
+        <input value={text} onChange={(e) => setText(e.target.value)} placeholder={`e.g. ${slot.example}`} aria-label={slot.label} className="mt-1 w-full rounded-xl border border-line bg-paper-raised px-3 py-2" />
+      </label>
+      <div aria-live="polite" className="mt-1 text-sm">
+        {q.length >= 2 && !look && <p className="text-ink-soft">Looking it up…</p>}
+        {look && "error" in look && <p className="text-red-800">{look.error}</p>}
+        {look && "matches" in look && !look.matches.length && <p className="text-red-800">{look.hint}</p>}
+        {chosen && (
+          <p>
+            <span className="text-ink-soft">We found: </span>
+            <strong>{chosen.name}</strong> <span className="text-ink-soft">({describe(chosen)})</span>
+          </p>
+        )}
+        {look && "matches" in look && look.matches.length > 1 && (
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <span className="text-ink-soft">Not it?</span>
+            {look.matches
+              .filter((m) => m.entityId !== chosen?.entityId)
+              .map((m) => (
+                <button key={m.entityId} type="button" onClick={() => choose(m)} className="rounded-full border border-line px-3 py-1 hover:bg-paper-raised">
+                  {m.name} <span className="text-ink-soft">({describe(m)})</span>
+                </button>
+              ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

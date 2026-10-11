@@ -14,8 +14,9 @@ export type Entity = {
 
 export const tagId = (t: QlooTag) => t.tag_id ?? t.id ?? "";
 
-export async function search(query: string, take = 5): Promise<Entity[]> {
-  const d = await qloo<{ results?: Entity[] }>("/search", { query, take });
+/** `types`: only these entity types, comma separated (for example "urn:entity:brand"). */
+export async function search(query: string, take = 5, types?: string): Promise<Entity[]> {
+  const d = await qloo<{ results?: Entity[] }>("/search", { query, take, types });
   return d.results ?? [];
 }
 

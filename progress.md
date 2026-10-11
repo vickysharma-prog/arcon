@@ -2,6 +2,18 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-12 (late): Taste questions on the check screen are checked, and all three are required
+
+Vicky typed "marvels techy science fiction" for the film question and got a "Sophisticated Cabinet" style. The
+cause: the confirm step took Qloo's first search result blindly, and for that phrase it was a bookstore (a
+place, so it fed style tags). Now each question searches only its own kind (place; brand; film, show, artist
+or album) using Qloo's type filter, keeps only matches whose name is what the user typed (75% of their words,
+accents and endings ignored), and shows "We found: X (kind, address)" with other matches to switch to. A vague
+answer gets "We couldn't find that. Name one film, show, artist or album by name, like Interstellar." Design
+with my plan stays off until all three have a match, and the server looks each pick up again and rejects a
+missing, wrong-kind or unknown one. Checked against live Qloo: Interstellar, Breaking Bad, Arijit Singh, IKEA,
+Apple, Ace Hotel New York and Blue Tokai all match; the sci-fi phrase and "nice stuff" don't. 176 tests.
+
 ## 2026-10-12 (night): Vicky's own plan upload, and an agent loop for reading plans
 
 Vicky uploaded a real 30 x 40 ft three-bedroom plan with no hall: bedrooms open off the family, dining and
