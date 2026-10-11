@@ -17,6 +17,7 @@ import { CheckPlan } from "@/components/import/CheckPlan";
 import { importedOf } from "@/lib/plan-import/edits";
 import { creditOf, sayCredit, styleWords, tasteTrail } from "@/lib/design/trail";
 import { TasteTrail } from "./TasteTrail";
+import { Moodboard } from "./Moodboard";
 
 type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null };
 
@@ -263,6 +264,10 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
           </motion.li>
         ))}
       </ul>
+
+      <motion.div {...stagger(1.4)}>
+        <Moodboard id={p.id} />
+      </motion.div>
 
       <div className="mt-10 grid gap-6 md:grid-cols-3">
         <motion.section {...stagger(1.6)} className="rounded-2xl border border-line bg-paper-raised p-5">

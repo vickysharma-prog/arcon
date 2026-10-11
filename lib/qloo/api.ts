@@ -33,6 +33,25 @@ const CLOTHING = /swimwear|apparel|clothing|lingerie|fashion/i;
 /** A brand you could furnish a home from: not a magazine, an app or design firm, or a clothing label. */
 export const isHomeBrand = (b: Entity) => !b.tags?.some((t) => [MEDIA, SERVICE].includes(tagId(t))) && !CLOTHING.test(b.name);
 
+/** Entities by id, in one call (their images, tags and properties). */
+export async function entitiesById(ids: string[]): Promise<Entity[]> {
+  if (!ids.length) return [];
+  const d = await qloo<{ results?: Entity[] }>("/entities", { entity_ids: ids.join(",") });
+  return d.results ?? [];
+}
+
+/** Places with a photo that share these decor tags and suit this taste: hotels, cafés and bars that look the part. */
+export async function kindredPlaces(likedIds: string[], decorTags: string[], take = 6): Promise<Entity[]> {
+  if (!likedIds.length || !decorTags.length) return [];
+  return insights({
+    "filter.type": "urn:entity:place",
+    "filter.tags": decorTags.join(","),
+    "filter.exists": "properties.image",
+    "signal.interests.entities": likedIds.join(","),
+    take,
+  });
+}
+
 // Home and design brands matched to a set of liked entities, with why each one was picked.
 export async function homeBrands(likedIds: string[], take = 25): Promise<Entity[]> {
   if (!likedIds.length) return [];
