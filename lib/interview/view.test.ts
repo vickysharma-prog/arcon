@@ -38,6 +38,11 @@ test("activity shows labels and which calls are still running", () => {
   );
   assert.deepEqual(activity(m), [
     { label: "Looking up Ace Hotel", working: true },
-    { label: "set_project", working: false },
+    { label: "Saving the project details", working: false },
   ]);
+});
+
+test("a tool without a label shows what it is doing, never its code name", () => {
+  const m = { id: "a", role: "assistant", parts: [{ type: "dynamic-tool", toolName: "set_project", state: "output-available" }, { type: "dynamic-tool", toolName: "mystery_tool", state: "output-available" }] } as unknown as Parameters<typeof activity>[0];
+  assert.deepEqual(activity(m).map((a) => a.label), ["Saving the project details", "Working"]);
 });

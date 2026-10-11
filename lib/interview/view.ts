@@ -52,8 +52,23 @@ export function speakable(text: string) {
 }
 
 // The tool activity to show while the agent works, newest last.
+// What each tool is doing, in words, for when the agent's own label doesn't come through: the user should never
+// see a tool's code name.
+const DOING: Record<string, string> = {
+  set_project: "Saving the project details",
+  save_answers: "Noting what you said",
+  save_living: "Noting how you live",
+  save_running: "Noting how you run it",
+  find_taste: "Looking up what you love",
+  add_taste: "Updating your taste profile",
+  finish_interview: "Getting your design ready",
+};
+
 export function activity(m: Msg) {
   return m.parts
     .filter((p) => p.type === "dynamic-tool")
-    .map((p) => ({ label: p.toolMetadata?.eve?.label ?? p.toolName ?? "Working", working: !done(p) && p.state !== "output-error" }));
+    .map((p) => ({
+      label: p.toolMetadata?.eve?.label ?? DOING[p.toolName ?? ""] ?? "Working",
+      working: !done(p) && p.state !== "output-error",
+    }));
 }
