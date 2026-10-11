@@ -126,3 +126,45 @@ test("a thin strip beside a room joins that room instead of becoming a hall", ()
   assert.deepEqual(problems, []);
   assert.equal(layout.floors[0].spaces.filter((s) => s.kind === "corridor").length, 1, "no extra sliver hall");
 });
+
+test("a real open-plan house with no hall: bedrooms open off the living space, the front door goes where it was drawn", () => {
+  // Vicky's upload: a 30 x 40 ft three-bedroom house, as Gemini read it (rooms at the top, entrance at the bottom).
+  const rooms = [
+    { name: "Bedroom 2", kind: "bedroom", x: 0, y: 0, w: 2.74, h: 3.66 },
+    { name: "Bedroom 3", kind: "bedroom", x: 2.74, y: 0, w: 2.74, h: 3.66 },
+    { name: "Bath", kind: "bath", x: 5.48, y: 0, w: 1.22, h: 3.66 },
+    { name: "Master Bedroom", kind: "bedroom", x: 6.7, y: 0, w: 3.86, h: 3.66 },
+    { name: "Family Room", kind: "living", x: 0, y: 3.66, w: 4.57, h: 5.48 },
+    { name: "Dining Area", kind: "dining", x: 4.57, y: 3.66, w: 2.74, h: 5.48 },
+    { name: "Kitchen", kind: "kitchen", x: 7.31, y: 3.66, w: 2.59, h: 5.48 },
+    { name: "Closet", kind: "closet", x: 10.56, y: 3.66, w: 1.83, h: 2.13 },
+    { name: "Laundry", kind: "laundry", x: 10.56, y: 5.79, w: 1.83, h: 0.91 },
+    { name: "Washroom", kind: "bath", x: 9.91, y: 6.7, w: 2.28, h: 2.44 },
+  ].map((r) => ({ ...r, floor: 0 }));
+  const { layout, problems } = snapPlan({ spaceType: "house", width: 12.19, depth: 9.14, rooms, entry: { x: 5.1, y: 9.14 } });
+  assert.deepEqual(problems, []);
+  const doors = layout.floors[0].openings.filter((o) => o.type === "door");
+  const to = (id: string) => doors.find((o) => o.between[0] === id)?.between[1];
+  assert.equal(doors.find((o) => o.id === "door-entry")!.between[0], "dining-area");
+  assert.equal(to("bedroom-2"), "family-room");
+  assert.equal(to("bedroom-3"), "family-room");
+  for (const id of ["bedroom-2", "bedroom-3", "master-bedroom"]) assert.ok(!["bath", "washroom"].includes(to(id)!), `${id} doesn't open through a bath`);
+});
+
+test("rooms read as slightly overlapping meet halfway", () => {
+  const read: ReadPlan = {
+    spaceType: "apartment", width: 10, depth: 8,
+    rooms: [
+      { name: "Living room", kind: "living", floor: 0, x: 0, y: 0, w: 10, h: 3.4 },
+      { name: "Hall", kind: "corridor", floor: 0, x: 0, y: 3.4, w: 10, h: 1.2 },
+      { name: "Bedroom", kind: "bedroom", floor: 0, x: 0, y: 4.6, w: 5.6, h: 3.4 },
+      { name: "Bath", kind: "bath", floor: 0, x: 5, y: 4.6, w: 5, h: 3.4 },
+    ],
+  };
+  const { layout, problems } = snapPlan(read);
+  assert.deepEqual(problems, []);
+  const bed = layout.floors[0].spaces.find((s) => s.id === "bedroom")!.rect;
+  const bath = layout.floors[0].spaces.find((s) => s.id === "bath")!.rect;
+  assert.equal(bed.x + bed.w, bath.x);
+  assert.equal(bath.x, 5.3);
+});

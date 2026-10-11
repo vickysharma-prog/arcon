@@ -7,7 +7,7 @@ import { buildProfile, layerOf } from "../qloo/taste.ts";
 import { planOptionsFor } from "../design/options.ts";
 import { programOf, readPlan, type Hints } from "./read.ts";
 import { blocking, snapPlan, type ReadPlan } from "./snap.ts";
-import { applyEdits, importedOf, rescale, type Edit, type Imported } from "./edits.ts";
+import { applyEdits, importedOf, plainProblem, rescale, type Edit, type Imported } from "./edits.ts";
 
 export { applyEdits, importedOf, rescale, type Edit, type Imported };
 
@@ -15,17 +15,33 @@ export { applyEdits, importedOf, rescale, type Edit, type Imported };
 // user's plan first and two other layouts of the same rooms beside it.
 
 
+/**
+ * Read the plan, check it, and if rooms overlap or leave holes, tell the model what's wrong and let it look
+ * again: up to three readings, keeping the one with the fewest problems.
+ */
+export async function readChecked(data: Uint8Array, mediaType: string, hints: Hints, model: LanguageModel, tries = 3): Promise<Imported> {
+  let best: Imported | null = null;
+  let feedback: string | undefined;
+  for (let i = 0; i < tries; i++) {
+    const { read, questions } = await readPlan(data, mediaType, hints, model, feedback);
+    const { layout, problems, advice } = snapPlan(read);
+    const now: Imported = { read, layout, problems, advice, questions };
+    if (!best || problems.length < best.problems.length) best = now;
+    if (!problems.length) break;
+    feedback = problems.map((p) => `- ${plainProblem(p, layout)}`).join("\n");
+  }
+  return best!;
+}
+
 /** Upload: a new project for this guest, holding what was read off their plan, waiting for them to check it. */
 export async function importPlan(guestId: string, data: Uint8Array, mediaType: string, hints: Hints, model: LanguageModel): Promise<Project> {
-  const { read, questions } = await readPlan(data, mediaType, hints, model);
-  const { layout, problems, advice } = snapPlan(read);
-  const imported: Imported = { read, layout, problems, advice, questions };
+  const imported = await readChecked(data, mediaType, hints, model);
   return createProject({
     guest_id: guestId,
     space_type: hints.spaceType,
     title: "Your plan",
     status: "designing",
-    site: { width: read.width, depth: read.depth, floors: layout.floors.length, units: hints.units },
+    site: { width: imported.read.width, depth: imported.read.depth, floors: imported.layout.floors.length, units: hints.units },
     interview: { imported },
   });
 }

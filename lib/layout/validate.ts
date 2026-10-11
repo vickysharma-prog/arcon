@@ -11,7 +11,7 @@ const MIN_AREA: Record<string, number> = { bedroom: 7, "guest-room": 7 };
 const minSide = (kind: string) => MIN_SIDE[kind] ?? 2.1;
 
 // Rooms that don't need a window.
-const NO_WINDOW = new Set(["bath", "storage", "corridor", "stairs", "closet", "server"]);
+const NO_WINDOW = new Set(["bath", "storage", "corridor", "stairs", "closet", "server", "void", "pantry"]);
 
 const overlapArea = (a: Rect, b: Rect) =>
   Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) *
@@ -39,7 +39,7 @@ function checkFloor(layout: Layout, floor: Floor, errors: string[]) {
     const r = s.rect;
     if (r.x < -EPS || r.y < -EPS || r.x + r.w > width + EPS || r.y + r.h > depth + EPS)
       errors.push(`${at}: ${s.id} is outside the shell`);
-    if (Math.min(r.w, r.h) < minSide(s.kind) - EPS)
+    if (s.kind !== "void" && Math.min(r.w, r.h) < minSide(s.kind) - EPS)
       errors.push(`${at}: ${s.id} is narrower than ${minSide(s.kind)} m`);
     if (r.w * r.h < (MIN_AREA[s.kind] ?? 0) - EPS) errors.push(`${at}: ${s.id} is smaller than ${MIN_AREA[s.kind]} m²`);
   }
@@ -116,7 +116,8 @@ function checkFloor(layout: Layout, floor: Floor, errors: string[]) {
         if (!seen.has(next)) seen.add(next), queue.push(next);
       }
   }
-  for (const s of floor.spaces) if (!seen.has(s.id)) errors.push(`${at}: ${s.id} can't be reached`);
+  // "void" is wall thickness a reading left between rooms: part of the floor, but nobody goes there.
+  for (const s of floor.spaces) if (s.kind !== "void" && !seen.has(s.id)) errors.push(`${at}: ${s.id} can't be reached`);
 }
 
 export function validate(layout: Layout): string[] {

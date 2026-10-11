@@ -2,6 +2,17 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-12 (night): Vicky's own plan upload, and an agent loop for reading plans
+
+Vicky uploaded a real 30 x 40 ft three-bedroom plan with no hall: bedrooms open off the family, dining and
+kitchen space. The first version failed: every room got one door "to a hall first", so rooms formed islands
+nobody could reach. Doors now grow outward from the front door the way a person walks in; bedrooms and baths
+are never a way through; an open kitchen counts as living space. The reader now gives the main entrance's
+position and the plan is turned so the entrance faces the street. Slight overlaps meet halfway; thin strips
+are wall, not halls. Readings vary between runs, so reading is now a loop: read, check, and if rooms overlap
+or leave holes, tell the model exactly what's wrong and read again (up to three times, keep the best).
+Vicky's plan, re-read: 10 rooms, front door into the dining area, no problems. 171 tests.
+
 ## 2026-10-12 (evening): Bring your own plan (A4)
 
 Upload a floor plan at /start/plan; Gemini reads the rooms (tested: a drawn apartment read correctly in 4 s);

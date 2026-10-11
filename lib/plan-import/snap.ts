@@ -7,7 +7,8 @@ import { validate } from "../layout/validate.ts";
 
 /** One room as read from the drawing, in metres, x across and y from the front (street) edge back. */
 export type ReadRoom = { name: string; kind: string; floor: number; x: number; y: number; w: number; h: number };
-export type ReadPlan = { spaceType: SpaceType; width: number; depth: number; rooms: ReadRoom[] };
+/** `entry`: where the front door was drawn, on the outside wall, if the reader saw one. */
+export type ReadPlan = { spaceType: SpaceType; width: number; depth: number; rooms: ReadRoom[]; entry?: { x: number; y: number } | null };
 
 const SNAP = 0.35; // edges closer than this are the same wall
 const OUTER = 0.6; // an edge this close to the outside wall is the outside wall (readings often drift near the frame)
@@ -106,7 +107,7 @@ function facades(r: Space["rect"], W: number, D: number) {
 const opening = (id: string, type: Opening["type"], between: [string, string], line: { axis: "x" | "y"; at: number }, mid: number, width: number): Opening =>
   line.axis === "x" ? { id, type, between, x: mid, y: line.at, axis: "x", width } : { id, type, between, x: line.at, y: mid, axis: "y", width };
 
-function buildFloor(level: number, rooms: ReadRoom[], W: number, D: number, sx: (v: number) => number, sy: (v: number) => number): Floor {
+function buildFloor(level: number, rooms: ReadRoom[], W: number, D: number, sx: (v: number) => number, sy: (v: number) => number, entryAt?: { x: number; y: number } | null): Floor {
   const used = new Set<string>();
   const spaces: Space[] = [];
   for (const r of rooms) {
@@ -121,6 +122,31 @@ function buildFloor(level: number, rooms: ReadRoom[], W: number, D: number, sx: 
     const kind = ZONE[r.kind] ? r.kind : "living";
     spaces.push({ id, name: r.name, kind, zone: ZONE[kind], rect: { x: mm(x0), y: mm(y0), w: mm(x1 - x0), h: mm(y1 - y0) } });
   }
+  // Rooms read as slightly overlapping share a wall: put it in the middle of the overlap. A room drawn inside
+  // another (or a large overlap) is left for the validator to report.
+  for (let i = 0; i < spaces.length; i++)
+    for (let j = i + 1; j < spaces.length; j++) {
+      const a = spaces[i].rect;
+      const b = spaces[j].rect;
+      const ox = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x);
+      const oy = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y);
+      if (ox <= 1e-6 || oy <= 1e-6) continue;
+      if (ox <= oy && ox <= 0.8 && ox < Math.min(a.w, b.w) * 0.4) {
+        const [l, r] = a.x <= b.x ? [a, b] : [b, a];
+        const mid = mm((r.x + l.x + l.w) / 2);
+        const right = r.x + r.w;
+        l.w = mm(mid - l.x);
+        r.x = mid;
+        r.w = mm(right - mid);
+      } else if (oy < ox && oy <= 0.8 && oy < Math.min(a.h, b.h) * 0.4) {
+        const [t, u] = a.y <= b.y ? [a, b] : [b, a];
+        const mid = mm((u.y + t.y + t.h) / 2);
+        const bottom = u.y + u.h;
+        t.h = mm(mid - t.y);
+        u.y = mid;
+        u.h = mm(bottom - mid);
+      }
+    }
   // A thin strip left beside a room is a misread wall position: the room takes it, when it runs the room's length.
   for (let guard = 0; guard < 50; guard++) {
     const thin = gaps(spaces, W, D).find((g) => Math.min(g.w, g.h) < SLIVER);
@@ -137,58 +163,87 @@ function buildFloor(level: number, rooms: ReadRoom[], W: number, D: number, sx: 
     const r = host.rect;
     host.rect = { x: mm(Math.min(r.x, thin.x)), y: mm(Math.min(r.y, thin.y)), w: mm(flat ? r.w : r.w + thin.w), h: mm(flat ? r.h + thin.h : r.h) };
   }
-  // Whatever the drawing left between rooms is circulation: a hall or landing.
-  gaps(spaces, W, D).forEach((g, i) => spaces.push({ id: i ? `hall-${i + 1}` : "hall", name: "Hall", kind: "corridor", zone: "circulation", rect: g }));
+  // What's left between rooms: a hall where it's wide enough to walk, otherwise wall the reading missed.
+  let halls = 0;
+  let walls = 0;
+  for (const g of gaps(spaces, W, D)) {
+    if (Math.min(g.w, g.h) >= SLIVER) {
+      halls++;
+      spaces.push({ id: halls > 1 ? `hall-${halls}` : "hall", name: "Hall", kind: "corridor", zone: "circulation", rect: g });
+    } else spaces.push({ id: `wall-${++walls}`, name: "", kind: "void", zone: "circulation", rect: g });
+  }
 
   const openings: Opening[] = [];
-  const doorBetween = (a: Space, b: Space) => {
-    if (openings.some((o) => o.type === "door" && o.between.includes(a.id) && o.between.includes(b.id))) return true;
-    const s = shared(a.rect, b.rect);
-    if (!s || s.to - s.from < DOOR + 0.1) return false;
-    openings.push(opening(`door-${a.id}`, "door", [a.id, b.id], s, s.from + 0.1 + DOOR / 2, DOOR));
+  const real = spaces.filter((sp) => sp.kind !== "void");
+  const LIVING = ["living", "lounge", "dining", "reception", "retail", "counter"];
+
+  // The front door: where the drawing shows it, else on the street side, into a hall or a living space.
+  let start: Space | undefined;
+  if (level === 0) {
+    const options = real.filter((sp) => (sp.kind === "corridor" && Math.min(sp.rect.w, sp.rect.h) >= SLIVER) || LIVING.includes(sp.kind) || sp.kind === "kitchen");
+    const pick = (sp: Space) => facades(sp.rect, W, D).filter((f) => f.to - f.from >= ENTRY + 0.2);
+    let best: { sp: Space; f: ReturnType<typeof facades>[number]; at: number; score: number } | null = null;
+    for (const sp of options)
+      for (const f of pick(sp)) {
+        const along = entryAt ? Math.min(Math.max(f.axis === "x" ? entryAt.x : entryAt.y, f.from + 0.1 + ENTRY / 2), f.to - 0.1 - ENTRY / 2) : f.from + 0.1 + ENTRY / 2;
+        const [px, py] = f.axis === "x" ? [along, f.at] : [f.at, along];
+        // Near the drawn door if there is one; otherwise halls, then living spaces, on the street side first.
+        // Without a drawn door, a living space beats a hall: a strip the reading left may not be a real hall.
+        const kindScore = LIVING.includes(sp.kind) ? 0 : sp.kind === "corridor" ? 10 : 30;
+        const score = entryAt ? Math.hypot(px - entryAt.x, py - entryAt.y) : kindScore + (f.front ? 0 : 5);
+        if (!best || score < best.score) best = { sp, f, at: along, score };
+      }
+    if (best) {
+      start = best.sp;
+      openings.push(opening("door-entry", "door", [best.sp.id, "outside"], best.f, best.at, ENTRY));
+    }
+  } else start = real.find((sp) => sp.kind === "stairs");
+  start ??= real.find((sp) => sp.zone === "public") ?? real[0];
+
+  // Doors, grown outward from the front door the way a person walks in: every room joins a space already
+  // reached, through halls and living spaces first. Bedrooms, baths and the stairs are never a way through to
+  // another room, and a private room only opens off the kitchen if nothing else reaches it.
+  const reached = new Set<string>(start ? [start.id] : []);
+  const pass = (from: Space, to: Space, loose: boolean) => {
+    if (from.kind === "stairs" && to.zone !== "circulation") return false;
+    if (!loose && !(from.zone === "circulation" || from.zone === "public")) return false;
+    // An open kitchen is part of the living space (a great room); only a closed one can't lead to a bedroom.
+    if (!loose && PRIVATE.has(to.kind) && from.kind === "kitchen" && from.open === false) return false;
     return true;
   };
-  // Each room opens onto a hall if it can, then a living space (never the kitchen for a private room).
-  for (const room of spaces.filter((s) => s.zone !== "circulation")) {
-    const order = spaces
-      .filter((n) => n !== room)
-      .filter((n) => n.kind !== "stairs" && !(PRIVATE.has(room.kind) && n.kind === "kitchen"))
-      .sort((p, q) => rankOf(p) - rankOf(q));
-    for (const n of order) if (doorBetween(room, n)) break;
-  }
-  // Stairs and extra halls join the hall they touch.
-  for (const s of spaces.filter((x) => x.zone === "circulation" && x.id !== "hall")) {
-    const n = spaces.find((o) => o !== s && o.zone === "circulation" && shared(s.rect, o.rect));
-    if (n) doorBetween(s, n);
-  }
-  // Windows on the longest outside wall of every room that needs one.
-  for (const room of spaces.filter((s) => !NO_WINDOW.has(s.kind))) {
-    const f = facades(room.rect, W, D)[0];
-    if (f) openings.push(opening(`win-${room.id}`, "window", [room.id, "outside"], f, (f.from + f.to) / 2, Math.min((f.to - f.from) * 0.5, 2.4)));
-  }
-  if (level === 0) {
-    // The front door: on the street side, into a hall or a living space.
-    // Only into a space that leads somewhere: a hall wide enough to walk, or a living space with its own doors.
-    const connected = (s: Space) => openings.some((o) => o.type === "door" && o.between.includes(s.id));
-    const candidates = spaces.filter((s) =>
-      connected(s) && (s.zone === "circulation" ? s.kind === "corridor" && Math.min(s.rect.w, s.rect.h) >= SLIVER : ["living", "lounge", "dining", "reception", "retail", "counter"].includes(s.kind)),
-    );
-    for (const s of candidates.sort((p, q) => rankOf(p) - rankOf(q))) {
-      const f = facades(s.rect, W, D).sort((a, b) => Number(b.front) - Number(a.front))[0];
-      if (!f || f.to - f.from < ENTRY + 0.2) continue;
-      const mid = f.from + 0.1 + ENTRY / 2;
-      // Keep clear of this room's window on the same wall: move the window to what's left.
-      const win = openings.find((o) => o.id === `win-${s.id}` && o.axis === f.axis && Math.abs((f.axis === "x" ? o.y : o.x) - f.at) < 1e-6);
-      if (win) {
-        const from = f.from + 0.1 + ENTRY + 0.3;
-        win.width = Math.min((f.to - from) * 0.7, 2.4);
-        if (f.axis === "x") win.x = (from + f.to) / 2;
-        else win.y = (from + f.to) / 2;
-        if (win.width < 0.4) openings.splice(openings.indexOf(win), 1);
+  for (const loose of [false, true])
+    for (let changed = true; changed; ) {
+      changed = false;
+      const waiting = real.filter((sp) => !reached.has(sp.id)).sort((p, q) => rankOf(p) - rankOf(q));
+      for (const room of waiting) {
+        const parent = real
+          .filter((n) => reached.has(n.id) && pass(n, room, loose))
+          .map((n) => ({ n, s: shared(n.rect, room.rect) }))
+          .filter((x) => x.s && x.s.to - x.s.from >= DOOR + 0.1)
+          .sort((p, q) => rankOf(p.n) - rankOf(q.n) || q.s!.to - q.s!.from - (p.s!.to - p.s!.from))[0];
+        if (!parent) continue;
+        const sh = parent.s!;
+        openings.push(opening(room.kind === "stairs" ? "door-stairs" : `door-${room.id}`, "door", [room.id, parent.n.id], sh, sh.from + 0.1 + DOOR / 2, DOOR));
+        reached.add(room.id);
+        changed = true;
       }
-      openings.push(opening("door-entry", "door", [s.id, "outside"], f, mid, ENTRY));
-      break;
     }
+
+  // Windows on the longest outside wall of every room that needs one, clear of the front door.
+  const entry = openings.find((o) => o.id === "door-entry");
+  for (const room of real.filter((sp) => !NO_WINDOW.has(sp.kind))) {
+    const f = facades(room.rect, W, D)[0];
+    if (!f) continue;
+    let from = f.from;
+    let to = f.to;
+    if (entry && entry.between[0] === room.id && entry.axis === f.axis && Math.abs((f.axis === "x" ? entry.y : entry.x) - f.at) < 1e-6) {
+      const e = f.axis === "x" ? entry.x : entry.y;
+      // Take the longer side of the wall beside the door.
+      if (e - f.from > f.to - e) to = e - ENTRY / 2 - 0.3;
+      else from = e + ENTRY / 2 + 0.3;
+    }
+    const width = Math.min((to - from) * 0.5, 2.4);
+    if (width >= 0.4) openings.push(opening(`win-${room.id}`, "window", [room.id, "outside"], f, (from + to) / 2, width));
   }
   return { level, spaces, openings };
 }
@@ -218,7 +273,7 @@ export function snapPlan(read: ReadPlan): { layout: Layout; problems: string[]; 
   // Walls stack between floors, so edges are joined across all floors at once.
   const sx = snapper(rooms.flatMap((r) => [r.x, r.x + r.w]), [0, W]);
   const sy = snapper(rooms.flatMap((r) => [r.y, r.y + r.h]), [0, D]);
-  const floors = levels.map((level, i) => ({ ...buildFloor(i, rooms.filter((r) => r.floor === level), W, D, sx, sy), level: i }));
+  const floors = levels.map((level, i) => ({ ...buildFloor(i, rooms.filter((r) => r.floor === level), W, D, sx, sy, i === 0 ? read.entry : null), level: i }));
   const layout: Layout = { spaceType: read.spaceType, shell: { width: W, depth: D } as Shell, floors, concept: { id: "own", name: "Your plan", why: [] } };
   const all = validate(layout);
   return { layout, problems: blocking(all), advice: all.filter((e) => ADVICE.test(e)) };

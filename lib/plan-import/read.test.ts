@@ -16,6 +16,7 @@ const raw: LooseRead = {
     { name: "Room 3", kind: "kids room", floor: 0, x: 7, y: 4.6, w: 3, h: 3.4 },
     { name: "Bad", kind: "living", floor: 0, x: Number.NaN, y: 0, w: 2, h: 2 },
   ],
+  entry: null,
   questions: [" Is Room 3 a bedroom or a study? ", ""],
 };
 
@@ -59,4 +60,12 @@ test("readPlan sends the image to the model and cleans its answer", async () => 
 test("room names in capitals read as normal names", () => {
   const { read } = fromModel({ ...raw, rooms: [{ name: "LIVING AND  DINING", kind: "living", floor: 0, x: 0, y: 0, w: 5, h: 4 }, { name: "Bedroom 2", kind: "bedroom", floor: 0, x: 5, y: 0, w: 4, h: 4 }] }, { spaceType: "house", units: "metric" });
   assert.deepEqual(read.rooms.map((r) => r.name), ["Living and dining", "Bedroom 2"]);
+});
+
+test("an entrance drawn at the bottom turns the plan so the street side is the front", () => {
+  const { read } = fromModel({ ...raw, rooms: raw.rooms.slice(0, 3), entry: { x: 3, y: 8 } }, { spaceType: "apartment", units: "metric" });
+  assert.deepEqual(read.entry, { x: 3, y: 0 });
+  // The living room was at the top (y 0 to 3.4); after turning it sits at the back.
+  assert.ok(Math.abs(read.rooms[0].y - (8 - 3.4)) < 1e-9);
+  assert.ok(Math.abs(read.rooms[2].y - 0) < 1e-9, "the bottom row is now the front");
 });
