@@ -37,7 +37,10 @@ export function Interview() {
     }
   }, [busy, messages, voice]);
 
-  useEffect(() => bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" }), [messages.length, busy]);
+  // Braces matter: newer browsers return a promise from a smooth scrollIntoView, and an effect must not return it.
+  useEffect(() => {
+    bottom.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages.length, busy]);
 
   const taste = latestTaste(messages);
   const projectId = finishedProject(messages);

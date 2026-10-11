@@ -2,6 +2,15 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-14 (later): The interview crashed on the first message
+
+Vicky: typing anything in the interview broke the page. Reproduced live ("This page couldn't load", TypeError
+"i is not a function") and in dev ("destroy is not a function"): an effect written as an expression,
+useEffect(() => el.scrollIntoView({ behavior: "smooth" })), returned what scrollIntoView returns. Newer Chrome
+returns a promise from a smooth scroll, so React took it for a cleanup function and crashed when it ran. Our
+code hadn't changed; the browser had. Both expression-bodied effects now use braces and return nothing. Checked
+locally: the message sends and the interviewer replies.
+
 ## 2026-10-14: Real cost tables for every market and tier (B2b)
 
 Vicky reminded me of the decision: research each target market's own prices, not scale US rates. The budget now

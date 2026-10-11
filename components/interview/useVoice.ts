@@ -29,7 +29,9 @@ export function useListen(onFinal: (text: string) => void) {
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState("");
 
-  useEffect(() => setSupported(makeRecognition() !== null), []);
+  useEffect(() => {
+    setSupported(makeRecognition() !== null);
+  }, []);
 
   const start = useCallback(() => {
     const r = makeRecognition();
