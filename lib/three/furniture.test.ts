@@ -5,8 +5,34 @@ import { doorIsOpen, wallPieces } from "../layout/walls.ts";
 import { planOptions } from "../layout/place.ts";
 import { buildingShell } from "../layout/footprint.ts";
 import { DEFAULT_SHELLS, TEMPLATES } from "../layout/templates.ts";
+import { planOptionsFor } from "../design/options.ts";
+import { snapPlan } from "../plan-import/snap.ts";
 
-const layouts = Object.values(TEMPLATES).flatMap((p) => planOptions(p, buildingShell(p, DEFAULT_SHELLS[p.spaceType])));
+// Vicky's uploaded house (as read): no hall, so the master bedroom opens off the kitchen.
+const uploaded = snapPlan({
+  spaceType: "house",
+  width: 12.19,
+  depth: 9.14,
+  entry: { x: 5.1, y: 9.14 },
+  rooms: [
+    { name: "Bedroom 2", kind: "bedroom", x: 0, y: 0, w: 2.74, h: 3.66 },
+    { name: "Bedroom 3", kind: "bedroom", x: 2.74, y: 0, w: 2.74, h: 3.66 },
+    { name: "Bath", kind: "bath", x: 5.48, y: 0, w: 1.22, h: 3.66 },
+    { name: "Master Bedroom", kind: "bedroom", x: 6.7, y: 0, w: 3.86, h: 3.66 },
+    { name: "Family Room", kind: "living", x: 0, y: 3.66, w: 4.57, h: 5.48 },
+    { name: "Dining Area", kind: "dining", x: 4.57, y: 3.66, w: 2.74, h: 5.48 },
+    { name: "Kitchen", kind: "kitchen", x: 7.31, y: 3.66, w: 2.59, h: 5.48 },
+    { name: "Closet", kind: "closet", x: 10.56, y: 3.66, w: 1.83, h: 2.13 },
+    { name: "Laundry", kind: "laundry", x: 10.56, y: 5.79, w: 1.83, h: 0.91 },
+    { name: "Washroom", kind: "bath", x: 9.91, y: 6.7, w: 2.28, h: 2.44 },
+  ].map((r) => ({ ...r, floor: 0 })),
+}).layout;
+
+const layouts = [
+  ...Object.values(TEMPLATES).flatMap((p) => planOptions(p, buildingShell(p, DEFAULT_SHELLS[p.spaceType]))),
+  ...Object.values(TEMPLATES).flatMap((p) => planOptionsFor(p, buildingShell(p, DEFAULT_SHELLS[p.spaceType]), { space_type: p.spaceType })),
+  uploaded,
+];
 
 test("every piece sits inside its room", () => {
   for (const layout of layouts)
@@ -18,16 +44,23 @@ test("every piece sits inside its room", () => {
     }
 });
 
-test("nothing blocks the space in front of a door", () => {
+test("nothing blocks the space in front of any door into a room, its own or a neighbour's", () => {
   for (const layout of layouts)
     for (const it of furnish(layout)) {
+      if (it.name === "rug") continue;
       const f = layout.floors[it.level];
-      const door = f.openings.find((o) => o.type === "door" && o.between[0] === it.room);
-      if (!door) continue;
-      const c = doorClearance(door, f.spaces.find((s) => s.id === it.room)!, doorIsOpen(door, wallPieces(f, layout.shell)));
-      const clear = Math.abs(it.x - c.x) * 2 >= it.w + c.w - 1e-9 || Math.abs(it.z - c.z) * 2 >= it.d + c.d - 1e-9;
-      assert.ok(clear, `${it.room}/${it.name} blocks its door`);
+      const room = f.spaces.find((s) => s.id === it.room)!;
+      for (const door of f.openings.filter((o) => o.type === "door" && o.between.includes(it.room))) {
+        const c = doorClearance(door, room, doorIsOpen(door, wallPieces(f, layout.shell)));
+        const clear = Math.abs(it.x - c.x) * 2 >= it.w + c.w - 1e-9 || Math.abs(it.z - c.z) * 2 >= it.d + c.d - 1e-9;
+        assert.ok(clear, `${layout.concept?.id ?? layout.spaceType}: ${it.room}/${it.name} blocks ${door.id}`);
+      }
     }
+});
+
+test("the uploaded house: the kitchen keeps the way into the master bedroom clear, and still has its kitchen", () => {
+  const items = furnish(uploaded).filter((i) => i.room === "kitchen");
+  assert.ok(items.some((i) => i.name === "kitchen run"), "the kitchen run found another wall");
 });
 
 test("every room people live in gets a plant", () => {

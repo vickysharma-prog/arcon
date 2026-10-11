@@ -222,8 +222,9 @@ export function furnish(layout: Layout, { lush = false } = {}): Item[] {
     const pieces = wallPieces(floor, layout.shell);
     for (const room of floor.spaces.filter((s) => s.zone !== "circulation")) {
       const door = floor.openings.find((o) => o.type === "door" && o.between[0] === room.id);
-      // Keep the door's swing clear: 0.85 m into the room, a little wider than the door.
-      const clear = door ? doorClearance(door, room, doorIsOpen(door, pieces)) : null;
+      // Keep every doorway into this room clear, not only its own door: a bedroom that opens off the kitchen
+      // needs the kitchen side of its door free too. 0.85 m into the room, a little wider than the door.
+      const clears = floor.openings.filter((o) => o.type === "door" && o.between.includes(room.id)).map((o) => doorClearance(o, room, doorIsOpen(o, pieces)));
       // The wall behind a piece facing (dx, dz): is it solid along the piece's whole width, and free of windows?
       const wallOk = (box: Box, dx: number, dz: number, keepWindows: boolean) => {
         const { x, y, w, h } = room.rect;
@@ -265,10 +266,12 @@ export function furnish(layout: Layout, { lush = false } = {}): Item[] {
         const Z = origin[1] + u[1] * lx + v[1] * lz;
         const turned = u[0] === 0; // the room's u runs along world z
         let box = { x: X, z: Z, w: turned ? sv : su, d: turned ? su : sv };
-        if (clear && overlaps(box, clear)) {
-          // Slide the piece along its wall to clear the door; drop it only if it can't fit either side.
-          const moved = slideClear(box, clear, room, turned !== sideways);
-          if (!moved) return p.or && place(p.or);
+        const blocking = clears.find((c) => overlaps(box, c));
+        if (blocking) {
+          // Slide the piece along its wall to clear the door; drop it only if it can't fit either side, or if
+          // sliding puts it in front of another door.
+          const moved = slideClear(box, blocking, room, turned !== sideways);
+          if (!moved || clears.some((c) => overlaps(moved, c))) return p.or && place(p.or);
           box = moved;
         }
         // World direction of the piece's front, as a turn about y (0 faces +z).

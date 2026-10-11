@@ -2,6 +2,14 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-12 (night, after the trail): Nothing in front of any door
+
+Vicky's uploaded house: the kitchen counter and hob stood right in front of the door into the master bedroom,
+which opens off the kitchen. Furniture only kept a room's own entrance clear, not the doors of rooms that open
+off it. Now every doorway into a room is kept clear, and a piece that slides off one door can't land in front
+of another. The door test now checks every doorway, on the templates, every concept and Vicky's plan; on the
+old code it also caught a sofa across the kitchen door of the great-room plan.
+
 ## 2026-10-12 (night, last): Taste trail and style words (Q11, Q3)
 
 Your style now shows where everything came from. Under the summary: the words the style is made of, each with
