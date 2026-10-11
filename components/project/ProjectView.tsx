@@ -326,8 +326,12 @@ function PlansStep({ p, options, choosing, choose }: { p: View; options: Layout[
           >
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs uppercase tracking-widest text-ink-soft">Option {i + 1}</p>
-              {i === 0 && layout.concept && layout.concept.why.length > 0 && (
-                <span className="rounded-full bg-leaf/15 px-2.5 py-0.5 text-xs font-medium text-leaf">Best fit for you</span>
+              {layout.concept?.id === "own" ? (
+                <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent">Your upload</span>
+              ) : (
+                i === options.findIndex((o) => o.concept?.id !== "own") &&
+                layout.concept &&
+                layout.concept.why.length > 0 && <span className="rounded-full bg-leaf/15 px-2.5 py-0.5 text-xs font-medium text-leaf">Best fit for you</span>
               )}
             </div>
             <h2 className="mt-1 font-serif text-2xl">{layout.concept?.name ?? `Option ${i + 1}`}</h2>

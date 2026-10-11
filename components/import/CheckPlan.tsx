@@ -71,7 +71,12 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
       <h1 className="mt-1 font-serif text-5xl">
         <Decode text="Is this your plan?" />
       </h1>
-      <p className="mt-3 max-w-2xl text-lg text-ink-soft">Here's what we read off your drawing. Fix any room name or type, then tell us a few things you love so we can style it.</p>
+      <p className="mt-3 max-w-2xl text-lg text-ink-soft">
+        Here's what we read off your drawing. Fix any room name or type, then tell us a few things you love so we can style it.{" "}
+        <a href="/start/plan" className="text-accent underline-offset-2 hover:underline">
+          Upload a different plan
+        </a>
+      </p>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1.2fr_1fr]">
         <div className="space-y-5">

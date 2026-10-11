@@ -40,6 +40,12 @@ const FT = 0.3048;
  * everything to the size the user gave (their numbers beat the model's reading of the drawing). If the user
  * gave no size and the drawing had no scale, it asks for one.
  */
+// Drawings often label rooms in capitals; show them as "Living and dining", not "LIVING AND DINING".
+const tidy = (name: string) => {
+  const n = name.trim().replace(/\s+/g, " ") || "Room";
+  return n === n.toUpperCase() && /[A-Z]/.test(n) ? n.charAt(0) + n.slice(1).toLowerCase() : n;
+};
+
 export function fromModel(raw: LooseRead, hints: Hints): { read: ReadPlan; questions: string[] } {
   const questions = raw.questions.map((q) => q.trim()).filter(Boolean).slice(0, 3);
   const toM = (v: number | undefined) => (v === undefined ? undefined : hints.units === "imperial" ? v * FT : v);
@@ -65,7 +71,7 @@ export function fromModel(raw: LooseRead, hints: Hints): { read: ReadPlan; quest
   };
   const rooms: ReadRoom[] = raw.rooms
     .filter((r): r is typeof r & { x: number; y: number; w: number; h: number } => [r.x, r.y, r.w, r.h].every((v) => typeof v === "number" && Number.isFinite(v)) && r.w! > 0.3 && r.h! > 0.3)
-    .map((r) => ({ name: r.name.trim() || "Room", kind: kind(r.kind), floor: r.floor >= 1 ? 1 : 0, x: r.x * fx, y: r.y * fy, w: r.w * fx, h: r.h * fy }));
+    .map((r) => ({ name: tidy(r.name), kind: kind(r.kind), floor: r.floor >= 1 ? 1 : 0, x: r.x * fx, y: r.y * fy, w: r.w * fx, h: r.h * fy }));
   return { read: { spaceType: hints.spaceType, width: (raw.width || 10) * fx, depth: (raw.depth || 10) * fy, rooms }, questions };
 }
 

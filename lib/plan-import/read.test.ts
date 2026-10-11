@@ -55,3 +55,8 @@ test("readPlan sends the image to the model and cleans its answer", async () => 
   assert.equal(read.rooms.length, 5);
   assert.match(JSON.stringify(sent), /image\/png/);
 });
+
+test("room names in capitals read as normal names", () => {
+  const { read } = fromModel({ ...raw, rooms: [{ name: "LIVING AND  DINING", kind: "living", floor: 0, x: 0, y: 0, w: 5, h: 4 }, { name: "Bedroom 2", kind: "bedroom", floor: 0, x: 5, y: 0, w: 4, h: 4 }] }, { spaceType: "house", units: "metric" });
+  assert.deepEqual(read.rooms.map((r) => r.name), ["Living and dining", "Bedroom 2"]);
+});
