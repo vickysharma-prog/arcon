@@ -12,6 +12,9 @@ Singapore, India. Rates are US mid-tier from published 2025-26 ranges, scaled by
 The tier starts from the price of what they love, read from Qloo: hotel stars, a place's price level, a brand's
 dollar signs (Ace Hotel is a 4-star hotel, IKEA is $$), with the reasons shown, and can be switched. Unknown
 countries are flagged rather than silently priced as the US. 199 tests.
+Checked live on Vicky's uploaded plan: it priced in dollars because the upload flow never asked where the
+building is. The check screen now asks for the city (required), and the budget has a country picker that says
+so when the location is unknown.
 
 Vicky asked for any architecture project, not only the seven types. Started G1: ten new families (clinic,
 school, gym, salon, gallery, restaurant, showroom, coworking, workshop, other) with templates, nine room kinds,

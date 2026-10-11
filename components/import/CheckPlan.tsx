@@ -27,6 +27,7 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
   const [width, setWidth] = useState(String(toUser(imported.read.width)));
   const [depth, setDepth] = useState(String(toUser(imported.read.depth)));
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [location, setLocation] = useState("");
   const [picks, setPicks] = useState<Partial<Record<SlotId, Pick>>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +45,7 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
   const advice = all.filter((e) => !problems.includes(e));
   const rooms = layout.floors.flatMap((f) => f.spaces.filter((s) => s.zone !== "circulation").map((s) => ({ ...s, level: f.level })));
   const picked = SLOTS.filter((s) => picks[s.id]).length;
-  const ready = problems.length === 0 && picked === SLOTS.length;
+  const ready = problems.length === 0 && picked === SLOTS.length && location.trim().length >= 2;
 
   const send = async () => {
     setBusy(true);
@@ -57,6 +58,7 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
           answers,
           size: resized ? size : undefined,
           picks: SLOTS.map((s) => picks[s.id]),
+          location: location.trim(),
         }),
       });
       const body = await res.json();
@@ -149,6 +151,10 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
               <input aria-label="Depth" inputMode="decimal" value={depth} onChange={(e) => setDepth(e.target.value)} className="w-24 rounded-xl border border-line bg-paper-raised px-3 py-2" />
               <span className="text-ink-soft">{units === "imperial" ? "ft" : "m"}, width across the front by depth</span>
             </div>
+            <label className="mt-4 block">
+              <span className="text-sm">Where is it? Costs, stores and the local taste come from here.</span>
+              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="City, e.g. Pune or Austin, TX" autoComplete="address-level2" className="mt-1 w-full rounded-xl border border-line bg-paper-raised px-3 py-2" />
+            </label>
           </section>
 
           {imported.questions.length > 0 && (
@@ -175,7 +181,7 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
           <button onClick={() => void send()} disabled={!ready || busy} className="w-full rounded-full bg-btn px-8 py-3 text-lg text-btn-ink transition hover:opacity-90 disabled:opacity-40">
             {busy ? "Getting your design ready…" : "Design with my plan"}
           </button>
-          {!ready && !busy && <p className="text-center text-sm text-ink-soft">{problems.length ? "Fix the plan first." : `Answer all three, and check each match (${picked} of 3 done).`}</p>}
+          {!ready && !busy && <p className="text-center text-sm text-ink-soft">{problems.length ? "Fix the plan first." : !location.trim() ? "Say where the building is." : `Answer all three, and check each match (${picked} of 3 done).`}</p>}
         </div>
       </div>
     </main>

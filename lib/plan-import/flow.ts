@@ -48,7 +48,7 @@ export async function importPlan(guestId: string, data: Uint8Array, mediaType: s
   });
 }
 
-export type Confirm = { edits: Edit[]; answers?: Record<string, string>; size?: { width: number; depth: number }; picks: Pick[]; title?: string };
+export type Confirm = { edits: Edit[]; answers?: Record<string, string>; size?: { width: number; depth: number }; picks: Pick[]; location?: string; title?: string };
 
 /**
  * Check: apply the user's corrections (and size, if they gave one), build their taste from what they love,
@@ -83,7 +83,7 @@ export async function confirmImport(id: string, c: Confirm): Promise<Project> {
   const others = planOptionsFor(program, layout.shell, who).slice(0, 2);
   return updateProject(id, {
     title: c.title?.trim() || p.title,
-    site: { ...p.site, width: layout.shell.width, depth: layout.shell.depth, floors: layout.floors.length },
+    site: { ...p.site, width: layout.shell.width, depth: layout.shell.depth, floors: layout.floors.length, location: c.location?.trim() || p.site.location },
     interview: { ...p.interview, imported: { ...imp, read, layout, problems: [], confirmed: true }, importAnswers: c.answers ?? {} },
     taste_signals: signals,
     taste,

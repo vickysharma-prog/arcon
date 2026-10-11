@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Layout } from "@/lib/layout/schema";
-import { CATEGORY_NAMES, estimate, knownMarket, marketOf, money, TIER_NAMES, TIERS, type Category, type Tier } from "@/lib/budget/costs";
+import { CATEGORY_NAMES, estimate, knownMarket, marketOf, MARKETS, money, TIER_NAMES, TIERS, type Category, type Tier } from "@/lib/budget/costs";
 import type { PriceSignal } from "@/lib/budget/tier";
 
 type Props = { id: string; layout: Layout; location: string | null | undefined; interview: Record<string, unknown> | null };
@@ -12,6 +12,7 @@ type Props = { id: string; layout: Layout; location: string | null | undefined; 
 export function BudgetStep({ id, layout, location, interview }: Props) {
   const [taste, setTaste] = useState<{ tier: Tier; signals: PriceSignal[] } | null>(null);
   const [tier, setTier] = useState<Tier | null>(null);
+  const [marketId, setMarketId] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -24,7 +25,7 @@ export function BudgetStep({ id, layout, location, interview }: Props) {
     };
   }, [id]);
 
-  const market = marketOf(location);
+  const market = MARKETS.find((m) => m.id === marketId) ?? marketOf(location);
   const newBuild = (interview?.project as { newBuild?: boolean } | undefined)?.newBuild === true;
   const said = Object.values((interview?.budget ?? {}) as Record<string, unknown>).filter((v) => typeof v === "string" || typeof v === "number");
   const active = tier ?? taste?.tier ?? "mid";
@@ -42,8 +43,18 @@ export function BudgetStep({ id, layout, location, interview }: Props) {
       <p className="mt-3 max-w-2xl text-ink-soft">
         {newBuild ? "Building and fitting out" : "Fitting out"} {Math.round(e.area)} m² at {TIER_NAMES[active].toLowerCase()} quality, in{" "}
         {market.currency}. An early estimate from typical {market.name} costs, not a quote: builders&apos; prices vary by about this range.
-        {!knownMarket(location) ? " We don't have costs for this country yet, so these are US costs." : ""}
+        {!location ? " We don't know where it is yet: pick the country below." : !knownMarket(location) ? " We don't have costs for this country yet, so these are US costs." : ""}
       </p>
+      <label className="mt-3 inline-flex items-center gap-2 text-sm">
+        <span className="text-ink-soft">Costs for</span>
+        <select value={market.id} onChange={(ev) => setMarketId(ev.target.value)} className="rounded-full border border-line bg-paper-raised px-3 py-1">
+          {MARKETS.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name} ({m.currency})
+            </option>
+          ))}
+        </select>
+      </label>
 
       <section className="mt-8 rounded-2xl border border-line bg-paper-raised p-5" aria-labelledby="tier">
         <h2 id="tier" className="font-serif text-2xl">Quality</h2>

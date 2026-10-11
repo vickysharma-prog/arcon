@@ -10,6 +10,7 @@ const Body = z.object({
   answers: z.record(z.string().max(300), z.string().max(300)).optional(),
   size: z.object({ width: z.number().positive().max(2000), depth: z.number().positive().max(2000) }).optional(),
   picks: z.array(z.object({ slot: z.enum(["place", "brand", "media"]), id: z.string().max(120), name: z.string().min(1).max(200) })).length(3),
+  location: z.string().trim().min(2).max(100),
   title: z.string().max(60).optional(),
 });
 
