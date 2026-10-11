@@ -46,3 +46,22 @@ test("a tool without a label shows what it is doing, never its code name", () =>
   const m = { id: "a", role: "assistant", parts: [{ type: "dynamic-tool", toolName: "set_project", state: "output-available" }, { type: "dynamic-tool", toolName: "mystery_tool", state: "output-available" }] } as unknown as Parameters<typeof activity>[0];
   assert.deepEqual(activity(m).map((a) => a.label), ["Saving the project details", "Working"]);
 });
+
+test("the progress rail fills stage by stage as the interviewer records each part", async () => {
+  const { stageReached } = await import("./view.ts");
+  assert.equal(stageReached([]), 0);
+  assert.equal(stageReached([msg("1", tool("set_project", { saved: true }))]), 1);
+  assert.equal(stageReached([msg("1", tool("set_project", {}), tool("save_answers", {}), tool("save_running", {}))]), 3);
+  assert.equal(stageReached([msg("1", tool("save_answers", {}))]), 0, "a later stage can't jump the queue");
+  assert.equal(stageReached([msg("1", tool("set_project", {}), tool("save_answers", {}), tool("save_living", {}), tool("add_taste", { tasteCount: 2 }))]), 3);
+  assert.equal(stageReached([msg("1", tool("set_project", {}), tool("save_answers", {}), tool("save_living", {}), tool("add_taste", { tasteCount: 3 }))]), 4);
+});
+
+test("languages: greeting, listening and voice per language; Devanagari always reads in Hindi", async () => {
+  const { langOf, voiceFor } = await import("./lang.ts");
+  assert.match(langOf("hi").greeting, /नमस्ते/);
+  assert.equal(langOf("nonsense").id, "en");
+  assert.equal(voiceFor("घर", "en"), "hi-IN");
+  assert.equal(voiceFor("Aap kya design karna chahte ho?", "hinglish"), "hi-IN");
+  assert.equal(voiceFor("What are we designing?", "en"), "en");
+});

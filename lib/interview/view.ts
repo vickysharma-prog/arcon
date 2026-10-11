@@ -72,3 +72,31 @@ export function activity(m: Msg) {
       working: !done(p) && p.state !== "output-error",
     }));
 }
+
+/** The interview's stages, in order, for the progress rail. */
+export const STAGES = ["Project", "People", "How it's used", "Taste", "Design"] as const;
+
+/**
+ * How far the interview has got, 0 to 5: a stage counts once the tool that records it has run (the project saved,
+ * people noted, how they live or run it noted, three things they love added, the interview finished).
+ */
+export function stageReached(messages: readonly Msg[]): number {
+  const ran = new Set<string>();
+  let tastes = 0;
+  for (const m of messages)
+    for (const p of m.parts)
+      if (done(p) && p.toolName) {
+        ran.add(p.toolName);
+        if (p.toolName === "add_taste") tastes = Math.max(tastes, (p.output as { tasteCount?: number } | undefined)?.tasteCount ?? 0);
+      }
+  const steps = [
+    ran.has("set_project"),
+    ran.has("save_answers"),
+    ran.has("save_living") || ran.has("save_running"),
+    tastes >= 3,
+    finishedProject(messages) !== null,
+  ];
+  // Stages fill in order: the rail never shows a later stage done before an earlier one.
+  const first = steps.indexOf(false);
+  return first === -1 ? steps.length : first;
+}
