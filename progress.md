@@ -12,7 +12,7 @@ never as something they love. At the bottom, "Where your style came from": each 
 with match strength), then a table of every choice and its source. The brief now builds the style name from the
 strongest style words. Checked live on the Ace Hotel, IKEA and Interstellar project.
 Found on the way: the matched brands included an interior design app and an architecture firm (service brands);
-they are filtered out now, with clothing labels and magazines. 191 tests.
+they are filtered out now, with clothing labels and magazines. 187 tests.
 
 ## 2026-10-12 (night, later): Qloo deep dive, and the Q plan
 
