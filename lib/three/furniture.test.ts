@@ -85,3 +85,11 @@ test("a powder room gets a toilet and basin but no shower", () => {
   assert.ok(items.some((i) => i.name === "toilet") && items.some((i) => i.name === "vanity"));
   assert.ok(!items.some((i) => i.name === "shower"));
 });
+
+test("a café's seating is many small tables, and its kitchen has no café table in it", () => {
+  const cafe = planOptions(TEMPLATES.cafe, buildingShell(TEMPLATES.cafe, DEFAULT_SHELLS.cafe))[0];
+  const items = furnish(cafe);
+  assert.ok(items.filter((i) => i.room === "seating" && i.name === "cafe table").length >= 3, "several tables");
+  assert.ok(!items.some((i) => i.room === "seating" && i.name === "dining set"), "no family table");
+  assert.ok(!items.some((i) => i.room === "kitchen" && i.name === "cafe table"));
+});

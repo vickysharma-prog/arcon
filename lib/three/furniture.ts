@@ -283,10 +283,10 @@ export function furnish(layout: Layout, { lush = false } = {}): Item[] {
       };
       // A powder room, WC or restroom is a half bath: toilet and basin, no shower.
       const half = room.kind === "bath" && /powder|wc|restroom|toilet/i.test(room.name);
-      for (const p of [...(SETS[room.kind] ?? []).filter((q) => !(half && q.name === "shower")), PLANT, ...(lush ? [LUSH_PLANT] : [])]) place(p);
+      for (const p of [...setFor(room, layout.spaceType, W, D).filter((q) => !(half && q.name === "shower")), PLANT, ...(lush ? [LUSH_PLANT] : [])]) place(p);
       return roomItems;
       };
-      const needs = ESSENTIALS[room.kind] ?? [];
+      const needs = essentialsFor(room.kind, layout.spaceType);
       const missing = (its: Item[]) => needs.filter((n) => !its.some((i) => i.name === n)).length;
       let best: Item[] = [];
       let bestScore = -Infinity;
@@ -302,6 +302,27 @@ export function furnish(layout: Layout, { lush = false } = {}): Item[] {
   return items;
 }
 
+const HOMES = new Set(["house", "apartment", "studio"]);
+
+/**
+ * The pieces for one room. Homes use the room's set as it is. A café or restaurant's dining room is seating:
+ * a grid of small tables, 1.8 m apart, instead of one family dining table; a business kitchen has no table.
+ */
+function setFor(room: Space, spaceType: string, W: number, D: number): Piece[] {
+  const base = SETS[room.kind] ?? [];
+  if (HOMES.has(spaceType)) return base;
+  const noHomeFallback = (p: Piece): Piece => (p.or?.name === "cafe table" ? { ...p, or: undefined } : { ...p, or: p.or && noHomeFallback(p.or) });
+  if (room.kind === "kitchen") return base.map(noHomeFallback);
+  if (room.kind !== "dining") return base;
+  const cols = Math.max(1, Math.floor((W - 0.4) / 1.8));
+  const rows = Math.max(1, Math.floor((D - 0.4) / 1.8));
+  const tables: Piece[] = [];
+  for (let r = 0; r < rows; r++)
+    for (let c = 0; c < cols; c++)
+      tables.push({ name: "cafe table", fx: (c + 0.5) / cols, fz: (r + 0.5) / rows, w: 1.3, d: 1.1, h: 0.95, role: "wood" });
+  return tables;
+}
+
 // What makes a room usable: a living room needs somewhere to sit and a TV, a dining room a table, and so on.
 export const ESSENTIALS: Record<string, string[]> = {
   living: ["sofa", "media unit"],
@@ -313,12 +334,16 @@ export const ESSENTIALS: Record<string, string[]> = {
   office: ["desk"],
 };
 
+/** A café's seating needs tables to sit at; everything else as for a home. */
+export const essentialsFor = (kind: string, spaceType: string) =>
+  !HOMES.has(spaceType) && kind === "dining" ? ["cafe table"] : (ESSENTIALS[kind] ?? []);
+
 /** The essentials each room is missing, as "room-id: piece". Empty means every room is usable. */
 export function missingEssentials(layout: Layout, items: Item[] = furnish(layout)): string[] {
   const out: string[] = [];
   for (const f of layout.floors)
     for (const room of f.spaces)
-      for (const need of ESSENTIALS[room.kind] ?? [])
+      for (const need of essentialsFor(room.kind, layout.spaceType))
         if (!items.some((i) => i.room === room.id && i.level === f.level && i.name === need)) out.push(`${room.id}: ${need}`);
   return out;
 }

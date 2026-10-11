@@ -1,15 +1,22 @@
 // Draws a project's plan options from above: rooms, walls, doors, every piece of furniture, and the walkthrough
 // route as a line, one floor at a time. For checking by eye that furniture sits on walls and the walk stays inside.
-// Run: node --env-file=.env.local --env-file=.env scripts/walk-sheet.ts <projectId> out.html
+// Run: node --env-file=.env.local --env-file=.env scripts/walk-sheet.ts <projectId | template name> out.html
 import { writeFileSync } from "node:fs";
 import { getProject } from "../lib/project/store.ts";
+import { planOptionsFor } from "../lib/design/options.ts";
+import { buildingShell } from "../lib/layout/footprint.ts";
+import { DEFAULT_SHELLS, TEMPLATES } from "../lib/layout/templates.ts";
 import { wallPieces } from "../lib/layout/walls.ts";
 import { furnish } from "../lib/three/furniture.ts";
 import { STOREY, walkPlan, EYE } from "../lib/three/geometry.ts";
 import type { Floor, Layout } from "../lib/layout/schema.ts";
 
 const [id, out = "walk.html"] = process.argv.slice(2);
-const p = await getProject(id);
+// A template name (house, cafe, office...) draws that template's three plans; anything else is a project id.
+const template = TEMPLATES[id as keyof typeof TEMPLATES];
+const p = template
+  ? { options: planOptionsFor(template, buildingShell(template, DEFAULT_SHELLS[template.spaceType]), { space_type: template.spaceType }) }
+  : await getProject(id);
 const s = 30;
 
 function floorSvg(l: Layout, f: Floor) {

@@ -94,3 +94,10 @@ test("a brand Qloo matched is never called something the user loves", () => {
   assert.match(line, /Brands that match the films and music you love, like Matched Brand/);
   assert.doesNotMatch(line, /Things you love, like Matched Brand/);
 });
+
+test("a café's reasons talk about guests, not living rooms or bedrooms", () => {
+  const lively = { tags: [{ family: "ambience" as const, value: "lively", weight: 3, sources: [{ entityId: "a", name: "Cafe A", layer: 1 as const }] }], brands: [] };
+  const why = rank({ space_type: "cafe", taste: lively }).flatMap((r) => r.why).join(" ");
+  assert.match(why, /spaces guests use/);
+  assert.doesNotMatch(why, /living|bedroom/i);
+});

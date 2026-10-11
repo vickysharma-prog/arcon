@@ -297,6 +297,7 @@ function PlansStep({ p, options, choosing, choose }: { p: View; options: Layout[
   const personal = options.some((o) => o.concept);
   // What each plan does best and gives up, measured against the others.
   const trades = compare(options);
+  const home = ["house", "apartment", "studio"].includes(p.space_type ?? "house");
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-10 pt-2">
       <h1 className="font-serif text-5xl">
@@ -343,13 +344,13 @@ function PlansStep({ p, options, choosing, choose }: { p: View; options: Layout[
                   {trades[i].gains.map((c) => (
                     <li key={c.measure} className="flex gap-2">
                       <span className="w-4 shrink-0 text-center font-medium text-leaf">+</span>
-                      <span>{sayClaim(c, units)}</span>
+                      <span>{sayClaim(c, units, home)}</span>
                     </li>
                   ))}
                   {trades[i].gives.map((c) => (
                     <li key={c.measure} className="flex gap-2 text-ink-soft">
                       <span className="w-4 shrink-0 text-center font-medium">−</span>
-                      <span>{sayClaim(c, units)}</span>
+                      <span>{sayClaim(c, units, home)}</span>
                     </li>
                   ))}
                 </ul>

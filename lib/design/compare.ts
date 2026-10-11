@@ -67,8 +67,11 @@ const SQFT = 10.7639;
 const size = (m2: number, units: "imperial" | "metric") => (units === "metric" ? `${Math.round(m2)} m²` : `${Math.round((m2 * SQFT) / 5) * 5} sq ft`);
 
 /** A claim in plain words, in the project's units. */
-export function sayClaim(c: Claim, units: "imperial" | "metric" = "imperial"): string {
+export function sayClaim(c: Claim, units: "imperial" | "metric" = "imperial", home = true): string {
   const v = size(c.value, units);
+  // A café, office or shop has guest spaces, not a living room.
+  if (!home && c.measure === "open") return c.best ? `The most open space for guests (${v})` : `The least open space for guests (${v})`;
+  if (!home && c.measure === "living") return c.best ? `The biggest lounge of the three (${v})` : `The smallest lounge of the three (${v})`;
   const pct = `${Math.round(c.value * 100)}%`;
   if (c.best)
     return {

@@ -60,6 +60,11 @@ type Scored = { id: ConceptId; score: number; why: string[] };
 
 /** Scores every concept for this client and writes the reasons. Exported for tests. */
 export function rank(who: Who): Scored[] {
+  // Homes talk about living rooms and bedrooms; cafés, offices, shops and hotels about guest and private spaces.
+  const home = !who.space_type || HOME_TYPES.has(who.space_type);
+  const [openSpace, privateRooms, toGarden] = home
+    ? ["the living spaces flow together", "the private rooms are tucked away", "living opens to the garden"]
+    : ["the spaces guests use flow together", "the staff and private rooms are tucked away", "the guest spaces open to the back"];
   const living: Living = livingOf(who.interview);
   const said = living.said ?? {};
   const ages = kidAges(who.interview);
@@ -98,9 +103,9 @@ export function rank(who: Who): Scored[] {
   if (living.outlook === "garden") add("hall-garden", 2.5, `${quoted(said.outlook, "You want the living room to face the garden")}, so it opens onto the back.`);
   if (living.outlook === "street") add("hall-street", 2, `${quoted(said.outlook, "You like the living room to face the street")}, so it sits at the front.`);
 
-  if (social.weight > 0) add("great-room", Math.min(2, social.weight * 0.5), `${social.who} lean lively and social, so the living spaces flow together.`);
-  if (quiet.weight > 0) add("split", Math.min(2, quiet.weight * 0.5), `${quiet.who} lean calm and intimate, so the private rooms are tucked away.`);
-  if (outdoor.weight > 0) add("hall-garden", Math.min(1.5, outdoor.weight * 0.5), `${outdoor.who} lean toward the outdoors, so living opens to the garden.`);
+  if (social.weight > 0) add("great-room", Math.min(2, social.weight * 0.5), `${social.who} lean lively and social, so ${openSpace}.`);
+  if (quiet.weight > 0) add("split", Math.min(2, quiet.weight * 0.5), `${quiet.who} lean calm and intimate, so ${privateRooms}.`);
+  if (outdoor.weight > 0) add("hall-garden", Math.min(1.5, outdoor.weight * 0.5), `${outdoor.who} lean toward the outdoors, so ${toGarden}.`);
 
   return Object.values(s).sort((a, b) => b.score - a.score);
 }
@@ -126,7 +131,7 @@ export function planOptionsFor(program: Program, shell: Shell, who: Who = {}): L
   const names = home ? HOME_NAMES : WORK_NAMES;
   const { program: p, tweaks, why: shared } = adjust(program, who);
   const out: Layout[] = [];
-  for (const { id, why } of rank(who)) {
+  for (const { id, why } of rank({ ...who, space_type: who.space_type ?? program.spaceType })) {
     if (out.length === 3) break;
     const layout = placeConcept(p, shell, id, tweaks);
     if (!layout) continue;
