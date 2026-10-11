@@ -1,20 +1,23 @@
-import Link from "next/link";
-import { SiteHeader } from "@/components/SiteHeader";
+import { Intro } from "@/components/landing/Intro";
+import { Hero, LandingHeader } from "@/components/landing/Hero";
+import { Audience, Facts, Features, FinalCall, Footer, HowItWorks, Pricing, TasteFlow } from "@/components/landing/Sections";
 
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col">
-      <SiteHeader />
-      <main className="flex flex-1 flex-col items-center justify-center px-4 py-24 text-center">
-        <h1 className="max-w-2xl font-serif text-5xl leading-tight sm:text-6xl">Spaces designed around who you are.</h1>
-        <p className="mt-6 max-w-xl text-lg text-ink-soft">
-          Tell Arcon the films, places and things you love. It designs your home, hotel, office or café from them, then
-          walks you through it in 3D.
-        </p>
-        <Link href="/start" className="mt-10 rounded-full bg-btn px-7 py-3.5 text-lg text-btn-ink transition hover:opacity-90">
-          Start designing
-        </Link>
+    <div className="flex flex-1 flex-col overflow-x-clip">
+      <Intro />
+      <LandingHeader />
+      <main className="flex-1">
+        <Hero />
+        <Facts />
+        <HowItWorks />
+        <TasteFlow />
+        <Features />
+        <Audience />
+        <Pricing />
+        <FinalCall />
       </main>
+      <Footer />
     </div>
   );
 }
