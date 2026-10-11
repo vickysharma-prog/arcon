@@ -22,7 +22,7 @@ word of the brand is in its name and the city is in its address ("Ethan Allen Hw
 carries the handle; it has no websites); otherwise no link. The shopping list has the same tier picker as the
 budget, shared between the two and the 3D card, and the tier now picks the brand: each piece goes to the brand
 nearest the tier among those that make it and their rivals (essential and mid: IKEA beds and Safavieh rugs;
-luxury: Roche Bobois and Poliform), with loved brands winning close calls. 222 tests.
+luxury: Roche Bobois and Poliform), with loved brands winning close calls. 218 tests.
 
 ## 2026-10-13 (night): Motion pass (M1)
 
