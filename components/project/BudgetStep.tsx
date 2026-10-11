@@ -43,7 +43,7 @@ export function BudgetStep({ id, layout, location, interview }: Props) {
       <p className="mt-3 max-w-2xl text-ink-soft">
         {newBuild ? "Building and fitting out" : "Fitting out"} {Math.round(e.area)} m² at {TIER_NAMES[active].toLowerCase()} quality, in{" "}
         {market.currency}. An early estimate from typical {market.name} costs, not a quote: builders&apos; prices vary by about this range.
-        {!location ? " We don't know where it is yet: pick the country below." : !knownMarket(location) ? " We don't have costs for this country yet, so these are US costs." : ""}
+        {!location && !marketId ? " We don't know where it is yet: pick the country below." : !knownMarket(location) ? " We don't have costs for this country yet, so these are US costs." : ""}
       </p>
       <label className="mt-3 inline-flex items-center gap-2 text-sm">
         <span className="text-ink-soft">Costs for</span>
