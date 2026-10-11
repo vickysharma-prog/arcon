@@ -2,6 +2,26 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-11 to 12: Plans picked for how people live, and architect rules
+
+Vicky's direction: the three plans must be chosen for the user from their interview and taste, not one plan
+flipped three ways. Built the "how you live in it" interview step (homes only, typed tool, evals), four
+layout concepts, a ranking that quotes the user's words and their Qloo loves, and trade-offs on each card.
+
+Vicky then found basic mistakes in the 3D: rooms opening into the stairs, a missing dining table, a bookshelf
+in the middle of the open plan, the walk repeating and passing through walls, a front door on the side, a
+window over the front door. The checks had only covered geometry. Wrote the rules an architect would apply
+into the validator and tests, rebuilt the stair as a U stair in its own stairwell, made furniture respect
+walls and windows and never overlap, and replaced the walk with a route through doors that a test proves
+never crosses a wall. Found and fixed more on the way: 5 m² bedrooms, a 2 m deep living room, a front door
+into the kitchen, a powder room with a shower, Qloo-matched brands worded as things the user loves.
+
+Checked that it is not only for homes: cafés, offices, shops and hotels now get business wording and café
+seating gets small tables. Decided two new pieces of work: A4 (bring your own plan, skip the interview) and
+A5 (a business version of the "how you live" step).
+
+Tests: 149 passing; fuzz clean on 3,000 extra random programs. On 400 random homes, 87% get three plans.
+
 ## 2026-10-09 (night): Fixes from Vicky's testing, and the plan options problem
 
 Vicky tested the live site and found three layout problems: the explore guide was cut off on short screens,
