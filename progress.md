@@ -15,6 +15,12 @@ Browsers block sound until a click, so a first-time visitor taps to enter and th
 anyone arriving from inside the app hears it at once. Sign up and every pricing button open the interview as a
 guest until accounts land (D1). Checked at desktop and phone width: no sideways scroll, no console errors.
 
+Later the same night, from Vicky's review: the intro now plays together with its sound from the tap (a faint
+breathing mark waits with "Tap to enter"), and the Arcon logo in any header replays it. The hero shows a live 3D
+sample home built by the layout engine, which turns slowly until grabbed, with its plan in the corner and a ground
+and upper floor switch; wheel zoom is off so the page still scrolls. The cursor light is smaller and the taste flow
+is wider, with more taste words.
+
 ## 2026-10-14 (night): Why the interview stalled after the first answer
 
 Vicky: the live interview stopped after "A home". Ran it end to end on production and read the session stream.
