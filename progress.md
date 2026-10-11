@@ -2,6 +2,23 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-13: Budget (B2, Q4), and any project type parked (G1)
+
+Budget step: the chosen plan costed by trade (floors and walls, electrical and lighting, kitchen, bathrooms,
+furniture, plants, construction for new builds, 10% design and contingency) and by room, as a low-high range
+(about 20% under to 25% over), in the site's market and currency: US, Canada, UK, Germany, Australia, UAE,
+Singapore, India. Rates are US mid-tier from published 2025-26 ranges, scaled by market; checked against them
+(a mid-range Pune house fit-out comes to about ₹1,000-1,550 per sq ft, inside the ₹800-1,800 published band).
+The tier starts from the price of what they love, read from Qloo: hotel stars, a place's price level, a brand's
+dollar signs (Ace Hotel is a 4-star hotel, IKEA is $$), with the reasons shown, and can be switched. Unknown
+countries are flagged rather than silently priced as the US. 199 tests.
+
+Vicky asked for any architecture project, not only the seven types. Started G1: ten new families (clinic,
+school, gym, salon, gallery, restaurant, showroom, coworking, workshop, other) with templates, nine room kinds,
+furniture, three new 3D models. The original seven were checked identical before and after (14 plan and
+furniture hashes) and just as fast. Vicky then decided to finish the seven types properly first, so G1 is
+parked on the branch g1-any-project; main is unchanged.
+
 ## 2026-10-13 (early): Moodboard (Q2)
 
 Your style has a moodboard of real Qloo photos: what they love, then places elsewhere that share their decor
