@@ -4,12 +4,23 @@ import { useEffect, useMemo, useState } from "react";
 import type { Layout } from "@/lib/layout/schema";
 import { CATEGORY_NAMES, estimate, knownMarket, marketOf, MARKETS, money, TIER_NAMES, TIERS, type Category, type Tier } from "@/lib/budget/costs";
 import type { PriceSignal } from "@/lib/budget/tier";
+import type { Brief } from "@/lib/design/brief";
+import type { Profile } from "@/lib/qloo/taste";
+import { GreenAndTime } from "./GreenAndTime";
 
-type Props = { id: string; layout: Layout; location: string | null | undefined; interview: Record<string, unknown> | null };
+type Props = {
+  id: string;
+  layout: Layout;
+  location: string | null | undefined;
+  interview: Record<string, unknown> | null;
+  brief: Brief | null;
+  profile: Profile | null;
+  lot: { width: number; depth: number } | null;
+};
 
 // What the chosen plan will cost: a range for the whole job, by trade and by room, at a quality tier read from the
 // price of what they love. The tier can be changed; the estimate follows at once.
-export function BudgetStep({ id, layout, location, interview }: Props) {
+export function BudgetStep({ id, layout, location, interview, brief, profile, lot }: Props) {
   const [taste, setTaste] = useState<{ tier: Tier; signals: PriceSignal[] } | null>(null);
   const [tier, setTier] = useState<Tier | null>(null);
   const [marketId, setMarketId] = useState<string | null>(null);
@@ -125,6 +136,17 @@ export function BudgetStep({ id, layout, location, interview }: Props) {
           <p className="mt-3 text-xs text-ink-soft">Room figures are before design fees and contingency{newBuild ? " and the building itself" : ""}.</p>
         </section>
       </div>
+
+      <GreenAndTime
+        id={id}
+        layout={layout}
+        brief={brief}
+        taste={profile}
+        lot={lot}
+        tier={active}
+        newBuild={newBuild}
+        said={Object.values((interview?.timeline ?? {}) as Record<string, unknown>).filter((v): v is string | number => typeof v === "string" || typeof v === "number").map(String)}
+      />
     </main>
   );
 }

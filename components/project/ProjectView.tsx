@@ -163,7 +163,15 @@ export function ProjectView({ id }: { id: string }) {
             />
           )}
           {step === "budget" && p.options?.[p.chosen_option ?? 0] && (
-            <BudgetStep id={p.id} layout={p.options[p.chosen_option ?? 0]} location={p.site.location} interview={p.interview} />
+            <BudgetStep
+              id={p.id}
+              layout={p.options[p.chosen_option ?? 0]}
+              location={p.site.location}
+              interview={p.interview}
+              brief={p.brief}
+              profile={p.taste}
+              lot={p.site.width && p.site.depth ? { width: p.site.width, depth: p.site.depth } : null}
+            />
           )}
           {step === "drawings" && <Coming title="Your drawings" text="Plans you can download and share with your architect or builder." />}
           {step === "workspace" && <Coming title="Make it yours" text="Ask for any change and watch the plan, 3D model and budget update." />}
