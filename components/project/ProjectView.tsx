@@ -15,6 +15,8 @@ import { canLeave, isStep, nextStep, STEPS, type StepId } from "./steps";
 import { WalkthroughStep } from "./WalkthroughStep";
 import { CheckPlan } from "@/components/import/CheckPlan";
 import { importedOf } from "@/lib/plan-import/edits";
+import { creditOf, sayCredit, styleWords, tasteTrail } from "@/lib/design/trail";
+import { TasteTrail } from "./TasteTrail";
 
 type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null };
 
@@ -224,6 +226,9 @@ const rise = { hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } };
 
 function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
   const still = useReducedMotion();
+  const credit = (names: string[]) => names.map((n) => sayCredit(creditOf(p, n))).join("; ");
+  const words = styleWords(p);
+  const chosen = p.chosen_option !== null ? p.options?.[p.chosen_option] : null;
   const stagger = (delay: number) => ({ initial: still ? false : "hidden", animate: "show", variants: rise, transition: { duration: 0.6, delay } }) as const;
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-10 pt-2">
@@ -236,6 +241,15 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
       <motion.p {...stagger(0.4)} className="mt-5 max-w-2xl text-xl leading-relaxed text-ink-soft">
         {b.summary}
       </motion.p>
+      {words.length > 0 && (
+        <motion.ul {...stagger(0.6)} className="mt-5 flex flex-wrap gap-2" aria-label="The words your style is made of">
+          {words.map((w) => (
+            <li key={w.word} className="rounded-full border border-line bg-paper-raised px-3 py-1 text-sm">
+              {w.word} <span className="text-ink-soft">· {w.from[0] ? (w.from[0].loved ? w.from[0].name : sayCredit(w.from[0])) : ""}</span>
+            </li>
+          ))}
+        </motion.ul>
+      )}
 
       <ul className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {b.palette.map((c, i) => (
@@ -244,7 +258,7 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
             <div className="p-3 text-sm">
               <p className="font-medium">{c.name}</p>
               <p className="text-ink-soft">{c.role}</p>
-              {c.from.length > 0 && <p className="mt-1 text-xs text-ink-soft">From {c.from.join(", ")}</p>}
+              {c.from.length > 0 && <p className="mt-1 text-xs text-ink-soft">From {credit(c.from)}</p>}
             </div>
           </motion.li>
         ))}
@@ -257,7 +271,7 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
             {b.materials.map((m) => (
               <li key={m.name}>
                 <span className="font-medium">{m.name}</span> <span className="text-ink-soft">· {m.where}</span>
-                {m.from.length > 0 && <p className="text-xs text-ink-soft">From {m.from.join(", ")}</p>}
+                {m.from.length > 0 && <p className="text-xs text-ink-soft">From {credit(m.from)}</p>}
               </li>
             ))}
           </ul>
@@ -265,6 +279,7 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
         <motion.section {...stagger(1.8)} className="rounded-2xl border border-line bg-paper-raised p-5">
           <h2 className="font-serif text-2xl">Light</h2>
           <p className="mt-3 text-sm">{b.lighting.mood}</p>
+          {b.lighting.from.length > 0 && <p className="mt-1 text-xs text-ink-soft">From {credit(b.lighting.from)}</p>}
           <ul className="mt-2 list-disc pl-5 text-sm text-ink-soft">
             {b.lighting.fixtures.map((f) => (
               <li key={f}>{f}</li>
@@ -290,11 +305,16 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
             {p.taste.brands.slice(0, 8).map((br) => (
               <li key={br.id} className="rounded-full border border-line bg-paper-raised px-4 py-1.5 text-sm">
                 {br.name}
+                {creditOf(p, br.name).via.length > 0 && <span className="text-ink-soft"> · matched to {creditOf(p, br.name).via.slice(0, 2).join(" and ")}</span>}
               </li>
             ))}
           </ul>
         </motion.section>
       )}
+
+      <motion.div {...stagger(2.5)}>
+        <TasteTrail trail={tasteTrail(p, b, chosen)} />
+      </motion.div>
     </main>
   );
 }

@@ -60,6 +60,7 @@ Home brands matched to their taste:
 ${brands || "- none"}
 
 Rules:
+- Make the style name from two of the strongest decor, ambience, aesthetic or style signals above, in plain words ("post industrial" and "eclectic" make "Eclectic Industrial"), so the client can see where it came from.
 - Build every choice from the signals above. In each "from", list only names that appear in "Things they love" or the brand list, copied exactly.
 - Be concrete: "smoked oak floors", "brass wall lights", not "natural materials".
 - Every room gets living plants; pick plants that suit the city's climate and the style.

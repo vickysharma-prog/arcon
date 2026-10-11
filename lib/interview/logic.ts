@@ -22,6 +22,9 @@ const KIND: Record<string, string> = {
   "urn:entity:person": "person",
 };
 
+/** "film", "place", "brand"... for a Qloo entity type. */
+export const kindOf = (type: string | undefined) => KIND[type ?? ""] ?? "other";
+
 // Sides from 6 m (a small studio) to 180 m (a large hotel). Anything else is almost certainly a typo.
 export function siteSizeProblem(width: number | undefined, depth: number | undefined, unit: "ft" | "m"): string | null {
   for (const [name, v] of [["width", width], ["depth", depth]] as const) {
