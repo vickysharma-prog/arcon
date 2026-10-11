@@ -2,6 +2,17 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-12 (night, later): Qloo deep dive, and the Q plan
+
+Vicky: Qloo should be behind every design decision it can inform, visibly. About 40 live calls explored what
+we hadn't used: tag families, audiences, demographics, trending, entity look-ups, images, price levels, local
+places. Best finds: brands carry price level, income level, age group, sustainability and competitor tags;
+places carry price, hotel class, photos and how they run (takeout, table service); cafés near a real
+neighbourhood come back with their decor for a given crowd. Dead ends: trending (empty), books (noisy),
+culture straight to decor tags (generic). Pitfall: unfiltered brand search found a fashion label for "RH".
+Findings in private/qloo-findings.md, the plan (Q2 to Q11, each decision, signal and where it shows) in
+private/plan.md. About 100 of 10,000 Qloo calls used.
+
 ## 2026-10-12 (late night): How a business runs (A5)
 
 Cafés, offices, shops and hotels now get their own "how you run it" step, like homes get "how you live".
