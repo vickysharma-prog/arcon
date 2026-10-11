@@ -189,3 +189,14 @@ export function transition() {
   setTimeout(() => tone(1800, 40, { type: "square", gain: 0.03 }), 120);
   setTimeout(() => tone(2400, 50, { type: "square", gain: 0.025 }), 175);
 }
+
+// A number counting up: soft blips that rise in pitch for `ms`, then the two-note "ok" as it lands.
+export function counting(ms = 1100) {
+  const steps = Math.max(6, Math.round(ms / 70));
+  for (let i = 0; i < steps; i++) {
+    // Blips come quicker at the start and slow as the number settles, like the count itself.
+    const at = ms * (1 - Math.pow(1 - i / steps, 2));
+    setTimeout(() => tone(900 + i * 60, 18, { type: "square", gain: 0.018 }), at);
+  }
+  setTimeout(ok, ms + 30);
+}

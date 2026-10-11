@@ -64,7 +64,7 @@ export function BudgetStep({ id, layout, location, interview, brief, profile, lo
         </div>
       ) : (
         <h1 className="mt-3 font-serif text-5xl sm:text-6xl" aria-label={`${fmt(e.total.low)} to ${fmt(e.total.high)}`}>
-          <CountUp value={e.total.low} format={fmt} /> <span className="text-ink-soft">to</span> <CountUp value={e.total.high} format={fmt} />
+          <CountUp value={e.total.low} format={fmt} sound /> <span className="text-ink-soft">to</span> <CountUp value={e.total.high} format={fmt} />
         </h1>
       )}
       <p className="mt-3 max-w-2xl text-ink-soft">

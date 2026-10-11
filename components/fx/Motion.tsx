@@ -2,6 +2,7 @@
 
 import { animate, motion, useInView, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { counting } from "./sfx";
 
 // Small motion pieces shared by the design screens: sections that rise into view, numbers that count up, a score
 // ring that fills, bars that grow, cards with blueprint corner marks, and a scanning loader. Every piece shows its
@@ -23,8 +24,11 @@ export function Reveal({ children, delay = 0, className = "" }: { children: Reac
   );
 }
 
-/** A number that counts up to `value` when it comes into view, and glides to a new value when it changes. */
-export function CountUp({ value, format = (v) => String(Math.round(v)), duration = 1.1 }: { value: number; format?: (v: number) => string; duration?: number }) {
+/**
+ * A number that counts up to `value` when it comes into view, and glides to a new value when it changes.
+ * `sound`: tick along as it counts (for the one headline number on a screen, not every figure).
+ */
+export function CountUp({ value, format = (v) => String(Math.round(v)), duration = 1.1, sound = false }: { value: number; format?: (v: number) => string; duration?: number; sound?: boolean }) {
   const still = useReducedMotion();
   const ref = useRef<HTMLSpanElement>(null);
   const seen = useInView(ref, { once: true });
@@ -33,10 +37,11 @@ export function CountUp({ value, format = (v) => String(Math.round(v)), duration
   useEffect(() => {
     if (still) return setShown(value);
     if (!seen) return;
+    if (sound && from.current !== value) counting(duration * 1000);
     const c = animate(from.current, value, { duration, ease: [0.16, 1, 0.3, 1], onUpdate: (v) => setShown(v) });
     from.current = value;
     return () => c.stop();
-  }, [value, seen, still, duration]);
+  }, [value, seen, still, duration, sound]);
   return (
     <span ref={ref} className="tabular-nums">
       {format(shown)}
