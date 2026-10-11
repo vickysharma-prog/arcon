@@ -2,6 +2,18 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-12 (night, last): Taste trail and style words (Q11, Q3)
+
+Your style now shows where everything came from. Under the summary: the words the style is made of, each with
+its source, taking turns between the things they love so one hotel can't fill the list. Every colour, material
+and light says what it came from; a brand Qloo matched is credited as "Buster + Punch, matched to Interstellar",
+never as something they love. At the bottom, "Where your style came from": each thing they love and what it gave
+(Ace Hotel: vintage, artistic, moodily dark; IKEA: clean lines, natural wood tones; Interstellar: four brands,
+with match strength), then a table of every choice and its source. The brief now builds the style name from the
+strongest style words. Checked live on the Ace Hotel, IKEA and Interstellar project.
+Found on the way: the matched brands included an interior design app and an architecture firm (service brands);
+they are filtered out now, with clothing labels and magazines. 191 tests.
+
 ## 2026-10-12 (night, later): Qloo deep dive, and the Q plan
 
 Vicky: Qloo should be behind every design decision it can inform, visibly. About 40 live calls explored what

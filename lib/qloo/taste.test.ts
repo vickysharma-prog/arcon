@@ -31,3 +31,12 @@ test("tags are weighted by layer and keep their evidence", () => {
   assert.ok(!p.tags.some((t) => t.value === "home_goods")); // industry tags are not style
   assert.deepEqual(p.brands[0].because, [{ entityId: "f1", score: 0.6 }]);
 });
+
+test("only brands you could furnish a home from are matched", async () => {
+  const { isHomeBrand } = await import("./api.ts");
+  const brand = (name: string, type: string) => ({ entity_id: name, name, tags: [{ tag_id: `urn:tag:brand_type:qloo:${type}` }] });
+  assert.equal(isHomeBrand(brand("Nourison Home", "retail_brand")), true);
+  assert.equal(isHomeBrand(brand("Dwell", "media_brand")), false);
+  assert.equal(isHomeBrand(brand("Homestyler", "service_brand")), false, "an app is not furniture");
+  assert.equal(isHomeBrand(brand("Chiquelle X Swimwear", "retail_brand")), false);
+});

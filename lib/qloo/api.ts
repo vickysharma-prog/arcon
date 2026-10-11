@@ -26,6 +26,12 @@ export async function insights(params: Record<string, string | number | boolean 
 }
 
 const MEDIA = "urn:tag:brand_type:qloo:media_brand";
+const SERVICE = "urn:tag:brand_type:qloo:service_brand";
+// ponytail: a name check for clothing labels Qloo files under home goods; a product_service check if more slip through.
+const CLOTHING = /swimwear|apparel|clothing|lingerie|fashion/i;
+
+/** A brand you could furnish a home from: not a magazine, an app or design firm, or a clothing label. */
+export const isHomeBrand = (b: Entity) => !b.tags?.some((t) => [MEDIA, SERVICE].includes(tagId(t))) && !CLOTHING.test(b.name);
 
 // Home and design brands matched to a set of liked entities, with why each one was picked.
 export async function homeBrands(likedIds: string[], take = 25): Promise<Entity[]> {
@@ -38,7 +44,7 @@ export async function homeBrands(likedIds: string[], take = 25): Promise<Entity[
     "feature.explainability": true,
     take,
   });
-  return brands.filter((b) => !b.tags?.some((t) => tagId(t) === MEDIA));
+  return brands.filter(isHomeBrand);
 }
 
 // Stores near a location, ranked by taste (e.g. furniture stores in "Austin, TX").
