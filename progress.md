@@ -2,6 +2,20 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-14 (early): Shopping list, and click a 3D piece to see its brand (B4, Q5)
+
+A new Shopping list step after the budget. It lists what the 3D actually places that you would buy (furniture,
+lamps, rugs, plants, appliances; fitted kitchens and baths stay in the budget), counted with their rooms. Each
+piece goes to a brand in their taste that makes it, read from the brand's Qloo product tags (Nourison: rugs;
+Buster + Punch: lighting; Roche Bobois: sofas, beds), near their price tier, brands they named winning close
+calls. A cheaper and a dearer alternative come from the brand's own competitor and similar-brand tags plus
+other brands in their taste that make the piece. Rough prices per piece at their tier and in their currency;
+furniture stores near the site ranked for their taste. Every brand and store opens a Google Maps search near
+them. On Vicky's plan: bed from Ethan Allen ($$$, or IKEA $$, or Roche Bobois $$$$), rug from Nourison Home
+(or Safavieh $$), sofa from IKEA (she loves it; or West Elm $$$); stores Home Centre and Nilkamal in Pune. The
+first build takes about 15 s of Qloo look-ups, cached after. In the walkthrough, clicking any piece you can buy
+opens a card with its brand, why, price and alternatives. 216 tests.
+
 ## 2026-10-13 (night): Motion pass (M1)
 
 Vicky: the style and budget pages looked like a plain dashboard. Added a small motion kit (components/fx/Motion):

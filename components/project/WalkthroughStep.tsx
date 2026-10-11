@@ -7,6 +7,13 @@ import type { Layout } from "@/lib/layout/schema";
 import type { Mode, Pose } from "@/components/three/HouseScene";
 import { PlanSvg } from "@/components/plan/PlanSvg";
 import { look as lookOf } from "@/lib/three/materials";
+import type { Item } from "@/lib/three/furniture";
+import { PIECES } from "@/lib/shop/list";
+import type { Shopping } from "@/lib/shop/fetch";
+import { marketOf, money } from "@/lib/budget/costs";
+import { AnimatePresence, motion } from "motion/react";
+import { Scanning } from "@/components/fx/Motion";
+import { tick } from "@/components/fx/sfx";
 
 type SceneProps = ComponentProps<typeof import("@/components/three/HouseScene").default>;
 
@@ -19,9 +26,9 @@ const HouseScene = dynamic(() => import("@/components/three/HouseScene"), {
 });
 
 export function WalkthroughStep({
-  layout, brief, taste, title, option = 0, planName, changePlan, next, extraPlants,
+  layout, brief, taste, title, option = 0, planName, changePlan, next, extraPlants, projectId, location,
 }: {
-  layout: Layout; extraPlants?: Record<string, number>; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null;
+  layout: Layout; extraPlants?: Record<string, number>; projectId?: string; location?: string | null; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null;
   /** Which of the three plan options this is, and a way back to pick another. */
   option?: number; planName?: string; changePlan?: () => void;
   next?: { label: string; go: () => void };
@@ -29,6 +36,18 @@ export function WalkthroughStep({
   const [mode, setMode] = useState<Mode>("walk");
   const [playing, setPlaying] = useState(true);
   const [room, setRoom] = useState("Outside");
+  // Click a piece to see where to buy it: the shopping list is fetched on the first click and kept.
+  const [picked, setPicked] = useState<Item | null>(null);
+  const [shop, setShop] = useState<Shopping | null>(null);
+  const pick = (it: Item) => {
+    tick();
+    setPicked(it);
+    if (!shop && projectId)
+      fetch(`/api/projects/${projectId}/shopping`)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((b) => b && setShop(b))
+        .catch(() => {});
+  };
   const [progress, setProgress] = useState(0);
   const [restart, setRestart] = useState(0);
   const [cutaway, setCutaway] = useState(true);
@@ -100,6 +119,7 @@ export function WalkthroughStep({
         <HouseScene
           layout={layout}
           extraPlants={extraPlants}
+          onPick={projectId ? pick : undefined}
           brief={brief}
           taste={taste}
           fitKey={fitKey}
@@ -121,6 +141,18 @@ export function WalkthroughStep({
             setGuide(true);
           }}
         />
+        <AnimatePresence>
+          {picked && (
+            <PieceCard
+              key={`${picked.room}-${picked.name}-${picked.x}`}
+              it={picked}
+              room={layout.floors.flatMap((f) => f.spaces).find((s) => s.id === picked.room)?.name ?? ""}
+              shop={shop}
+              location={location}
+              onClose={() => setPicked(null)}
+            />
+          )}
+        </AnimatePresence>
         {mode === "walk" && (
           <>
             <div className="pointer-events-none absolute left-4 top-4 rounded-full bg-paper/85 px-4 py-1.5 font-mono text-sm backdrop-blur">
@@ -284,5 +316,53 @@ function FullButton({ full, onClick }: { full: boolean; onClick: () => void }) {
         <path d={full ? "M9 3v6H3M15 3v6h6M9 21v-6H3M15 21v-6h6" : "M3 9V3h6M21 9V3h-6M3 15v6h6M21 15v6h-6"} />
       </svg>
     </button>
+  );
+}
+
+// What a clicked piece is and where to buy it: the brand in their taste that makes it, why, a rough price, and a
+// cheaper and a dearer alternative, from the shopping list.
+function PieceCard({ it, room, shop, location, onClose }: { it: Item; room: string; shop: Shopping | null; location?: string | null; onClose: () => void }) {
+  const line = shop?.lines.find((l) => l.piece === it.name);
+  const m = marketOf(location);
+  const why = (b: NonNullable<typeof line>["brand"]) => (!b ? "" : b.loved ? "you love it" : b.via.length ? `matched to ${b.via.slice(0, 2).join(" and ")}` : "matched to your taste");
+  return (
+    <motion.div
+      role="dialog"
+      aria-label={PIECES[it.name]?.label}
+      initial={{ opacity: 0, y: 16, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 10, scale: 0.97 }}
+      className="absolute bottom-20 left-4 z-10 w-[min(20rem,calc(100%-2rem))] rounded-2xl border border-accent/40 bg-paper/95 p-4 text-sm shadow-[0_18px_50px_-20px_var(--accent)] backdrop-blur"
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-mono text-[11px] uppercase tracking-widest text-ink-soft">{room}</p>
+          <p className="font-serif text-xl">{PIECES[it.name]?.label}</p>
+        </div>
+        <button type="button" onClick={onClose} aria-label="Close" className="rounded-full px-2 text-ink-soft hover:bg-line/60">
+          ×
+        </button>
+      </div>
+      {!shop ? (
+        <div className="mt-2">
+          <Scanning label="Finding its brand in your taste" />
+        </div>
+      ) : line?.brand ? (
+        <div className="mt-2 space-y-1">
+          <p>
+            <span className="font-medium">{line.brand.name}</span> <span className="text-ink-soft">{"$".repeat(line.brand.level ?? 0)}</span>
+          </p>
+          <p className="text-ink-soft">{why(line.brand)} · about {money(line.each, m)}</p>
+          {(line.cheaper || line.dearer) && (
+            <p className="text-xs text-ink-soft">
+              {line.cheaper && <>Spend less: {line.cheaper.name}. </>}
+              {line.dearer && <>Spend more: {line.dearer.name}.</>}
+            </p>
+          )}
+        </div>
+      ) : (
+        <p className="mt-2 text-ink-soft">{it.name.includes("plant") ? "From a plant nursery near you." : "No brand in your taste makes this one."}</p>
+      )}
+    </motion.div>
   );
 }

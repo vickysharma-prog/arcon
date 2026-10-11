@@ -8,7 +8,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Box3, CatmullRomCurve3, Plane, Raycaster, Vector2, Vector3 } from "three";
 import type { Layout } from "@/lib/layout/schema";
 import { decorate } from "@/lib/three/decor";
-import { furnish } from "@/lib/three/furniture";
+import { furnish, type Item } from "@/lib/three/furniture";
+import { PIECES } from "@/lib/shop/list";
 import { blockers, step } from "@/lib/three/explore";
 import { buildSlabs, buildWalls, EYE, onTour, stairBoxes, STOREY, walkPlan, WALL_H, type Glass, type Slab, type WallBox } from "@/lib/three/geometry";
 import { look as lookOf, luminance, mix, scheme, type Look, type Scheme } from "@/lib/three/materials";
@@ -22,6 +23,8 @@ type Props = {
   layout: Layout;
   /** Plants the client added to raise the greenery score, by room id. */
   extraPlants?: Record<string, number>;
+  /** Called when a piece you can buy is clicked. */
+  onPick?: (it: Item) => void;
   /** Look-around only: lift the roof off, and show floors up to this level ("all" keeps every floor). */
   cutaway?: boolean;
   upTo?: number | "all";
@@ -53,7 +56,7 @@ function wallGeom(w: WallBox | Glass, thick: number) {
     : { position: [w.at, y, mid] as const, size: [thick, h, len] as const };
 }
 
-function Building({ layout, colors, look, cutaway = false, upTo = "all", extraPlants }: { layout: Layout; colors: Scheme; look: Look; cutaway?: boolean; upTo?: number | "all"; extraPlants?: Record<string, number> }) {
+function Building({ layout, colors, look, cutaway = false, upTo = "all", extraPlants, onPick }: { layout: Layout; colors: Scheme; look: Look; cutaway?: boolean; upTo?: number | "all"; extraPlants?: Record<string, number>; onPick?: (it: Item) => void }) {
   const shown = (level: number) => upTo === "all" || level <= upTo;
   // Show inside cuts the top floor's walls at 1.4 m, like an architect's section, so every room reads from above.
   const topShown = upTo === "all" ? (layout.floors.at(-1)?.level ?? 0) : upTo;
@@ -178,9 +181,27 @@ function Building({ layout, colors, look, cutaway = false, upTo = "all", extraPl
           <meshStandardMaterial color={colors.roof} roughness={0.8} />
         </mesh>
       )}
-      {items.map((it, i) => (
-        <Model key={`i-${i}`} it={it} k={colors} />
-      ))}
+      {items.map((it, i) =>
+        onPick && PIECES[it.name] ? (
+          // A piece you can buy: click it to see the brand it comes from.
+          <group
+            key={`i-${i}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPick(it);
+            }}
+            onPointerOver={(e) => {
+              e.stopPropagation();
+              document.body.style.cursor = "pointer";
+            }}
+            onPointerOut={() => (document.body.style.cursor = "")}
+          >
+            <Model it={it} k={colors} />
+          </group>
+        ) : (
+          <Model key={`i-${i}`} it={it} k={colors} />
+        ),
+      )}
       {/* a warm light in every room, with its fixture on the ceiling when the roof is on */}
       {slabs
         .filter((s) => s.zone !== "circulation")
@@ -579,7 +600,7 @@ export default function HouseScene(props: Props) {
   const orbit = props.mode === "orbit";
   const top = props.layout.floors.at(-1)?.level ?? 0;
   const building = (
-    <Building layout={props.layout} colors={colors} look={look} cutaway={orbit && props.cutaway} upTo={orbit ? props.upTo : "all"} extraPlants={props.extraPlants} />
+    <Building layout={props.layout} colors={colors} look={look} cutaway={orbit && props.cutaway} upTo={orbit ? props.upTo : "all"} extraPlants={props.extraPlants} onPick={props.onPick} />
   );
   return (
     <Canvas

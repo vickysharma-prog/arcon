@@ -178,6 +178,8 @@ export function ProjectView({ id }: { id: string }) {
             <WalkthroughStep
               layout={p.options[p.chosen_option ?? 0]}
               extraPlants={extraPlants}
+              projectId={p.id}
+              location={p.site.location}
               brief={p.brief}
               taste={p.taste}
               title={p.title}
