@@ -7,7 +7,7 @@ import { Logo } from "@/components/Logo";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { CountUp } from "@/components/fx/Motion";
 import { tick, transition } from "@/components/fx/sfx";
-import { INTRO_DONE } from "./Intro";
+import { HomeLink, INTRO_DONE } from "./Intro";
 
 // The header for the landing page: the logo on its own at the left, the sections in a floating glass bar in the
 // middle, and the way in at the right. A highlight slides under whichever link the pointer is on.
@@ -30,9 +30,9 @@ export function LandingHeader() {
   return (
     <header className="sticky top-0 z-40">
       <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-4 py-4 sm:px-8">
-        <Link href="/" aria-label="Arcon home" className="justify-self-start">
+        <HomeLink className="justify-self-start">
           <Logo size={28} />
-        </Link>
+        </HomeLink>
         <nav
           onMouseLeave={() => setHover(null)}
           className={`hidden items-center gap-1 rounded-full border p-1 text-sm backdrop-blur-md transition-all duration-300 md:flex ${scrolled ? "border-line bg-paper-raised/80 shadow-[0_10px_40px_-20px_var(--accent)]" : "border-line/70 bg-paper-raised/50"}`}

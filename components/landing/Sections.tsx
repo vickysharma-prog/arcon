@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
 import { AnimatedMark } from "@/components/AnimatedMark";
 import { Logo } from "@/components/Logo";
+import { HomeLink } from "./Intro";
 import { CountUp, HudCard, Reveal, Ring } from "@/components/fx/Motion";
 import { tick, transition } from "@/components/fx/sfx";
 
@@ -403,7 +404,9 @@ export function Footer() {
   return (
     <footer className="border-t border-line">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-ink-soft sm:flex-row sm:px-8">
-        <Logo size={22} />
+        <HomeLink>
+          <Logo size={22} />
+        </HomeLink>
         <p>Taste intelligence powered by Qloo · © 2026 Arcon</p>
         <Link href="/privacy" className="hover:text-ink">
           Privacy

@@ -1,83 +1,119 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useState, type ReactNode } from "react";
 import { seeds, SIZE } from "@/lib/brand/seeds";
 import { burst, chime, transition } from "@/components/fx/sfx";
 
 const SEEDS = seeds();
 const SEEN = "arcon-intro";
+const REPLAY = "arcon:intro-replay";
 /** Fired as the intro leaves, so the page can start its own animations in view of the visitor. */
 export const INTRO_DONE = "arcon:intro-done";
 
 // Runs before the overlay is painted: a visitor who saw the intro this session, or asks for less motion, skips it.
 const SKIP = `try{if(sessionStorage.getItem("${SEEN}")||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("intro-seen")}catch(e){}`;
 
-/** The boot sound: a data burst, a rising sweep, then a soft chord as the page opens. */
+/** The boot sound, timed to the animation: a data burst as the seeds start, a sweep as they fill, a chord on the name. */
 function boot() {
   burst();
-  setTimeout(transition, 120);
-  setTimeout(chime, 520);
+  setTimeout(transition, 700);
+  setTimeout(chime, 1300);
 }
 
-// The opening: the seed mark grows from the centre out, the name resolves under it, and a scan line runs. Browsers
-// only allow sound after a click, so a fresh visitor taps to enter and the tap plays the boot sound; someone who
-// clicked their way here from inside the app hears it at once. It is plain CSS underneath, so it still fades out on
-// its own if scripts are slow or nobody taps.
+const clicked = () => (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive ?? false;
+
+/** Plays the intro again, from any page: the logo in every header uses this. */
+export function replayIntro() {
+  try {
+    sessionStorage.removeItem(SEEN);
+  } catch {}
+  document.documentElement.classList.remove("intro-seen");
+  window.scrollTo({ top: 0 });
+  window.dispatchEvent(new Event(REPLAY));
+}
+
+/** A link home that replays the intro on the way. */
+export function HomeLink({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <Link href="/" aria-label="Arcon home" onClick={replayIntro} className={className}>
+      {children}
+    </Link>
+  );
+}
+
+type Phase = "gate" | "play" | "leaving" | "gone";
+
+// The opening. The seed mark grows from the centre out with the boot sound, the name resolves under it, a scan line
+// runs, and the page shows through. Browsers allow sound only after a click, so a first-time visitor sees a faint
+// mark and "Tap to enter", and the tap starts the animation and the sound together. Anyone who has already clicked
+// (the logo, or a link inside the app) gets it straight away. Without scripts it fades out on its own.
 export function Intro() {
-  const [gone, setGone] = useState(false);
-  const [leaving, setLeaving] = useState(false);
-  const [gate, setGate] = useState(false);
+  const [phase, setPhase] = useState<Phase>("gate");
+  const [run, setRun] = useState(0);
+  // Set once scripts are running: the intro then waits for the tap instead of fading out on its own.
+  const [live, setLive] = useState(false);
 
   useEffect(() => {
-    if (document.documentElement.classList.contains("intro-seen")) {
-      setGone(true);
-      window.dispatchEvent(new Event(INTRO_DONE));
-      return;
-    }
-    try {
-      sessionStorage.setItem(SEEN, "1");
-    } catch {}
+    setLive(true);
     const timers: ReturnType<typeof setTimeout>[] = [];
-    const leave = () => {
-      setLeaving(true);
-      window.dispatchEvent(new Event(INTRO_DONE));
-      timers.push(setTimeout(() => setGone(true), 600));
+    const clear = () => timers.splice(0).forEach(clearTimeout);
+    const done = () => window.dispatchEvent(new Event(INTRO_DONE));
+    const unlisten = () => {
+      window.removeEventListener("pointerdown", play);
+      window.removeEventListener("keydown", play);
     };
-    if ((navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive) {
-      timers.push(setTimeout(boot, 150), setTimeout(leave, 2300));
-      return () => timers.forEach(clearTimeout);
-    }
-    setGate(true);
-    const enter = () => {
+
+    function play() {
+      unlisten();
+      clear();
+      try {
+        sessionStorage.setItem(SEEN, "1");
+      } catch {}
+      setRun((n) => n + 1);
+      setPhase("play");
       boot();
-      leave();
-    };
-    // The CSS fades the intro out at 9 seconds; after that a click belongs to the page, not the intro.
-    timers.push(
-      setTimeout(() => {
-        setGone(true);
-        window.dispatchEvent(new Event(INTRO_DONE));
-      }, 9000),
-    );
-    window.addEventListener("pointerdown", enter, { once: true });
-    window.addEventListener("keydown", enter, { once: true });
+      timers.push(
+        setTimeout(() => {
+          setPhase("leaving");
+          done();
+        }, 2500),
+        setTimeout(() => setPhase("gone"), 3100),
+      );
+    }
+    window.addEventListener(REPLAY, play);
+
+    if (document.documentElement.classList.contains("intro-seen")) {
+      setPhase("gone");
+      done();
+    } else if (clicked()) {
+      play();
+    } else {
+      window.addEventListener("pointerdown", play);
+      window.addEventListener("keydown", play);
+    }
     return () => {
-      timers.forEach(clearTimeout);
-      window.removeEventListener("pointerdown", enter);
-      window.removeEventListener("keydown", enter);
+      clear();
+      unlisten();
+      window.removeEventListener(REPLAY, play);
     };
   }, []);
 
-  if (gone) return null;
+  if (phase === "gone") return null;
+  const playing = phase !== "gate";
   return (
     <>
       <script dangerouslySetInnerHTML={{ __html: SKIP }} />
-      <div className={`intro fixed inset-0 z-50 grid cursor-pointer place-items-center bg-paper ${leaving ? "intro-leaving" : ""}`} aria-hidden>
+      <div
+        key={run}
+        className={`intro fixed inset-0 z-50 grid cursor-pointer place-items-center bg-paper ${live ? "intro-live" : ""} ${playing ? "intro-play" : "intro-waiting"} ${phase === "leaving" ? "intro-leaving" : ""}`}
+        aria-hidden
+      >
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.06]"
           style={{ backgroundImage: "linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px)", backgroundSize: "36px 36px" }}
         />
-        <div className="intro-scan pointer-events-none absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-accent/15 to-transparent" />
+        {playing && <div className="intro-scan pointer-events-none absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-accent/15 to-transparent" />}
         <div className="relative flex flex-col items-center">
           <svg width="132" height="132" viewBox={`0 0 ${SIZE} ${SIZE}`} className="intro-mark">
             {SEEDS.map((s, i) => (
@@ -104,8 +140,8 @@ export function Intro() {
           <div className="mt-6 h-px w-48 overflow-hidden bg-line">
             <div className="intro-bar h-px bg-gradient-to-r from-btn to-accent" />
           </div>
-          {gate && (
-            <p className="intro-letter mt-8 flex items-center gap-3 rounded-full border border-accent/50 px-5 py-2 font-mono text-xs uppercase tracking-[0.3em] text-accent" style={{ animationDelay: "1700ms" }}>
+          {!playing && (
+            <p className="intro-gate absolute top-full mt-10 flex items-center gap-3 whitespace-nowrap rounded-full border border-accent/50 px-5 py-2 font-mono text-xs uppercase tracking-[0.3em] text-accent">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
               Tap to enter
             </p>
