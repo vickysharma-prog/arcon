@@ -41,8 +41,14 @@ const STYLE_FAMILIES = new Set(["decor", "ambience", "aesthetic", "style"]);
 export function styleWords(p: Taste, n = 6): { word: string; from: Credit[] }[] {
   const tags = (p.taste?.tags ?? []).filter((t) => STYLE_FAMILIES.has(t.family));
   const loved = (t: StyleTag) => t.sources.some((s) => s.layer !== 3);
+  // Take turns between the things they named, strongest word first from each, so one hotel can't fill the list.
+  const lead = (t: StyleTag) => t.sources.find((s) => s.layer !== 3)!.entityId;
+  const queues = new Map<string, StyleTag[]>();
+  for (const t of tags.filter(loved)) queues.set(lead(t), [...(queues.get(lead(t)) ?? []), t]);
+  const turns: StyleTag[] = [];
+  for (let i = 0; [...queues.values()].some((q) => q.length > i); i++) for (const q of queues.values()) if (q[i]) turns.push(q[i]);
   const seen = new Set<string>();
-  return [...tags.filter(loved), ...tags.filter((t) => !loved(t))]
+  return [...turns, ...tags.filter((t) => !loved(t))]
     .filter((t) => !seen.has(label(t.value)) && seen.add(label(t.value)))
     .slice(0, n)
     .map((t) => ({ word: label(t.value), from: t.sources.map((s) => creditOf(p, s.name)).sort((a, b) => Number(b.loved) - Number(a.loved)) }));

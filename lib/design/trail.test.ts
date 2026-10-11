@@ -69,3 +69,9 @@ test("the trail ties every choice to evidence and drops choices with none", () =
   assert.equal(t.choices.filter((c) => c.what === "Plan").length, 1, "only the taste-backed plan reason");
   assert.equal(tasteTrail({ taste_signals: [], taste: null }, null).choices.length, 0);
 });
+
+test("style words take turns between the things they love", () => {
+  const tag = (value: string, weight: number, entityId: string) => ({ family: "decor" as const, value, weight, sources: [{ entityId, name: entityId, layer: 1 as const }] });
+  const q = { taste_signals: [], taste: { tags: [tag("a1", 9, "A"), tag("a2", 8, "A"), tag("a3", 7, "A"), tag("b1", 2, "B")], brands: [] } };
+  assert.deepEqual(styleWords(q, 3).map((w) => w.word), ["a1", "b1", "a2"]);
+});
