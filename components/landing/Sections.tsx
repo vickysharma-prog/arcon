@@ -23,34 +23,6 @@ function Heading({ eyebrow, title, sub }: { eyebrow: string; title: ReactNode; s
   );
 }
 
-// The numbers under the hero, running past slowly.
-const FACTS = ["7 kinds of space", "3 plan options every time", "Budgets in 8 markets", "English, हिंदी, Hinglish", "About 8 minutes", "Plants in every room", "Walk through it in 3D"];
-
-// Two tapes crossing under the hero, one in ink and one in blue, running opposite ways.
-export function Facts() {
-  return (
-    <div className="relative h-36 overflow-hidden sm:h-40" aria-label={FACTS.join(", ")}>
-      <Tape className="-rotate-[3deg] bg-btn text-btn-ink" />
-      <Tape className="rotate-[3deg] bg-accent text-white" reverse />
-    </div>
-  );
-}
-
-function Tape({ className, reverse = false }: { className: string; reverse?: boolean }) {
-  return (
-    <div aria-hidden className={`absolute -inset-x-10 top-1/2 -translate-y-1/2 py-3 shadow-[0_10px_30px_-12px_var(--accent)] ${className}`}>
-      <div className={`flex w-max gap-10 animate-[marquee_40s_linear_infinite] motion-reduce:animate-none ${reverse ? "[animation-direction:reverse]" : ""}`}>
-        {[...FACTS, ...FACTS].map((f, i) => (
-          <span key={i} className="flex items-center gap-10 whitespace-nowrap font-mono text-xs uppercase tracking-[0.25em] sm:text-sm">
-            {f}
-            <span className="h-1.5 w-1.5 rotate-45 bg-current opacity-70" />
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 const STEPS = [
   { n: "01", title: "Talk", body: "One question at a time. Tap an answer, type, or just speak." },
   { n: "02", title: "Taste", body: "Qloo reads what you love and finds the words for your style." },
