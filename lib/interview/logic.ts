@@ -1,6 +1,7 @@
 import type { Entity } from "../qloo/api.ts";
 import { layerOf, type Profile } from "../qloo/taste.ts";
 import type { Project } from "../project/store.ts";
+import { livingMissing, livingOf } from "./living.ts";
 
 const FT = 0.3048;
 export const toMetres = (value: number, unit: "ft" | "m") => (unit === "ft" ? value * FT : value);
@@ -48,6 +49,8 @@ export function missingForDesign(p: Project): string[] {
   if (!p.site.location) missing.push("the city or ZIP code");
   if (p.taste_signals.length < MIN_TASTE) missing.push(`at least ${MIN_TASTE} things they love: places, brands, films or music`);
   if (!p.taste_signals.some((s) => s.layer === 1 || s.layer === 2)) missing.push("at least one place or brand they love");
+  const living = livingMissing(p.space_type, livingOf(p.interview));
+  if (living) missing.push(living);
   return missing;
 }
 

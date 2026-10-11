@@ -29,6 +29,7 @@ test("a complete project is ready", () => {
   const ready = project({
     space_type: "house",
     site: { width: 14, depth: 10, location: "Austin, TX" },
+    interview: { living: { kitchen: "open", bedrooms: "apart" } },
     taste_signals: [
       { entityId: "a", name: "A", layer: 1 },
       { entityId: "b", name: "B", layer: 3 },
@@ -43,8 +44,20 @@ test("culture alone is not enough taste", () => {
     space_type: "house",
     site: { width: 14, depth: 10, location: "Austin" },
     taste_signals: ["a", "b", "c"].map((id) => ({ entityId: id, name: id, layer: 3 as const })),
+    interview: { living: { kitchen: "open", bedrooms: "together" } },
   });
   assert.deepEqual(missingForDesign(onlyFilms), ["at least one place or brand they love"]);
+});
+
+test("a home also needs to know how they live in it", () => {
+  const noLiving = project({
+    space_type: "house",
+    site: { width: 14, depth: 10, location: "Austin" },
+    taste_signals: [{ entityId: "a", name: "A", layer: 1 }, { entityId: "b", name: "B", layer: 2 }, { entityId: "c", name: "C", layer: 3 }],
+  });
+  assert.equal(missingForDesign(noLiving).length, 1);
+  assert.match(missingForDesign(noLiving)[0], /kitchen/);
+  assert.deepEqual(missingForDesign({ ...noLiving, space_type: "cafe" }), []);
 });
 
 test("the summary keeps the strongest words and their sources", () => {
