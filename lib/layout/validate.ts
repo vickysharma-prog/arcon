@@ -56,6 +56,18 @@ function checkFloor(layout: Layout, floor: Floor, errors: string[]) {
     }
   }
 
+  // Two openings can't share the same stretch of wall: a window over the front door is no door at all.
+  for (let i = 0; i < floor.openings.length; i++)
+    for (let j = i + 1; j < floor.openings.length; j++) {
+      const a = floor.openings[i];
+      const b = floor.openings[j];
+      if (a.axis !== b.axis) continue;
+      const line = (o: Opening) => (o.axis === "x" ? o.y : o.x);
+      const along = (o: Opening) => (o.axis === "x" ? o.x : o.y);
+      if (Math.abs(line(a) - line(b)) > EPS) continue;
+      if (Math.abs(along(a) - along(b)) * 2 < a.width + b.width - EPS) errors.push(`${at}: ${a.id} and ${b.id} overlap on the same wall`);
+    }
+
   for (const s of floor.spaces)
     if (!NO_WINDOW.has(s.kind) && !floor.openings.some((o) => o.type === "window" && o.between.includes(s.id)))
       errors.push(`${at}: ${s.id} has no window`);

@@ -80,3 +80,11 @@ test("rooms come out close to the size the program asked for", () => {
         assert.ok(got < asked * 2, `${s.id}: asked ${asked} m², got ${got.toFixed(1)} m²`);
       }
 });
+
+test("the validator catches a window over a door", () => {
+  const layout = structuredClone(place(TEMPLATES.apartment, DEFAULT_SHELLS.apartment));
+  const floor = layout.floors[0];
+  const door = floor.openings.find((o) => o.id === "door-entry")!;
+  floor.openings.push({ id: "win-bad", type: "window", between: ["hall", "outside"], x: door.x, y: door.y, axis: door.axis, width: 1 });
+  assert.ok(validate(layout).some((e) => /win-bad and door-entry overlap|door-entry and win-bad overlap/.test(e)));
+});

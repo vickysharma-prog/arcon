@@ -93,11 +93,20 @@ function band(rooms: ProgramRoom[], box: Box, D: number, front: number, livingAt
   const fr = row(frontRow, 0, backRow.length ? split : D);
   const br = backRow.length ? row(backRow, split, D - split, backBox) : [];
 
+  // The front door opens into the front-row room at the middle of the band, near one end of its wall,
+  // and that room's window takes the rest of the wall, so the two never overlap.
+  const mid = (box.x0 + box.x1) / 2;
+  const entryRoom = entry && fr.length ? (fr.find((s) => s.rect.x <= mid && mid <= s.rect.x + s.rect.w) ?? fr[0]) : null;
+  if (entryRoom) openings.push({ id: "door-entry", type: "door", between: [entryRoom.id, "outside"], x: entryRoom.rect.x + 0.3 + ENTRY / 2, y: 0, axis: "x", width: ENTRY });
   for (const s of spaces) {
     const atFront = s.rect.y === 0;
     const atBack = Math.abs(s.rect.y + s.rect.h - D) < 1e-9;
-    if (atFront) openings.push({ id: `win-${s.id}`, type: "window", between: [s.id, "outside"], x: s.rect.x + s.rect.w / 2, y: 0, axis: "x", width: Math.min(s.rect.w * 0.5, 2.4) });
-    else if (atBack) openings.push({ id: `win-${s.id}`, type: "window", between: [s.id, "outside"], x: s.rect.x + s.rect.w / 2, y: D, axis: "x", width: Math.min(s.rect.w * 0.5, 2.4) });
+    if (!atFront && !atBack) continue;
+    // The stretch of facade free for a window: all of it, or what the front door leaves.
+    const from = s === entryRoom ? s.rect.x + 0.3 + ENTRY + 0.3 : s.rect.x;
+    const to = s.rect.x + s.rect.w;
+    const width = Math.min((to - from) * (s === entryRoom ? 0.7 : 0.5), 2.4);
+    if (width > 0.3) openings.push({ id: `win-${s.id}`, type: "window", between: [s.id, "outside"], x: (from + to) / 2, y: atFront ? 0 : D, axis: "x", width });
   }
   // Neighbours in a row share a side wall; each back-row room joins the front room it overlaps most.
   for (const r of [fr, br])
@@ -112,12 +121,6 @@ function band(rooms: ProgramRoom[], box: Box, D: number, front: number, livingAt
       .sort((p, q) => q.hi - q.lo - (p.hi - p.lo))[0];
     if (best && best.hi - best.lo >= DOOR)
       openings.push({ id: `door-${b.id}-${best.a.id}`, type: "door", between: [b.id, best.a.id], x: (best.lo + best.hi) / 2, y: split, axis: "x", width: DOOR });
-  }
-  // The front door opens into the middle of the band's front row.
-  if (entry && fr.length) {
-    const mid = (box.x0 + box.x1) / 2;
-    const room = fr.find((s) => s.rect.x <= mid && mid <= s.rect.x + s.rect.w) ?? fr[0];
-    openings.push({ id: "door-entry", type: "door", between: [room.id, "outside"], x: room.rect.x + room.rect.w / 2, y: 0, axis: "x", width: ENTRY });
   }
   return { level: 0, spaces, openings };
 }
