@@ -60,12 +60,22 @@ export function withFallback(primary: Model, fallbacks: Model[]): LanguageModel 
   });
 }
 
-export function chatModel(env: Record<string, string | undefined> = process.env): LanguageModel {
+/**
+ * The Gemini models to try, in order. With `tools`, "lite" models go last: they sometimes write a tool call out as
+ * text ("tool_code print(default_api...)") instead of making it, which stalls an agent, so they only stand in when
+ * every other model is out of quota.
+ */
+export function geminiOrder(primary: string, tools: boolean, fallbacks = GEMINI_FALLBACKS): string[] {
+  const all = [...new Set([primary, ...fallbacks].filter(Boolean))];
+  return tools ? [...all.filter((n) => !/lite/i.test(n)), ...all.filter((n) => /lite/i.test(n))] : all;
+}
+
+export function chatModel(env: Record<string, string | undefined> = process.env, { tools = false } = {}): LanguageModel {
   const r = route(env);
   if (r.via === "google") {
     const google = createGoogleGenerativeAI({ apiKey: env.GOOGLE_GENERATIVE_AI_API_KEY });
-    const names = (env.ARCON_FALLBACK_MODELS?.split(",").map((x) => x.trim()) ?? GEMINI_FALLBACKS).filter((n) => n && n !== r.model);
-    return withFallback(google(r.model), names.map((n) => google(n)));
+    const [first, ...rest] = geminiOrder(r.model, tools, env.ARCON_FALLBACK_MODELS?.split(",").map((x) => x.trim()));
+    return withFallback(google(first), rest.map((n) => google(n)));
   }
   if (r.via === "anthropic") return createAnthropic({ apiKey: env.ANTHROPIC_API_KEY })(r.model);
   return r.model;

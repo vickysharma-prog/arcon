@@ -35,3 +35,10 @@ test("out of quota, the next model answers; a real error is not hidden", async (
   await assert.rejects(generateText({ model: withFallback(failing(new Error("bad request")), [answer("never")]), prompt: "hi", maxRetries: 0 }), /bad request/);
   assert.ok(isQuota(quota) && isQuota(new Error("RESOURCE_EXHAUSTED")) && !isQuota(new Error("invalid key")));
 });
+
+test("an agent that calls tools never leads with a lite model", async () => {
+  const { geminiOrder } = await import("./models.ts");
+  assert.deepEqual(geminiOrder("gemini-3.1-flash-lite", true, ["gemini-3.5-flash", "gemini-3.1-flash-lite"]), ["gemini-3.5-flash", "gemini-3.1-flash-lite"]);
+  assert.deepEqual(geminiOrder("gemini-3.1-flash-lite", false, ["gemini-3.5-flash"]), ["gemini-3.1-flash-lite", "gemini-3.5-flash"]);
+  assert.deepEqual(geminiOrder("gemini-3.5-flash", true, ["gemini-3.5-flash", "gemini-2.5-flash"]), ["gemini-3.5-flash", "gemini-2.5-flash"]);
+});
