@@ -51,11 +51,14 @@ export type Look = {
   finish: Finish; feature: string; tile: string; tileKind: "plain" | "zellige" | "marble" | "terracotta"; curtain: string; frame: string; art: string[];
   /** Furniture style, and whether the space leans green (more plants) or cozy (throws and cushions). */
   style: Style; lush: boolean; cozy: boolean;
-  /** The loved places and brands whose Qloo tags chose the style, strongest first. */
+  /** Things the user named (places, brands) whose Qloo tags chose the style, strongest first. */
   because: string[];
+  /** Brands Qloo matched to the films and music they love, which also pointed to this style. */
+  matched: string[];
 };
 type BriefWords = { name?: string; summary?: string; palette?: Swatch[]; materials?: { name: string; where: string }[] };
-type Taste = { tags: { value: string; weight: number; sources: { name: string }[] }[]; brands: { name: string; aesthetic: string[] }[] };
+// Layer 3 sources are brands Qloo matched to the user's culture picks, not things they named themselves.
+type Taste = { tags: { value: string; weight: number; sources: { name: string; layer?: number }[] }[]; brands: { name: string; aesthetic: string[] }[] };
 
 const STYLES: [Style, RegExp][] = [
   ["midcentury", /mid.?century|retro|atomic|sixties|seventies|danish/],
@@ -76,23 +79,36 @@ const COZY = /cozy|cosy|warm|intimate|homey|comfort|snug|moody/;
 export function styleOf(taste: Taste | null | undefined, words: string, name = "") {
   const score = new Map<Style, number>();
   const credit = new Map<Style, Map<string, number>>();
-  const add = (text: string, w: number, from: string[]) => {
+  const matchedCredit = new Map<Style, Map<string, number>>();
+  const bump = (m: Map<Style, Map<string, number>>, style: Style, names: string[], w: number) => {
+    const c = m.get(style) ?? new Map<string, number>();
+    for (const n of names) c.set(n, (c.get(n) ?? 0) + w);
+    m.set(style, c);
+  };
+  const add = (text: string, w: number, loved: string[] = [], matched: string[] = []) => {
     for (const [style, re] of STYLES)
       if (re.test(text)) {
         score.set(style, (score.get(style) ?? 0) + w);
-        const c = credit.get(style) ?? new Map<string, number>();
-        for (const f of from) c.set(f, (c.get(f) ?? 0) + w);
-        credit.set(style, c);
+        bump(credit, style, loved, w);
+        bump(matchedCredit, style, matched, w);
       }
   };
-  for (const t of taste?.tags ?? []) add(t.value.replaceAll("_", " ").toLowerCase(), t.weight, t.sources.map((s) => s.name));
-  for (const b of taste?.brands ?? []) for (const a of b.aesthetic) add(a.replaceAll("_", " ").toLowerCase(), 0.5, [b.name]);
-  add(words, 1, []);
-  add(name.toLowerCase(), 8, []);
+  for (const t of taste?.tags ?? [])
+    add(
+      t.value.replaceAll("_", " ").toLowerCase(),
+      t.weight,
+      t.sources.filter((s) => s.layer !== 3).map((s) => s.name),
+      t.sources.filter((s) => s.layer === 3).map((s) => s.name),
+    );
+  for (const b of taste?.brands ?? []) for (const a of b.aesthetic) add(a.replaceAll("_", " ").toLowerCase(), 0.5, [], [b.name]);
+  add(words, 1);
+  add(name.toLowerCase(), 8);
   const style = [...score].sort((a, b) => b[1] - a[1])[0]?.[0] ?? "modern";
-  const because = [...(credit.get(style) ?? [])].sort((a, b) => b[1] - a[1]).map(([n]) => n).slice(0, 3);
+  const top = (m: Map<Style, Map<string, number>>, n: number) => [...(m.get(style) ?? [])].sort((a, b) => b[1] - a[1]).map(([x]) => x).slice(0, n);
+  const because = top(credit, 3);
+  const matched = top(matchedCredit, 2).filter((x) => !because.includes(x));
   const all = [words, ...(taste?.tags ?? []).map((t) => t.value.replaceAll("_", " "))].join(" ").toLowerCase();
-  return { style, because, lush: LUSH.test(all), cozy: COZY.test(all) };
+  return { style, because, matched, lush: LUSH.test(all), cozy: COZY.test(all) };
 }
 
 export function look(brief: BriefWords | null | undefined, taste?: Taste | null): Look {

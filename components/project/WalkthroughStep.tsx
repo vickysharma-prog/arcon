@@ -19,11 +19,11 @@ const HouseScene = dynamic(() => import("@/components/three/HouseScene"), {
 });
 
 export function WalkthroughStep({
-  layout, brief, taste, title, option = 0, changePlan, next,
+  layout, brief, taste, title, option = 0, planName, changePlan, next,
 }: {
   layout: Layout; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null;
   /** Which of the three plan options this is, and a way back to pick another. */
-  option?: number; changePlan?: () => void;
+  option?: number; planName?: string; changePlan?: () => void;
   next?: { label: string; go: () => void };
 }) {
   const [mode, setMode] = useState<Mode>("walk");
@@ -56,7 +56,7 @@ export function WalkthroughStep({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs uppercase tracking-widest text-ink-soft">
-            {title} · plan option {option + 1}
+            {title} · {planName ?? `plan option ${option + 1}`}
             {changePlan && (
               <button onClick={changePlan} className="ml-2 normal-case tracking-normal text-accent underline-offset-2 hover:underline">
                 Change plan
@@ -68,7 +68,8 @@ export function WalkthroughStep({
           </h1>
           <p className="text-sm text-ink-soft">
             Furnished in a <span className="font-medium text-ink">{STYLE_NAME[style.style]}</span> style
-            {style.because.length > 0 && <> because you love {style.because.join(", ")}</>}.
+            {style.because.length > 0 && <> because you love {style.because.join(", ")}</>}
+            {style.matched.length > 0 && <>{style.because.length ? ", and" : ", from"} brands that match your taste like {style.matched.join(" and ")}</>}.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

@@ -25,6 +25,8 @@ const p = await createProject({
     people: { adults: 2, kids: [6, 9], pets: "dog", worksFromHome: true },
     needs: { bedrooms: 3, office: true, dislikes: "dark kitchen" },
     budget: { range: "$450k to $550k" },
+    // The demo persona's answers to "how do you live in it", as the interviewer would save them.
+    living: { kitchen: "open", entertaining: "sometimes", bedrooms: "together", outlook: "garden", said: { kitchen: "I want to cook while the kids do homework" } },
   },
   taste_signals: signals,
   taste,

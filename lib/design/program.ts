@@ -1,6 +1,6 @@
 import { generateText, Output, type LanguageModel } from "ai";
 import { z } from "zod";
-import { planOptions } from "../layout/place.ts";
+import { planOptionsFor, type Who } from "./options.ts";
 import { Program, type Layout, type Shell, type SpaceType } from "../layout/schema.ts";
 import { TEMPLATES } from "../layout/templates.ts";
 import { validate } from "../layout/validate.ts";
@@ -39,12 +39,13 @@ export function toProgram(spaceType: SpaceType, floors: number, rooms: z.infer<t
   return Program.parse({ spaceType, floors, rooms: placed });
 }
 
-// Three valid plan options for a program, or null if the program can't be laid out in this shell.
-export function optionsFor(program: Program, shell: Shell): Layout[] | null {
+// Up to three valid plans for a program, picked for how this client lives (see options.ts), or null when
+// fewer than `min` layout concepts fit the site.
+export function optionsFor(program: Program, shell: Shell, who: Who = {}, min = 2): Layout[] | null {
   try {
     if (Array.from({ length: program.floors }, (_, f) => program.rooms.some((r) => r.floor === f)).includes(false)) return null;
-    const options = planOptions(program, buildingShell(program, shell));
-    return options.every((o) => validate(o).length === 0) ? options : null;
+    const options = planOptionsFor(program, buildingShell(program, shell), who);
+    return options.length >= min && options.every((o) => validate(o).length === 0) ? options : null;
   } catch {
     return null;
   }
@@ -88,14 +89,14 @@ export async function generateProgram(p: Project, model: LanguageModel): Promise
   try {
     const { output } = await generateText({ model, output: Output.object({ schema: LooseDraft }), prompt: programPrompt(p, floors) });
     const program = toProgram(spaceType, floors, Draft.parse(output).rooms);
-    const options = optionsFor(program, shell);
+    const options = optionsFor(program, shell, p);
     if (options) return { program, options, source: "model" };
   } catch (e) {
     // Fall through to the template, but say why so a broken prompt or schema never hides.
     console.warn("program draft rejected, using the template:", e instanceof Error ? e.message : e);
   }
   const program = templateFor(spaceType, floors);
-  const options = optionsFor(program, shell);
+  const options = optionsFor(program, shell, p, 1);
   if (!options) throw new Error(`a ${spaceType} doesn't fit a ${shell.width.toFixed(1)} by ${shell.depth.toFixed(1)} m site`);
   return { program, options, source: "template" };
 }

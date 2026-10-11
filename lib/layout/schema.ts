@@ -71,6 +71,6 @@ export const Layout = z.object({
   shell: Shell,
   floors: z.array(Floor).min(1),
   /** The layout idea behind this option, and why it fits this client (quoting their answers or loves). */
-  concept: z.object({ id: z.string(), name: z.string(), why: z.array(z.string()) }).optional(),
+  concept: z.object({ id: z.string(), name: z.string(), summary: z.string().optional(), why: z.array(z.string()) }).optional(),
 });
 export type Layout = z.infer<typeof Layout>;

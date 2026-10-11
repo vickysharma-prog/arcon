@@ -145,6 +145,7 @@ export function ProjectView({ id }: { id: string }) {
               taste={p.taste}
               title={p.title}
               option={p.chosen_option ?? 0}
+              planName={p.options[p.chosen_option ?? 0]?.concept?.name}
               changePlan={() => setStep("plans")}
               next={next ? { label: `Next: ${STEPS.find((s) => s.id === next)?.label}`, go: () => setStep(next) } : undefined}
             />
@@ -292,12 +293,17 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
 
 function PlansStep({ p, options, choosing, choose }: { p: View; options: Layout[]; choosing: number | null; choose: (i: number) => void }) {
   const units = p.site.units ?? "imperial";
+  const personal = options.some((o) => o.concept);
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-10 pt-2">
       <h1 className="font-serif text-5xl">
-        <Decode text="Three ways to lay it out" />
+        <Decode text={personal ? "Plans picked for how you live" : "Three ways to lay it out"} />
       </h1>
-      <p className="mt-3 max-w-2xl text-lg text-ink-soft">The same rooms, arranged differently. Pick the one that fits how you live; you can change anything later.</p>
+      <p className="mt-3 max-w-2xl text-lg text-ink-soft">
+        {personal
+          ? "Different layout ideas for the same rooms, best fit first, each with the reasons from what you told us. Pick one; you can change anything later."
+          : "The same rooms, arranged differently. Pick the one that fits how you live; you can change anything later."}
+      </p>
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
         {options.map((layout, i) => (
           <motion.article
@@ -307,7 +313,26 @@ function PlansStep({ p, options, choosing, choose }: { p: View; options: Layout[
             transition={{ delay: i * 0.15 }}
             className={`rounded-2xl border bg-paper-raised p-4 ${p.chosen_option === i ? "border-accent ring-2 ring-accent/30" : "border-line"}`}
           >
-            <h2 className="font-serif text-2xl">Option {i + 1}</h2>
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs uppercase tracking-widest text-ink-soft">Option {i + 1}</p>
+              {i === 0 && layout.concept && layout.concept.why.length > 0 && (
+                <span className="rounded-full bg-leaf/15 px-2.5 py-0.5 text-xs font-medium text-leaf">Best fit for you</span>
+              )}
+            </div>
+            <h2 className="mt-1 font-serif text-2xl">{layout.concept?.name ?? `Option ${i + 1}`}</h2>
+            {layout.concept?.summary && <p className="mt-1 text-sm text-ink-soft">{layout.concept.summary}</p>}
+            {!!layout.concept?.why.length && (
+              <ul className="mt-3 space-y-1.5 rounded-xl bg-paper p-3">
+                {layout.concept.why.map((w) => (
+                  <li key={w} className="flex gap-2 text-sm">
+                    <svg className="mt-0.5 h-4 w-4 shrink-0 text-leaf" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <path d="M5 12l5 5L20 7" />
+                    </svg>
+                    <span>{w}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
             {layout.floors.map((f) => (
               <div key={f.level} className="mt-3">
                 {layout.floors.length > 1 && <p className="text-xs uppercase tracking-widest text-ink-soft">{f.level === 0 ? "Ground floor" : "Upstairs"}</p>}

@@ -55,7 +55,8 @@ test("Qloo taste tags choose the furniture style and say which loves chose it", 
   };
   const s = styleOf(taste, "");
   assert.equal(s.style, "midcentury");
-  assert.deepEqual(s.because, ["Hotel A", "Cafe B", "Brand D"]);
+  assert.deepEqual(s.because, ["Hotel A", "Cafe B"]);
+  assert.deepEqual(s.matched, ["Brand D"]);
   assert.equal(s.cozy, true);
   assert.equal(s.lush, false);
   assert.equal(styleOf(null, "").style, "modern");
@@ -68,4 +69,14 @@ test("the brief's style name leads, so the 3D matches the style page", () => {
   assert.equal(styleOf(calm, "").style, "scandi");
   assert.equal(styleOf(calm, "", "Industrial Bohemian").style, "industrial");
   assert.equal(look({ name: "Warm Bohemian", palette }, calm).style, "boho");
+});
+
+test("brands Qloo matched are never credited as things the user loves", () => {
+  const taste = {
+    tags: [{ value: "industrial", weight: 5, sources: [{ name: "Matched Brand", layer: 3 }, { name: "Named Hotel", layer: 1 }] }],
+    brands: [{ name: "Other Match", aesthetic: ["industrial"] }],
+  };
+  const s = styleOf(taste, "");
+  assert.deepEqual(s.because, ["Named Hotel"]);
+  assert.ok(s.matched.includes("Matched Brand") && !s.because.includes("Matched Brand"));
 });
