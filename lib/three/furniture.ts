@@ -22,6 +22,9 @@ export type Item = {
 // or is a smaller piece to try when this one can't fit around the door.
 type Piece = { name: string; fx: number; fz: number; w: number; d: number; h: number; role: Role; lift?: number; face?: [number, number]; or?: Piece };
 
+/** Fallbacks in order: each piece's `or` is the next one. */
+const chain = (pieces: Piece[]): Piece => pieces.reduceRight<Piece | undefined>((next, p) => ({ ...p, or: next }), undefined)!;
+
 const bed = (fx = 0.5): Piece[] => [
   { name: "rug", fx, fz: 0.42, w: 2.6, d: 1.9, h: 0.015, role: "accent" },
   {
@@ -78,10 +81,12 @@ const SETS: Record<string, Piece[]> = {
     {
       name: "kitchen run", fx: 0.5, fz: 0.07, w: 3.8, d: 0.65, h: 2.3, role: "base",
       // If the back of the kitchen opens to the living area, the run goes on a side wall instead.
-      or: {
-        name: "kitchen run", fx: 0.96, fz: 0.5, w: 3.4, d: 0.65, h: 2.3, role: "base", face: [-1, 0],
-        or: { name: "kitchen run", fx: 0.04, fz: 0.5, w: 3.4, d: 0.65, h: 2.3, role: "base", face: [1, 0] },
-      },
+      // When doors break up every wall (a kitchen that rooms open off), a shorter run fits between them.
+      or: chain([3.4, 2.4, 1.8].flatMap((w) => [
+        ...(w < 3.4 ? [{ name: "kitchen run", fx: 0.5, fz: 0.07, w, d: 0.65, h: 2.3, role: "base" as const }] : []),
+        { name: "kitchen run", fx: 0.96, fz: 0.5, w, d: 0.65, h: 2.3, role: "base" as const, face: [-1, 0] as [number, number] },
+        { name: "kitchen run", fx: 0.04, fz: 0.5, w, d: 0.65, h: 2.3, role: "base" as const, face: [1, 0] as [number, number] },
+      ])),
     },
     {
       name: "island", fx: 0.5, fz: 0.58, w: 1.9, d: 1.5, h: 0.95, role: "wood",

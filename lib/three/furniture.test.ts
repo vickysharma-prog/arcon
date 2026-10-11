@@ -7,6 +7,7 @@ import { buildingShell } from "../layout/footprint.ts";
 import { DEFAULT_SHELLS, TEMPLATES } from "../layout/templates.ts";
 import { planOptionsFor } from "../design/options.ts";
 import { snapPlan } from "../plan-import/snap.ts";
+import type { Layout } from "../layout/schema.ts";
 
 // Vicky's uploaded house (as read): no hall, so the master bedroom opens off the kitchen.
 const uploaded = snapPlan({
@@ -61,6 +62,23 @@ test("nothing blocks the space in front of any door into a room, its own or a ne
 test("the uploaded house: the kitchen keeps the way into the master bedroom clear, and still has its kitchen", () => {
   const items = furnish(uploaded).filter((i) => i.room === "kitchen");
   assert.ok(items.some((i) => i.name === "kitchen run"), "the kitchen run found another wall");
+});
+
+test("a kitchen with a door on every wall still gets a counter, between the doors", () => {
+  // Like Vicky's plan as saved: the dining area, the master bedroom, a closet and the hall all open off it.
+  const kitchen = { id: "kitchen", name: "Kitchen", kind: "kitchen", zone: "public" as const, rect: { x: 0, y: 0, w: 2.6, h: 5.5 } };
+  const door = (id: string, to: string, axis: "x" | "y", x: number, y: number) => ({ id, type: "door" as const, between: [to, "kitchen"] as [string, string], axis, x, y, width: 0.9 });
+  const layout = {
+    spaceType: "house" as const,
+    shell: { width: 2.6, depth: 5.5 },
+    floors: [{
+      level: 0,
+      spaces: [kitchen],
+      openings: [door("d1", "dining", "y", 0, 1.2), door("d2", "master", "x", 1.3, 0), door("d3", "closet", "y", 2.6, 1.0), door("d4", "hall", "x", 1.3, 5.5)],
+    }],
+  } as unknown as Layout;
+  const run = furnish(layout).find((i) => i.name === "kitchen run");
+  assert.ok(run, "a counter fits");
 });
 
 test("every room people live in gets a plant", () => {

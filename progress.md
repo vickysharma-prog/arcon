@@ -9,6 +9,9 @@ which opens off the kitchen. Furniture only kept a room's own entrance clear, no
 off it. Now every doorway into a room is kept clear, and a piece that slides off one door can't land in front
 of another. The door test now checks every doorway, on the templates, every concept and Vicky's plan; on the
 old code it also caught a sofa across the kitchen door of the great-room plan.
+Clearing every door left Vicky's kitchen (four doors: dining, master bedroom, closet, hall) with no wall long
+enough for the counter, so it lost its kitchen. The counter now falls back to 2.4 m and then 1.8 m runs on each
+wall. Checked on both of Vicky's saved projects: every plan has a counter (1.8 to 2.3 m) and no door is blocked.
 
 ## 2026-10-12 (night, last): Taste trail and style words (Q11, Q3)
 
