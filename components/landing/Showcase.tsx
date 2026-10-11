@@ -5,7 +5,6 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { PlanSvg } from "@/components/plan/PlanSvg";
 import { CountUp } from "@/components/fx/Motion";
-import { tick } from "@/components/fx/sfx";
 import { TEMPLATES, DEFAULT_SHELLS } from "@/lib/layout/templates";
 import { place } from "@/lib/layout/place";
 import { buildingShell } from "@/lib/layout/footprint";
@@ -79,54 +78,40 @@ export function Showcase() {
   useEffect(() => {
     if (still) return;
     const t = setInterval(() => setNote((i) => (i + 1) % NOTES.length), 3200);
-    return () => clearInterval(t);
+    // the camera closes in and pulls back about every 20 seconds; switch floors while it is far out
+    const f = setInterval(() => setLevel((l) => 1 - l), 19600);
+    return () => {
+      clearInterval(t);
+      clearInterval(f);
+    };
   }, [still]);
 
   const n = NOTES[note];
+  // No frame: the sketch is drawn straight onto the page, with the same floor as a plan beside it.
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-line bg-paper-raised/90 p-3 shadow-[0_40px_100px_-50px_var(--accent)] backdrop-blur sm:p-4">
-      <span aria-hidden className="pointer-events-none absolute left-0 top-0 h-px w-1/3 bg-gradient-to-r from-transparent via-accent to-transparent animate-[edge_2.4s_linear_infinite] motion-reduce:animate-none" />
-      <div className="flex items-center justify-between gap-2 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">
-        <span className="flex items-center gap-2">
+    <div className="relative">
+      {/* the drawing fades out toward its edges, so it never ends in a hard line */}
+      <div
+        ref={box}
+        className="relative h-[360px] sm:h-[460px] lg:-mr-10 lg:h-[540px]"
+        style={{ maskImage: "radial-gradient(ellipse 50% 50% at 50% 50%, black 62%, transparent 100%)", WebkitMaskImage: "radial-gradient(ellipse 50% 50% at 50% 50%, black 62%, transparent 100%)" }}
+      >
+        {ready ? <HouseScene layout={layout} brief={BRIEF} mode="showcase" sketch cutaway upTo={level} playing={false} /> : <Loading />}
+      </div>
+
+      <div className="pointer-events-none absolute bottom-16 right-0 w-28 sm:w-36 lg:-right-8">
+        <p className="mb-1.5 flex items-center justify-end gap-2 font-mono text-[9px] uppercase tracking-[0.25em] text-ink-soft">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-leaf" />
-          Live 3D · sample home
-        </span>
-        <div className="flex rounded-full border border-line p-0.5" role="radiogroup" aria-label="Floor">
-          {["Ground", "Upper"].map((f, i) => (
-            <button
-              key={f}
-              type="button"
-              role="radio"
-              aria-checked={level === i}
-              onClick={() => {
-                tick();
-                setLevel(i);
-              }}
-              className={`rounded-full px-2.5 py-1 tracking-[0.15em] transition ${level === i ? "bg-btn text-btn-ink" : "hover:text-ink"}`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div ref={box} className="relative mt-3 h-[340px] overflow-hidden rounded-xl border border-line bg-[#dfe8f3] sm:h-[380px]">
-        {ready ? (
-          <HouseScene layout={layout} brief={BRIEF} mode="orbit" cutaway upTo={level} playing={false} autoRotate={!still} wheelZoom={false} />
-        ) : (
-          <Loading />
-        )}
-        {/* the same home as a plan, in the corner */}
-        <div className="pointer-events-none absolute bottom-2 left-2 w-28 rounded-lg border border-line bg-paper/85 p-1.5 shadow-sm backdrop-blur sm:w-36">
-          <PlanSvg layout={layout} level={level} units="metric" className="h-auto w-full" />
-          <p className="mt-1 text-center font-mono text-[8px] uppercase tracking-[0.2em] text-ink-soft">{level ? "Upper" : "Ground"} floor plan</p>
-        </div>
-        <p className="pointer-events-none absolute right-2 top-2 rounded-full bg-paper/80 px-2.5 py-1 font-mono text-[9px] uppercase tracking-[0.2em] text-ink-soft backdrop-blur">
-          Drag to explore · tap a room
+          {level ? "Upper" : "Ground"} floor
         </p>
+        <AnimatePresence mode="wait">
+          <motion.div key={level} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 0.9, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
+            <PlanSvg layout={layout} level={level} units="metric" className="h-auto w-full" />
+          </motion.div>
+        </AnimatePresence>
       </div>
 
-      <div className="mt-3 flex min-h-[44px] items-center gap-3 border-t border-line pt-3">
+      <div className="relative -mt-6 flex items-end gap-5">
         <AnimatePresence mode="wait">
           <motion.div key={n.room} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3 }} className="min-w-0 flex-1">
             <p className="truncate text-sm">

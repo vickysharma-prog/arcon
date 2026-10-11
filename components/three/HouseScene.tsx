@@ -16,8 +16,9 @@ import { look as lookOf, luminance, mix, scheme, type Look, type Scheme } from "
 import { LookCtx, Model } from "./models";
 import { planks, tiled, tiles } from "./textures";
 import { roomBell, step as playStep } from "@/components/fx/sfx";
+import { SketchFx, SketchMaterial } from "./Sketch";
 
-export type Mode = "walk" | "explore" | "orbit";
+export type Mode = "walk" | "explore" | "orbit" | "showcase";
 
 type Props = {
   layout: Layout;
@@ -46,6 +47,8 @@ type Props = {
   /** Look-around only: turn slowly on its own until someone grabs it, and whether the mouse wheel zooms. */
   autoRotate?: boolean;
   wheelZoom?: boolean;
+  /** Draw it as a hand sketch in the page's ink and blue, instead of in full colour. */
+  sketch?: boolean;
 };
 
 
@@ -504,6 +507,23 @@ function Explorer({ layout, level, go, onPose, onRoom }: { layout: Layout; level
 
 // Look-around view: start from above the corner of the building with a normal lens. Runs as a layout
 // effect so the camera is in place before Bounds frames the model from this direction.
+// Showcase: the camera moves on its own, circling the building slowly while drifting in close and back out again,
+// like a film of an architect's model. Nobody steers it.
+function Tour({ layout }: { layout: Layout }) {
+  const { camera } = useThree();
+  const { width: W, depth: D } = layout.shell;
+  const span = Math.max(W, D);
+  useFrame(({ clock }) => {
+    const t = clock.elapsedTime;
+    const turn = 0.7 + t * 0.11;
+    const out = 0.5 + 0.5 * Math.cos(t * 0.32); // starts wide, closes in, pulls back: about 20 seconds a cycle
+    const r = span * (0.95 + 0.7 * out);
+    camera.position.set(W / 2 + Math.cos(turn) * r, span * (0.6 + 0.5 * out), D / 2 + Math.sin(turn) * r);
+    camera.lookAt(W / 2, 0.6, D / 2);
+  });
+  return null;
+}
+
 function Overview({ layout, autoRotate = false, wheelZoom = true }: { layout: Layout; autoRotate?: boolean; wheelZoom?: boolean }) {
   const { camera } = useThree();
   const [spin, setSpin] = useState(autoRotate);
@@ -615,27 +635,38 @@ export default function HouseScene(props: Props) {
   const { width: W, depth: D } = props.layout.shell;
   const h = props.layout.floors.length * STOREY;
   const orbit = props.mode === "orbit";
+  const showcase = props.mode === "showcase";
   const top = props.layout.floors.at(-1)?.level ?? 0;
   const building = (
-    <Building layout={props.layout} colors={colors} look={look} cutaway={orbit && props.cutaway} upTo={orbit ? props.upTo : "all"} extraPlants={props.extraPlants} onPick={props.onPick} />
+    <Building
+      layout={props.layout}
+      colors={colors}
+      look={look}
+      cutaway={(orbit || showcase) && props.cutaway}
+      upTo={orbit || showcase ? props.upTo : "all"}
+      extraPlants={props.extraPlants}
+      onPick={props.onPick}
+    />
   );
   return (
     <Canvas
       shadows
-      camera={{ fov: orbit ? 45 : props.mode === "explore" ? 72 : 82, near: 0.05, far: 300, position: [W * 1.6, h * 2.2 + 6, D * 1.9] }}
+      camera={{ fov: orbit ? 45 : showcase ? 38 : props.mode === "explore" ? 72 : 82, near: 0.05, far: 300, position: [W * 1.6, h * 2.2 + 6, D * 1.9] }}
       dpr={[1, 2]}
       gl={{ preserveDrawingBuffer: true }}
     >
-      <color attach="background" args={["#dfe8f3"]} />
+      {!props.sketch && <color attach="background" args={["#dfe8f3"]} />}
       <hemisphereLight args={["#ffffff", "#d9cfc2", 0.7]} />
       <directionalLight position={[W + 14, 26, -8]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004} shadow-normalBias={0.02} shadow-camera-left={-30} shadow-camera-right={30} shadow-camera-top={30} shadow-camera-bottom={-30} />
       <ambientLight intensity={0.25} />
       <Studio />
       {/* the site sits outside Bounds, so framing fits the building, not the lawn */}
-      <mesh rotation-x={-Math.PI / 2} position={[W / 2, -0.02, D / 2]} receiveShadow>
-        <planeGeometry args={[W + 40, D + 40]} />
-        <meshStandardMaterial color={colors.ground} roughness={1} />
-      </mesh>
+      {!props.sketch && (
+        <mesh rotation-x={-Math.PI / 2} position={[W / 2, -0.02, D / 2]} receiveShadow>
+          <planeGeometry args={[W + 40, D + 40]} />
+          <meshStandardMaterial color={colors.ground} roughness={1} />
+        </mesh>
+      )}
       <LookCtx.Provider value={look}>
         {orbit ? (
           <Bounds fit clip observe margin={1.12} maxDuration={0.9}>
@@ -644,6 +675,11 @@ export default function HouseScene(props: Props) {
             <Recenter layout={props.layout} fitKey={props.fitKey} />
             {props.cutaway && <RoomLabels layout={props.layout} level={props.upTo === "all" || props.upTo === undefined ? top : props.upTo} />}
           </Bounds>
+        ) : showcase ? (
+          <>
+            {building}
+            <Tour layout={props.layout} />
+          </>
         ) : props.mode === "explore" ? (
           <>
             {building}
@@ -657,10 +693,17 @@ export default function HouseScene(props: Props) {
           </>
         )}
       </LookCtx.Provider>
-      <EffectComposer multisampling={4}>
-        <N8AO halfRes aoRadius={0.5} distanceFalloff={0.5} intensity={2.2} quality="medium" />
-        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-      </EffectComposer>
+      {props.sketch && <SketchMaterial />}
+      {props.sketch ? (
+        <EffectComposer multisampling={4}>
+          <SketchFx />
+        </EffectComposer>
+      ) : (
+        <EffectComposer multisampling={4}>
+          <N8AO halfRes aoRadius={0.5} distanceFalloff={0.5} intensity={2.2} quality="medium" />
+          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+        </EffectComposer>
+      )}
     </Canvas>
   );
 }
