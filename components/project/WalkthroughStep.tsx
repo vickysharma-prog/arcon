@@ -17,23 +17,31 @@ import { tick } from "@/components/fx/sfx";
 
 type SceneProps = ComponentProps<typeof import("@/components/three/HouseScene").default>;
 
+const WHOLE: Record<string, string> = { house: "house", apartment: "apartment", studio: "studio", cafe: "café", office: "office", shop: "shop", hotel: "floor" };
+
 const STYLE_NAME = { midcentury: "Mid-century", industrial: "Industrial", scandi: "Scandinavian", boho: "Boho", classic: "Classic", modern: "Modern" } as const;
 
 // three.js needs the browser, so the scene loads on the client only.
 const HouseScene = dynamic(() => import("@/components/three/HouseScene"), {
   ssr: false,
-  loading: () => <div className="grid h-full place-items-center font-mono text-sm text-ink-soft">&gt; building your 3D model…</div>,
+  loading: () => (
+    <div className="grid h-full place-items-center">
+      <Scanning label="Building your 3D model" />
+    </div>
+  ),
 });
 
 export function WalkthroughStep({
-  layout, brief, taste, title, option = 0, planName, changePlan, next, extraPlants, projectId, location, tier,
+  layout, brief, taste, title, option = 0, planName, changePlan, next, extraPlants, projectId, location, tier, spaceType,
 }: {
-  layout: Layout; extraPlants?: Record<string, number>; projectId?: string; location?: string | null; tier?: string | null; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null;
+  layout: Layout; spaceType?: string | null; extraPlants?: Record<string, number>; projectId?: string; location?: string | null; tier?: string | null; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null;
   /** Which of the three plan options this is, and a way back to pick another. */
   option?: number; planName?: string; changePlan?: () => void;
   next?: { label: string; go: () => void };
 }) {
   const [mode, setMode] = useState<Mode>("walk");
+  // "Whole café", "Whole office": the button that steps back out names what was designed.
+  const whole = `Whole ${WHOLE[spaceType ?? ""] ?? "space"}`;
   const [playing, setPlaying] = useState(true);
   const [room, setRoom] = useState("Outside");
   // Click a piece to see where to buy it: the shopping list is fetched on the first click and kept.
@@ -219,7 +227,7 @@ export function WalkthroughStep({
         )}
         {mode === "orbit" && (
           <>
-            {guide && <MouseGuide finished={finished} onClose={() => setGuide(false)} />}
+            {guide && <MouseGuide finished={finished} whole={whole} onClose={() => setGuide(false)} />}
             <div className="absolute left-4 right-4 top-4 z-30 flex flex-wrap items-center gap-2">
               <button onClick={() => setCutaway((c) => !c)} aria-pressed={cutaway} className={`rounded-full px-4 py-1.5 text-sm ${cutaway ? "bg-btn text-btn-ink" : "bg-paper/85 text-ink backdrop-blur"}`}>
                 {cutaway ? "Showing inside" : "Show inside"}
@@ -234,7 +242,7 @@ export function WalkthroughStep({
                 </div>
               )}
               <button onClick={() => setFitKey((k) => k + 1)} className="rounded-full bg-paper/85 px-4 py-1.5 text-sm text-ink backdrop-blur hover:bg-paper">
-                Whole house
+                {whole}
               </button>
               <button onClick={() => setGuide(true)} className="ml-auto rounded-full bg-paper/85 px-4 py-1.5 text-sm text-ink-soft backdrop-blur hover:text-ink">
                 How to explore
@@ -249,7 +257,7 @@ export function WalkthroughStep({
 }
 
 // How to move around the 3D model with a mouse, trackpad or touch screen.
-function MouseGuide({ finished, onClose }: { finished: boolean; onClose: () => void }) {
+function MouseGuide({ finished, whole, onClose }: { finished: boolean; whole: string; onClose: () => void }) {
   // Escape or a click outside the card closes it too.
   useEffect(() => {
     const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -261,7 +269,7 @@ function MouseGuide({ finished, onClose }: { finished: boolean; onClose: () => v
     { icon: "M12 3v18M3 12h18M7 7l-4 5 4 5M17 7l4 5-4 5", what: "Move sideways", how: "Drag with the right button, or two fingers" },
     { icon: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14zM21 21l-5-5M8 11h6M11 8v6", what: "Zoom in and out", how: "Scroll the wheel, or pinch" },
     { icon: "M3 9l9-6 9 6v11H3zM9 20v-6h6v6", what: "See inside", how: "Show inside cuts the walls so every room shows; pick a floor" },
-    { icon: "M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z", what: "Visit a room", how: "Click a room's name to fly in; Whole house steps back out" },
+    { icon: "M12 21s-7-6.5-7-11a7 7 0 0 1 14 0c0 4.5-7 11-7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z", what: "Visit a room", how: `Click a room's name to fly in; ${whole} steps back out` },
     { icon: "M13 4a1.5 1.5 0 1 0 0 .01M10 21l2-6 3 3v3M9 12l3-4 3 3 3 1M12 8l-2 5", what: "Walk inside", how: "Explore inside: W A S D or arrows, or click the floor" },
   ];
   return (

@@ -2,7 +2,7 @@
 
 import { animate, motion, useInView, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { counting } from "./sfx";
+import { counting, startProcessing } from "./sfx";
 
 // Small motion pieces shared by the design screens: sections that rise into view, numbers that count up, a score
 // ring that fills, bars that grow, cards with blueprint corner marks, and a scanning loader. Every piece shows its
@@ -135,8 +135,21 @@ export function HudCard({ children, className = "", delay = 0 }: { children: Rea
 }
 
 /** A loading line: a beam sweeping across, with what is being worked on in monospace. */
+// Every scan on screen shares one loading sound: it starts with the first and fades out after the last.
+let scans = 0;
+let stopSound: (() => void) | null = null;
+
 export function Scanning({ label }: { label: string }) {
   const still = useReducedMotion();
+  useEffect(() => {
+    if (scans++ === 0) stopSound = startProcessing();
+    return () => {
+      if (--scans === 0) {
+        stopSound?.();
+        stopSound = null;
+      }
+    };
+  }, []);
   return (
     <div className="relative overflow-hidden rounded-lg border border-line bg-paper px-3 py-2" role="status">
       <p className="font-mono text-xs uppercase tracking-widest text-ink-soft">{label}</p>
