@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { setSound, soundOn } from "./fx/sfx";
 
 type Mode = "light" | "dark" | "system";
+type Me = { user: { id: string; email: string | null } | null; profile?: { name: string; company: string | null } | null };
 const KEY = "arcon-theme";
 
 function apply(mode: Mode) {
@@ -25,7 +26,20 @@ export function ProfileMenu() {
   const [settings, setSettings] = useState(false);
   const [mode, setMode] = useState<Mode>("system");
   const [sound, setSoundState] = useState(true);
+  const [me, setMe] = useState<Me | null>(null);
   const box = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((m) => m && setMe(m))
+      .catch(() => {});
+  }, []);
+
+  async function signOut() {
+    await fetch("/api/session", { method: "DELETE" }).catch(() => {});
+    window.location.assign("/");
+  }
 
   useEffect(() => {
     const t = document.documentElement.dataset.theme;
@@ -71,16 +85,59 @@ export function ProfileMenu() {
       {open && (
         <div role="menu" aria-label="Profile" className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-line bg-paper-raised shadow-lg">
           <div className="border-b border-line px-4 py-3">
-            <p className="font-medium">Guest</p>
-            <p className="text-xs text-ink-soft">Your projects are saved in this browser</p>
+            {me?.user ? (
+              <>
+                <p className="truncate font-medium">{me.profile?.name ?? me.user.email}</p>
+                <p className="truncate text-xs text-ink-soft">{me.profile?.company ?? me.user.email}</p>
+              </>
+            ) : (
+              <>
+                <p className="font-medium">Guest</p>
+                <p className="text-xs text-ink-soft">Your projects are saved in this browser. Sign in to keep them anywhere.</p>
+              </>
+            )}
           </div>
           {!settings ? (
             <ul className="p-1.5 text-sm">
+              {me?.user ? (
+                <>
+                  <li>
+                    <a role="menuitem" href="/home" className="block rounded-xl px-3 py-2 hover:bg-paper">
+                      Your projects
+                    </a>
+                  </li>
+                  <li>
+                    <a role="menuitem" href="/account" className="block rounded-xl px-3 py-2 hover:bg-paper">
+                      Account
+                    </a>
+                  </li>
+                </>
+              ) : (
+                <>
+                  <li>
+                    <a role="menuitem" href="/login" className="block rounded-xl px-3 py-2 hover:bg-paper">
+                      Sign in
+                    </a>
+                  </li>
+                  <li>
+                    <a role="menuitem" href="/login?mode=signup" className="block rounded-xl px-3 py-2 font-medium text-accent hover:bg-paper">
+                      Create a free account
+                    </a>
+                  </li>
+                </>
+              )}
               <li>
                 <button role="menuitem" onClick={() => setSettings(true)} className="flex w-full items-center justify-between rounded-xl px-3 py-2 text-left hover:bg-paper">
                   Settings <span aria-hidden className="text-ink-soft">›</span>
                 </button>
               </li>
+              {me?.user && (
+                <li>
+                  <button role="menuitem" onClick={signOut} className="w-full rounded-xl px-3 py-2 text-left text-ink-soft hover:bg-paper hover:text-ink">
+                    Sign out
+                  </button>
+                </li>
+              )}
             </ul>
           ) : (
             <div className="p-4">

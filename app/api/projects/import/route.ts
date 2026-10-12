@@ -1,4 +1,4 @@
-import { guestOf } from "@/lib/auth/request";
+import { whoOf } from "@/lib/auth/request";
 import { SpaceType } from "@/lib/layout/schema";
 import { chatModel } from "@/lib/models";
 import { importPlan } from "@/lib/plan-import/flow";
@@ -10,7 +10,7 @@ const TYPES = new Set(["image/png", "image/jpeg", "image/webp", "application/pdf
 const MAX_BYTES = 8 * 1024 * 1024;
 
 export async function POST(request: Request) {
-  const guestId = await guestOf(request.headers.get("cookie"));
+  const { guestId, userId } = await whoOf(request.headers.get("cookie"));
   if (!guestId) return Response.json({ error: "Please reload the page and try again." }, { status: 401 });
   const form = await request.formData().catch(() => null);
   const file = form?.get("file");
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   const spaceType = SpaceType.safeParse(form!.get("spaceType")).data ?? "house";
   const units = form!.get("units") === "metric" ? "metric" : "imperial";
   try {
-    const p = await importPlan(guestId, new Uint8Array(await file.arrayBuffer()), file.type, { spaceType, width: num("width"), depth: num("depth"), units }, chatModel());
+    const p = await importPlan(guestId, new Uint8Array(await file.arrayBuffer()), file.type, { spaceType, width: num("width"), depth: num("depth"), units }, chatModel(), userId);
     return Response.json({ id: p.id });
   } catch (e) {
     console.warn("plan import failed:", e instanceof Error ? e.message : e);

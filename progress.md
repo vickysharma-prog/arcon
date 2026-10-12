@@ -2,6 +2,27 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: Accounts (part 1 of the accounts, studio, site and pricing plan)
+
+Vicky asked to plan the rest of the product before building more. The plan (private/plan.md, "Accounts, studio,
+site and pricing") has seven parts: accounts, roles and invites, review, studio, full site tracking, PayPal plans
+with a judges' button, and the phone app. Photoreal renders move to the end, on a small paid credit.
+
+Part 1 is built:
+- Sign in or create an account with email and password (Vicky's call), Google or Apple. Forgot password sends a
+  reset link. Google and Apple show a friendly message until their keys are added in Supabase.
+- New accounts pick a role (homeowner, business owner, architect, builder), then a short profile for it. Architects
+  and builders add a studio or company name and a logo; builders add crew size and trades.
+- Projects started as a guest move into the account at sign-in. A project that already has an owner is never taken.
+- /home lists your projects ("My projects", "Studio" or "Sites" by role); /account edits the profile.
+- Routes now accept the signed-in user as well as the guest cookie. The user cookie is signed under its own label,
+  so a guest cookie can't pass as a user. Sign-in only accepts requests from Arcon's own pages.
+
+Tested locally with a test account: email link, password sign-in (wrong password message, weak password message),
+role and profile, home, account, sign out, redirect when signed out. 267 tests pass.
+
+Waiting on Vicky: Supabase URL settings, Google keys, Apple developer account (paid), PayPal sandbox keys.
+
 ## 2026-10-15: Share & export, and the walkthrough video (D2 and the video half of C2)
 
 Vicky: after the changes loop there has to be a way out, with designs people can share. The last step is now "Share

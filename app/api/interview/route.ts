@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { guestOf } from "@/lib/auth/request";
+import { whoOf } from "@/lib/auth/request";
 import { createProject, deleteProject } from "@/lib/project/store";
 import { search, type Entity } from "@/lib/qloo/api";
 import { layerOf } from "@/lib/qloo/taste";
@@ -18,7 +18,7 @@ const Body = z.object({
 });
 
 export async function POST(request: Request) {
-  const guestId = await guestOf(request.headers.get("cookie"));
+  const { guestId, userId } = await whoOf(request.headers.get("cookie"));
   if (!guestId) return Response.json({ error: "Please reload the page and try again." }, { status: 401 });
   const body = Body.safeParse(await request.json().catch(() => null));
   if (!body.success) return Response.json({ error: "Something went wrong with your answers. Please start again." }, { status: 400 });
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const signals = found.map((e) => ({ entityId: e.entity_id, name: e.name, layer: layerOf(e), type: e.types?.[0] }));
   const taste = await profileFor(signals, new Map(found.map((e) => [e.entity_id, e])));
 
-  const p = await createProject({ ...toProject(answers, body.data.lang), guest_id: guestId, status: "designing", taste_signals: signals, taste });
+  const p = await createProject({ ...toProject(answers, body.data.lang), guest_id: guestId, owner_id: userId, status: "designing", taste_signals: signals, taste });
   // The script is built to always meet what the design needs; if it ever doesn't, that's a bug, not the user's.
   const missing = missingForDesign(p);
   if (missing.length) {

@@ -21,6 +21,8 @@ Where Arcon stands right now. Updated as we go (Vicky's rule): progress, context
 
 ## In progress
 
+- Accounts, studio, site and pricing (seven parts, private/plan.md). Part 1, accounts, is built: email and password, Google and Apple (keys pending), role and profile, guest projects claimed, /home and /account. Next: part 2, roles and invites.
+
 - Qloo deep dive done; Q2 to Q11 planned (private/plan.md, Qloo everywhere). Q11 taste trail, Q3 style words, Q2 moodboard, B2 budget, Q4 tier, B3 timeline and greenery, Q6 eco brands and nurseries, M1 motion pass, B4 shopping list with 3D click, Q5 brand alternatives built. G1 (any project type) parked on branch g1-any-project until the seven types are solid.
 - A5: how a business runs. Built: save_running tool, ranking with the user's words, program sizing, evals.
 - A4: bring your own plan. Built and working end to end (upload at /start/plan, Gemini reads it, snap cleans it, Check your plan screen, taste, then the user's plan plus two engine alternatives). Checked live end to end (upload, check, design, plans) and with a PDF. Taste questions: all three required, each looked up by kind and shown to the user before use. Later polish: show the uploaded image beside the read plan (needs file storage).
@@ -44,5 +46,7 @@ Where Arcon stands right now. Updated as we go (Vicky's rule): progress, context
 - Evals run one at a time; the judge uses `gemini-3.1-flash-lite`.
 
 ## Waiting on
+
+- Vicky: Supabase Auth URL settings, Google OAuth keys, Apple developer account (paid, optional), PayPal sandbox keys.
 
 - Nothing blocking. Final model choice around 20 to 25 Oct.

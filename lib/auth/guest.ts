@@ -52,3 +52,20 @@ export async function ensureGuest(cookie: string | null | undefined, secret: str
   const fresh = newId();
   return { id: fresh, set: await signGuest(fresh, secret) };
 }
+
+// Signed-in users get their own cookie, signed under a separate label so a guest cookie can never pass as a user.
+export const USER_COOKIE = "arcon_user";
+
+export async function signUser(id: string, secret: string) {
+  if (!ID.test(id)) throw new Error("user id must be a UUID");
+  return `${id}.${await hmac(secret, `user:${id}`)}`;
+}
+
+export async function verifyUser(cookie: string | undefined | null, secret: string): Promise<string | null> {
+  if (!cookie) return null;
+  const dot = cookie.indexOf(".");
+  if (dot < 0) return null;
+  const id = cookie.slice(0, dot);
+  if (!ID.test(id)) return null;
+  return same(cookie.slice(dot + 1), await hmac(secret, `user:${id}`)) ? id : null;
+}

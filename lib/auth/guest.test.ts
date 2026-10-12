@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readCookie, signGuest, verifyGuest } from "./guest.ts";
+import { readCookie, signGuest, signUser, verifyGuest, verifyUser } from "./guest.ts";
 
 const SECRET = "a".repeat(32);
 const ID = "3f2a9c1e-5b7d-4e8a-9c21-7d4e5f6a8b90";
@@ -41,4 +41,12 @@ test("a valid cookie is kept; a missing or forged one is replaced", async () => 
   assert.equal(made.id, fresh);
   assert.equal(await verifyGuest(made.set, SECRET), fresh);
   assert.equal((await ensureGuest(undefined, SECRET, () => fresh)).id, fresh);
+});
+
+test("user cookies verify, and guest and user cookies can't stand in for each other", async () => {
+  const user = await signUser(ID, SECRET);
+  assert.equal(await verifyUser(user, SECRET), ID);
+  assert.equal(await verifyUser(await signGuest(ID, SECRET), SECRET), null);
+  assert.equal(await verifyGuest(user, SECRET), null);
+  assert.equal(await verifyUser(user.slice(0, -1) + "0", SECRET), null);
 });

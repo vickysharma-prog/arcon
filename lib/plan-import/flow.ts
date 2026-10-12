@@ -36,10 +36,11 @@ export async function readChecked(data: Uint8Array, mediaType: string, hints: Hi
 }
 
 /** Upload: a new project for this guest, holding what was read off their plan, waiting for them to check it. */
-export async function importPlan(guestId: string, data: Uint8Array, mediaType: string, hints: Hints, model: LanguageModel): Promise<Project> {
+export async function importPlan(guestId: string, data: Uint8Array, mediaType: string, hints: Hints, model: LanguageModel, userId: string | null = null): Promise<Project> {
   const imported = await readChecked(data, mediaType, hints, model);
   return createProject({
     guest_id: guestId,
+    owner_id: userId,
     space_type: hints.spaceType,
     title: "Your plan",
     status: "designing",
