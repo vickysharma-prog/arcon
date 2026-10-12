@@ -18,8 +18,13 @@ Part 1 is built:
 - Routes now accept the signed-in user as well as the guest cookie. The user cookie is signed under its own label,
   so a guest cookie can't pass as a user. Sign-in only accepts requests from Arcon's own pages.
 
-Tested locally with a test account: email link, password sign-in (wrong password message, weak password message),
-role and profile, home, account, sign out, redirect when signed out. 267 tests pass.
+- Once an account owns a project, only that account opens it; the old guest cookie no longer does, and sign-out
+  clears the guest cookie too. Checked: a project opens signed in (200) and not after sign-out (404).
+
+Tested locally with test accounts: email link, password sign-in (wrong and weak password messages), reset password
+from the email link, owner and architect profiles (studio name required, logo upload), home, account, sign out.
+Not tested: the "check your email" step after a new sign-up, because confirmation emails can't go to test
+addresses. 269 tests pass.
 
 Waiting on Vicky: Supabase URL settings, Google keys, Apple developer account (paid), PayPal sandbox keys.
 

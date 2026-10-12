@@ -59,4 +59,5 @@ test("only the guest who started a project owns it", async () => {
   assert.equal(ownsProject(mine, {}), false);
   assert.equal(ownsProject({ owner_id: "u1", guest_id: null }, { userId: "u1" }), true);
   assert.equal(ownsProject({ owner_id: null, guest_id: null }, { guestId: null, userId: null }), false);
+  assert.equal(ownsProject({ owner_id: "u1", guest_id: "g1" }, { guestId: "g1" }), false); // owned: the old guest cookie no longer opens it
 });

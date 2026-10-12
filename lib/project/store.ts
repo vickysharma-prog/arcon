@@ -40,9 +40,9 @@ export const getProject = (id: string) =>
 export const updateProject = (id: string, patch: Patch) =>
   must<Project>(supabaseAdmin().from("projects").update(patch).eq("id", id).select().single());
 
-// A project is visible to the user who signed in to it, or to the browser that started it.
+// Once a project has an owner, only that account can open it. Until then, the browser that started it can.
 export const ownsProject = (p: Pick<Project, "owner_id" | "guest_id">, who: { userId?: string | null; guestId?: string | null }) =>
-  (!!who.userId && p.owner_id === who.userId) || (!!who.guestId && p.guest_id === who.guestId);
+  p.owner_id ? !!who.userId && p.owner_id === who.userId : !!who.guestId && p.guest_id === who.guestId;
 
 export const deleteProject = (id: string) => must(supabaseAdmin().from("projects").delete().eq("id", id));
 
