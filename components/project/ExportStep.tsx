@@ -93,6 +93,23 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
       <h1 className="mt-1 font-serif text-4xl">Take your design with you</h1>
       <p className="mt-2 max-w-2xl text-ink-soft">Hand-drawn sketches to share, the plans and a full PDF pack for your architect or builder, a DXF for CAD, and the walkthrough as a video.</p>
 
+      {/* what the design is, as the PDF opens with it */}
+      <section className="mt-6 rounded-2xl border border-line bg-paper-raised p-5">
+        <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">{[p.site.location, brief?.name && `${brief.name} style`, area(cost.area, units)].filter(Boolean).join(" · ")}</p>
+        <h2 className="mt-1 font-serif text-3xl">{title}</h2>
+        {brief?.summary && <p className="mt-2 max-w-3xl text-ink-soft">{brief.summary}</p>}
+        {words.length > 0 && (
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <span className="text-xs text-ink-soft">Your taste, read through Qloo:</span>
+            {words.map((w) => (
+              <span key={w} className="rounded-full bg-paper px-3 py-0.5 text-sm capitalize">
+                {w}
+              </span>
+            ))}
+          </div>
+        )}
+      </section>
+
       <div className="mt-6 flex flex-wrap gap-2">
         <button type="button" onClick={() => { tick(); window.print(); }} className="glow-btn px-5 py-2.5">
           ⬇ PDF pack
