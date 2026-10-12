@@ -10,6 +10,8 @@ import type { Layout } from "@/lib/layout/schema";
 import { estimate, marketOf, money, CATEGORY_NAMES, TIER_NAMES, type Tier } from "@/lib/budget/costs";
 import { toDxf } from "@/lib/export/dxf";
 import { SHOTS, type Shot } from "@/components/three/HouseScene";
+import { stampPng, TAGLINE } from "@/components/fx/watermark";
+import { Mark } from "@/components/Logo";
 
 const HouseScene = dynamic(() => import("@/components/three/HouseScene"), { ssr: false });
 
@@ -61,7 +63,10 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
   const drawing = shots.length < views.length ? shots.length : -1;
   const onShot = useCallback((png: string) => {
     okSound();
-    setShots((s) => [...s, png]);
+    // Every sketch carries the Arcon watermark, in the downloads, the share sheet and the PDF.
+    void stampPng(png)
+      .catch(() => png)
+      .then((stamped) => setShots((s) => [...s, stamped]));
   }, []);
 
   if (!layout) return <p className="p-10 text-center text-ink-soft">Choose a plan first.</p>;
@@ -207,6 +212,14 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
 
       {/* the PDF: printed on white whatever the theme, one section per page */}
       <div className="print-sheet" aria-hidden>
+        <div className="print-watermark">
+          <Mark size={420} />
+        </div>
+        <div className="print-footer">
+          <Mark size={18} />
+          <span className="font-serif text-base">Made with Arcon</span>
+          <span>· {TAGLINE} · AI architect, powered by Qloo</span>
+        </div>
         <section className="print-page">
           <p className="text-xs uppercase tracking-[0.3em]">Arcon · design pack</p>
           <h1 className="mt-2 font-serif text-5xl">{title}</h1>

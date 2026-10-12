@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useState, type PointerEvent } from "react";
+import { useEffect, useState } from "react";
 import { Logo } from "@/components/Logo";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { tick, transition } from "@/components/fx/sfx";
@@ -68,20 +68,8 @@ export function Hero() {
     return () => clearInterval(t);
   }, [still]);
 
-  const follow = (e: PointerEvent<HTMLElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width;
-    const y = (e.clientY - r.top) / r.height;
-    e.currentTarget.style.setProperty("--mx", `${x * 100}%`);
-    e.currentTarget.style.setProperty("--my", `${y * 100}%`);
-  };
-
   return (
-    <section
-      onPointerMove={follow}
-      className="relative overflow-hidden"
-      style={{ background: "radial-gradient(600px circle at var(--mx, 70%) var(--my, 40%), color-mix(in srgb, var(--accent) 12%, transparent), transparent 60%)" }}
-    >
+    <section className="relative overflow-hidden">
       {/* blueprint grid, fading out toward the edges */}
       <div
         aria-hidden

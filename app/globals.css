@@ -190,3 +190,32 @@ html.intro-seen .intro { display: none; }
   .print-page { break-after: page; }
   .print-page:last-child { break-after: auto; }
 }
+
+/* The PDF's watermark: a faint mark behind every page and a footer on every page. Fixed elements repeat on each
+   printed page. */
+.print-watermark, .print-footer { display: none; }
+@media print {
+  .print-watermark {
+    display: block;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.06;
+    z-index: 0;
+  }
+  .print-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    font-size: 10px;
+    color: #55647a;
+    border-top: 1px solid #c9d3e0;
+    padding-top: 6px;
+  }
+  .print-page { position: relative; z-index: 1; padding-bottom: 28px; }
+}

@@ -14,6 +14,7 @@ import { marketOf, money } from "@/lib/budget/costs";
 import { AnimatePresence, motion } from "motion/react";
 import { Scanning } from "@/components/fx/Motion";
 import { tick } from "@/components/fx/sfx";
+import { stamp } from "@/components/fx/watermark";
 
 type SceneProps = ComponentProps<typeof import("@/components/three/HouseScene").default>;
 
@@ -82,13 +83,26 @@ export function WalkthroughStep({
     setPlaying(true);
     setRestart((r) => r + 1);
     setTimeout(() => {
-      const canvas = box.current?.querySelector("canvas");
-      if (!canvas || typeof MediaRecorder === "undefined") return;
+      const scene = box.current?.querySelector("canvas");
+      if (!scene || typeof MediaRecorder === "undefined") return;
+      // The video carries the "Made with Arcon" footer: each frame of the 3D view is copied onto a canvas with it.
+      const canvas = document.createElement("canvas");
+      canvas.width = scene.width;
+      canvas.height = scene.height;
+      const ctx = canvas.getContext("2d")!;
+      let frame = 0;
+      const paint = () => {
+        ctx.drawImage(scene, 0, 0, canvas.width, canvas.height);
+        stamp(ctx, canvas.width, canvas.height, { centre: false });
+        frame = requestAnimationFrame(paint);
+      };
+      paint();
       const type = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"].find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
       const rec = new MediaRecorder(canvas.captureStream(30), { mimeType: type, videoBitsPerSecond: 8_000_000 });
       const chunks: Blob[] = [];
       rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
       rec.onstop = () => {
+        cancelAnimationFrame(frame);
         setRecording(false);
         if (!chunks.length || recorder.current !== rec) return;
         const blob = new Blob(chunks, { type: rec.mimeType });
