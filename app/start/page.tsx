@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Interview } from "@/components/interview/Interview";
 
-export const metadata: Metadata = { title: "Start your design · Arcon" };
+export const metadata: Metadata = { title: "Let's get to know you · Arcon" };
 
 export default function StartPage() {
   return (

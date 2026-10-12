@@ -60,18 +60,25 @@ export function vagueHint(slot: SlotId): string {
 export type Pick = { slot: SlotId; id: string; name: string };
 
 /**
- * The user's three picks as Qloo entities, one for each question. The browser only sends ids and names, so each
- * is looked up again and must still be the same entity, of the right kind; anything else is asked again.
+ * One pick as its Qloo entity. The browser only sends an id and a name, so it is looked up again and must still be
+ * the same entity, of the right kind for its question; anything else is refused.
  */
+export async function confirmPick(p: Pick, find: (q: string, take: number, types: string) => Promise<Entity[]>): Promise<Entity> {
+  const s = slotOf(p.slot);
+  if (!s) throw new Error("That isn't one of the taste questions.");
+  const types: readonly string[] = s.types;
+  const e = (await find(p.name, 10, types.join(","))).find((x) => x.entity_id === p.id && x.types?.some((t) => types.includes(t)));
+  if (!e) throw new Error(`We couldn't confirm "${p.name}". Pick it again under "${s.label}".`);
+  return e;
+}
+
+/** The user's three picks as Qloo entities, one for each question, each confirmed with `confirmPick`. */
 export async function resolvePicks(picks: Pick[], find: (q: string, take: number, types: string) => Promise<Entity[]>): Promise<Entity[]> {
   return Promise.all(
     SLOTS.map(async (s) => {
       const p = picks.find((x) => x.slot === s.id);
       if (!p) throw new Error(`Answer "${s.label}" first.`);
-      const types: readonly string[] = s.types;
-      const e = (await find(p.name, 10, types.join(","))).find((x) => x.entity_id === p.id && x.types?.some((t) => types.includes(t)));
-      if (!e) throw new Error(`We couldn't confirm "${p.name}". Pick it again under "${s.label}".`);
-      return e;
+      return confirmPick(p, find);
     }),
   );
 }

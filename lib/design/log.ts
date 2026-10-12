@@ -17,7 +17,8 @@ export function processingLog(p: Source): string[] {
   const s = p.site;
   lines.push(`> load project · ${p.space_type ?? "space"} · ${s.location ?? "location unknown"}`);
   if (s.width && s.depth) lines.push(`> site ${s.width.toFixed(1)} × ${s.depth.toFixed(1)} m · ${s.floors ?? 1} floor${(s.floors ?? 1) > 1 ? "s" : ""}`);
-  const sections = Object.keys(p.interview);
+  // Markers the app keeps for itself aren't answers.
+  const sections = Object.keys(p.interview).filter((k) => k !== "scripted" && k !== "language");
   if (sections.length) lines.push(`> interview parsed · ${sections.join(", ")}`);
 
   for (const sig of p.taste_signals.slice(0, 6)) {

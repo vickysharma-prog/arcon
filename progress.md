@@ -2,6 +2,17 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-15: "Let's get to know you" replaces the AI interview
+
+Vicky: the interview was slow and irritating, the first thing a user sees. It is now a fixed script
+(lib/interview/script.ts) with no model in the loop: one question at a time in the centre of the screen, answers to
+tap (keys 1 to 9 work), typing only where it is needed, English, Hindi and Hinglish, voice in and out. Each next
+question appears at once. The place, brand and film questions are matched in Qloo as people type, two optional
+extras (music, a trip) add to the taste, and the taste card fills in live. The finish route checks every answer
+against the script, confirms the picks with Qloo again and creates the project in the shape the design step reads;
+the AI runs only after, on the brief, program and plans. Tested end to end on localhost: a house in English (project
+in 3.6 s, then the full design) and a café in Hinglish (project in 1.8 s, nothing missing for design).
+
 ## 2026-10-15 (early morning): The hero becomes a hand-drawn sketch
 
 Vicky asked for the 3D model as an architect's hand drawing in the site's ink and blue. The scene now has a sketch
