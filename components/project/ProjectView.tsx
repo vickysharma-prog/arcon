@@ -12,7 +12,6 @@ import { compare, sayClaim } from "@/lib/design/compare";
 import type { Layout } from "@/lib/layout/schema";
 import type { Project } from "@/lib/project/store";
 import { canLeave, isStep, STEPS, type StepId } from "./steps";
-import { TeamButton } from "./TeamPanel";
 import { can, ROLE_NAME, type ProjectRole } from "@/lib/project/access";
 import { Workspace } from "./Workspace";
 import { ExportStep } from "./ExportStep";
@@ -31,7 +30,7 @@ import { choicesOf, type Ticked } from "@/lib/green/improve";
 
 const greenTicked = (interview: Record<string, unknown> | null | undefined): Ticked => (Array.isArray(interview?.green) ? (interview.green as Ticked) : []);
 
-type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null; role?: ProjectRole };
+type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null; role?: ProjectRole; ownerName?: string | null };
 
 const WORK = ["read", "taste", "brief", "program", "plans"]; // progress ticks while the design request runs
 
@@ -160,14 +159,19 @@ export function ProjectView({ id }: { id: string }) {
     );
   if (!p || !p.brief || !p.options?.length) return <Processing p={p} done={work >= WORK.length} />;
 
-  const steps = editor ? STEPS : STEPS.filter((s) => s.id !== "workspace");
+  // Someone else's project reads as theirs: "Vicky's style", "Vicky's design".
+  const whose = role !== "owner" ? (p.ownerName?.split(" ")[0] ?? null) : null;
+  const steps = (editor ? STEPS : STEPS.filter((s) => s.id !== "workspace")).map((s) => (s.id === "brief" && whose ? { ...s, label: `${whose}'s style` } : s)) as typeof STEPS[number][];
   const next = steps[steps.findIndex((s) => s.id === step) + 1]?.id ?? null;
   return (
     <div className="flex flex-1 flex-col">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-end gap-3 px-4 pb-2">
-        {role !== "owner" && <span className="rounded-full bg-accent/10 px-3 py-1 text-xs text-accent">You&apos;re the {ROLE_NAME[role].toLowerCase()}</span>}
-        <TeamButton id={p.id} />
-      </div>
+      {role !== "owner" && (
+        <div className="mx-auto mb-3 flex w-full max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 text-sm">
+          <span className="font-serif text-xl">{whose ? `${whose}'s design` : "Shared design"}</span>
+          {whose && <span className="text-ink-soft">designed around {whose}&apos;s taste</span>}
+          <span className="rounded-full bg-accent/10 px-3 py-0.5 text-xs text-accent">You&apos;re the {ROLE_NAME[role].toLowerCase()}</span>
+        </div>
+      )}
       <Progress steps={steps} step={step} onJump={(s) => steps.findIndex((x) => x.id === s) <= steps.findIndex((x) => x.id === step) && setStep(s)} />
       {/* Next sits top right on every step (the walkthrough puts it in its own top row), and stays in reach while scrolling. */}
       {next && step !== "walkthrough" && (
@@ -222,7 +226,7 @@ export function ProjectView({ id }: { id: string }) {
               </div>
             </div>
           )}
-          {step === "brief" && <BriefStep p={p} brief={p.brief} />}
+          {step === "brief" && <BriefStep p={p} brief={p.brief} whose={whose} />}
           {step === "plans" && <PlansStep p={p} options={p.options} choosing={choosing} choose={editor ? choose : null} />}
           {step === "walkthrough" && (
             <WalkthroughStep
@@ -329,7 +333,7 @@ function Progress({ steps, step, onJump }: { steps: readonly (typeof STEPS)[numb
 
 const rise = { hidden: { opacity: 0, y: 18 }, show: { opacity: 1, y: 0 } };
 
-function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
+function BriefStep({ p, brief: b, whose }: { p: View; brief: Brief; whose: string | null }) {
   const still = useReducedMotion();
   const credit = (names: string[]) => names.map((n) => sayCredit(creditOf(p, n))).join("; ");
   const words = styleWords(p);
@@ -345,7 +349,7 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-10 pt-2">
       <motion.p {...stagger(0)} className="text-sm uppercase tracking-widest text-ink-soft">
-        {p.title} · your style
+        {p.title} · {whose ? `${whose}'s style` : "your style"}
       </motion.p>
       <h1 className="mt-3 font-serif text-6xl sm:text-7xl">
         <Decode text={b.name} delay={0.15} speed={34} />

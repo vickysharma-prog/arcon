@@ -56,7 +56,14 @@ export const revokeInvite = (projectId: string, token: string) => must(db().from
 
 export const removeMember = (projectId: string, userId: string) => must(db().from("project_members").delete().eq("project_id", projectId).eq("user_id", userId));
 
-export type InviteInfo = { project_id: string; role: MemberRole; title: string | null; space_type: string | null; location: string | null; from: string | null; state: "open" | "used" | "expired" };
+/** The name of the person a project was designed for: its owner, who answered "Let's get to know you". */
+export async function ownerName(ownerId: string | null): Promise<string | null> {
+  if (!ownerId) return null;
+  const row = await must<{ name: string } | null>(db().from("profiles").select("name").eq("user_id", ownerId).maybeSingle());
+  return row?.name ?? null;
+}
+
+export type InviteInfo = { project_id: string; role: MemberRole; title: string | null; space_type: string | null; location: string | null; from: string | null; owner: string | null; state: "open" | "used" | "expired" };
 
 const TOKEN = /^[0-9a-f]{64}$/;
 
@@ -68,10 +75,11 @@ export async function inviteInfo(token: string): Promise<InviteInfo | null> {
   );
   if (!inv || inv.revoked) return null;
   const [project, from] = await Promise.all([
-    must<{ title: string | null; space_type: string | null; site: { location?: string } }>(db().from("projects").select("title, space_type, site").eq("id", inv.project_id).single()),
+    must<{ title: string | null; space_type: string | null; site: { location?: string }; owner_id: string | null }>(db().from("projects").select("title, space_type, site, owner_id").eq("id", inv.project_id).single()),
     must<{ name: string; company: string | null } | null>(db().from("profiles").select("name, company").eq("user_id", inv.created_by).maybeSingle()),
   ]);
   return {
+    owner: await ownerName(project.owner_id),
     project_id: inv.project_id,
     role: inv.role,
     title: project.title,
@@ -106,8 +114,10 @@ export async function acceptInvite(token: string, userId: string): Promise<{ pro
 
 /** Projects someone was invited to, for their home page. */
 export async function memberProjects(userId: string) {
-  type Card = { id: string; title: string | null; space_type: string | null; status: string; mode: string; site: { location?: string }; updated_at: string };
+  type Card = { id: string; title: string | null; space_type: string | null; status: string; mode: string; site: { location?: string }; updated_at: string; owner_id: string | null };
   // The join returns one project per membership row (an object, though the client types it as a list).
-  const rows = (await must(db().from("project_members").select("role, projects(id, title, space_type, status, mode, site, updated_at)").eq("user_id", userId))) as unknown as { role: MemberRole; projects: Card | null }[];
-  return rows.filter((r) => r.projects).map((r) => ({ ...r.projects!, role: r.role }));
+  const rows = (await must(db().from("project_members").select("role, projects(id, title, space_type, status, mode, site, updated_at, owner_id)").eq("user_id", userId))) as unknown as { role: MemberRole; projects: Card | null }[];
+  const cards = rows.filter((r) => r.projects);
+  const names = await Promise.all(cards.map((r) => ownerName(r.projects!.owner_id)));
+  return cards.map((r, i) => ({ ...r.projects!, role: r.role, owner: names[i] }));
 }

@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import QRCode from "qrcode";
 import { ROLE_CAN, ROLE_NAME, type MemberRole, type ProjectRole } from "@/lib/project/access";
 import { ok, tick } from "@/components/fx/sfx";
@@ -14,32 +13,8 @@ type Team = { role: ProjectRole; signedIn: boolean; me: string | null; members: 
 const linkOf = (token: string) => `${window.location.origin}/join/${token}`;
 const initials = (m: Member) => (m.name ?? m.email ?? "?").split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("");
 
-// The "Team" button in a project, and the panel it opens: who is on the project, and invite links with a QR code.
-export function TeamButton({ id }: { id: string }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => {
-          tick();
-          setOpen(true);
-        }}
-        className="flex items-center gap-2 rounded-full border border-line px-4 py-2 text-sm transition hover:border-accent hover:text-accent"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <circle cx="9" cy="8" r="3.5" />
-          <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
-          <path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6" />
-        </svg>
-        Team
-      </button>
-      {typeof document !== "undefined" && createPortal(<AnimatePresence>{open && <TeamPanel id={id} onClose={() => setOpen(false)} />}</AnimatePresence>, document.body)}
-    </>
-  );
-}
-
-function TeamPanel({ id, onClose }: { id: string; onClose: () => void }) {
+// The team on a project: who is on it, and invite links with a QR code. Opened from the profile menu.
+export function TeamPanel({ id, onClose }: { id: string; onClose: () => void }) {
   const [team, setTeam] = useState<Team | null>(null);
   const [role, setRole] = useState<MemberRole | null>(null);
   const [fresh, setFresh] = useState<{ token: string; qr: string } | null>(null);

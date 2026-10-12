@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { setSound, soundOn } from "./fx/sfx";
+import { createPortal } from "react-dom";
+import { AnimatePresence } from "motion/react";
+import { setSound, soundOn, tick } from "./fx/sfx";
+import { TeamPanel } from "./project/TeamPanel";
 
 type Mode = "light" | "dark" | "system";
 type Me = { user: { id: string; email: string | null } | null; profile?: { name: string; company: string | null } | null };
@@ -27,6 +30,10 @@ export function ProfileMenu() {
   const [mode, setMode] = useState<Mode>("system");
   const [sound, setSoundState] = useState(true);
   const [me, setMe] = useState<Me | null>(null);
+  const [team, setTeam] = useState(false);
+  // On a project page the menu also opens that project's team. Read only once the menu is opened (always in the
+  // browser), so the header still prerenders.
+  const projectId = open || team ? (window.location.pathname.match(/^\/project\/([0-9a-f-]{36})/)?.[1] ?? null) : null;
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -99,6 +106,26 @@ export function ProfileMenu() {
           </div>
           {!settings ? (
             <ul className="p-1.5 text-sm">
+              {projectId && (
+                <li>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      tick();
+                      setOpen(false);
+                      setTeam(true);
+                    }}
+                    className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-medium hover:bg-paper"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                      <circle cx="9" cy="8" r="3.5" />
+                      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+                      <path d="M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6" />
+                    </svg>
+                    Team on this project
+                  </button>
+                </li>
+              )}
               {me?.user ? (
                 <>
                   <li>
@@ -177,6 +204,7 @@ export function ProfileMenu() {
           )}
         </div>
       )}
+      {projectId && typeof document !== "undefined" && createPortal(<AnimatePresence>{team && <TeamPanel id={projectId} onClose={() => setTeam(false)} />}</AnimatePresence>, document.body)}
     </div>
   );
 }

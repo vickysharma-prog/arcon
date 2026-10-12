@@ -14,6 +14,9 @@ One entry per working session, newest at the top. Date, what got done, what brok
   account create one (or sign in) and come straight back to join.
 - Home lists projects you were invited to, with "You're the client" (or architect, builder).
 - A signed-out visitor to a project sees "This project is private" with a sign-in button.
+- Vicky's review: everyone else on a project sees whose design it is ("Vicky's design, designed around Vicky's
+  taste", "Vicky's style"), on the project, the invite page and their home. The Team panel moved into the profile
+  menu ("Team on this project") so the plan flow stays clean. A GIF of invite and join is in Downloads.
 
 Tested on localhost with test owner and client accounts: invite link and QR, the join page signed out, sign up,
 profile, join, the client's view (200), and choose, edit and invite refused (404) for the client; the owner sees

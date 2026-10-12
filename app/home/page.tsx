@@ -35,7 +35,7 @@ async function HomePageBody() {
   if (!profile) redirect("/welcome?next=/home");
   const [own, shared] = await Promise.all([projectsOf(userId), memberProjects(userId)]);
   // Your own projects and the ones you were invited to, newest first, each with your role on it.
-  const projects: (ProjectCard & { role: ProjectRole })[] = [...own.map((p) => ({ ...p, role: "owner" as ProjectRole })), ...shared].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  const projects: (ProjectCard & { role: ProjectRole; owner?: string | null })[] = [...own.map((p) => ({ ...p, role: "owner" as ProjectRole })), ...shared].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8">
@@ -76,6 +76,7 @@ async function HomePageBody() {
                     <span className={p.status === "ready" ? "text-leaf" : "text-accent"}>{STAGE[p.status] ?? p.status}</span>
                   </div>
                   <p className="mt-3 font-serif text-2xl leading-tight group-hover:text-accent">{nameOf(p)}</p>
+                  {p.owner && <p className="mt-1 text-sm text-ink-soft">{p.owner.split(" ")[0]}&apos;s design</p>}
                   <p className="mt-4 flex items-center justify-between text-sm text-ink-soft">
                     <span>Updated {when(p.updated_at)}</span>
                     {p.role !== "owner" && <span className="rounded-full border border-line px-2.5 py-0.5 text-xs">You&apos;re the {ROLE_NAME[p.role].toLowerCase()}</span>}

@@ -29,11 +29,14 @@ async function Invite({ params }: { params: PageProps<"/join/[token]">["params"]
       </div>
     );
 
-  const project = info.title ?? `A ${SPACE[info.space_type ?? ""] ?? "project"}${info.location ? ` in ${info.location}` : ""}`;
+  const place = info.title ?? `A ${SPACE[info.space_type ?? ""] ?? "project"}${info.location ? ` in ${info.location}` : ""}`;
+  const first = info.owner?.split(" ")[0];
+  const project = first ? `${first}'s design` : place;
   return (
     <div className="text-center">
       <p className="text-xs uppercase tracking-[0.25em] text-accent">You&apos;re invited</p>
       <h1 className="mt-3 font-serif text-5xl leading-tight">{project}</h1>
+      {first && <p className="mt-2 text-ink-soft">{place} · designed around {first}&apos;s taste</p>}
       <p className="mx-auto mt-4 max-w-md text-ink-soft">
         {info.from ?? "Someone"} invited you to join as <span className="text-ink">{ROLE_NAME[info.role].toLowerCase()}</span>. {ROLE_CAN[info.role]}.
       </p>
