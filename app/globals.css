@@ -171,3 +171,22 @@ html.intro-seen .intro { display: none; }
 }
 .glow-btn:hover::after { transform: translateX(120%); }
 .glow-btn:active { transform: translateY(0) scale(0.98); }
+
+/* The PDF pack: hidden on screen; when printing, only the pack shows, on white, one section per page. */
+.print-sheet { display: none; }
+@media print {
+  @page { margin: 14mm; }
+  body * { visibility: hidden; }
+  .print-sheet, .print-sheet * { visibility: visible; }
+  .print-sheet {
+    display: block;
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    --paper: #ffffff; --paper-raised: #ffffff; --ink: #0e1a2b; --ink-soft: #55647a; --line: #c9d3e0; --accent: #2f6fed; --leaf: #2f5d45;
+    color: #0e1a2b;
+    background: #ffffff;
+  }
+  .print-page { break-after: page; }
+  .print-page:last-child { break-after: auto; }
+}

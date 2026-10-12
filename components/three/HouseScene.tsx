@@ -18,7 +18,7 @@ import { planks, tiled, tiles } from "./textures";
 import { roomBell, step as playStep } from "@/components/fx/sfx";
 import { SketchFx, SketchMaterial } from "./Sketch";
 
-export type Mode = "walk" | "explore" | "orbit" | "showcase";
+export type Mode = "walk" | "explore" | "orbit" | "showcase" | "shot";
 
 type Props = {
   layout: Layout;
@@ -47,8 +47,11 @@ type Props = {
   /** Look-around only: turn slowly on its own until someone grabs it, and whether the mouse wheel zooms. */
   autoRotate?: boolean;
   wheelZoom?: boolean;
-  /** Draw it as a hand sketch in the page's ink and blue, instead of in full colour. */
-  sketch?: boolean;
+  /** Draw it as a hand sketch in the page's ink and blue, instead of in full colour; "print" puts it on white paper. */
+  sketch?: boolean | "print";
+  /** Shot mode: where the camera stands, and what to do with the finished picture (a PNG data URL). */
+  shot?: Shot;
+  onShot?: (png: string) => void;
 };
 
 
@@ -507,6 +510,48 @@ function Explorer({ layout, level, go, onPose, onRoom }: { layout: Layout; level
 
 // Look-around view: start from above the corner of the building with a normal lens. Runs as a layout
 // effect so the camera is in place before Bounds frames the model from this direction.
+/**
+ * A fixed camera for a picture: which way it looks from (radians round the building, 0 = from the right, -π/2 = from
+ * the street), how steeply it looks down (radians above the horizon), and what it frames: the whole building, one
+ * floor, or one room (a plan rectangle on a level). The camera backs off until all of it fits, with a margin.
+ */
+export type Shot = { turn: number; tilt: number; level?: number; room?: { x: number; y: number; w: number; h: number } };
+export const SHOTS = {
+  street: { turn: -2.15, tilt: 0.38 },
+  back: { turn: 1.0, tilt: 0.4 },
+  above: { turn: -2.0, tilt: 0.95 },
+  aboveBack: { turn: 1.15, tilt: 0.95 },
+} satisfies Record<string, Shot>;
+
+// Shot: the camera stands still, framed on its subject, and once the furniture has had time to load the frame is
+// handed back as a picture.
+function ShotCam({ layout, shot, onShot }: { layout: Layout; shot: Shot; onShot?: (png: string) => void }) {
+  const { camera, gl } = useThree();
+  const { width: W, depth: D } = layout.shell;
+  useLayoutEffect(() => {
+    const floors = layout.floors.length;
+    const r = shot.room;
+    const y0 = (shot.level ?? 0) * STOREY;
+    const box = r
+      ? { x0: r.x, x1: r.x + r.w, z0: r.y, z1: r.y + r.h, y0, y1: y0 + WALL_H * 0.7 }
+      : { x0: 0, x1: W, z0: 0, z1: D, y0: shot.level === undefined ? 0 : y0, y1: shot.level === undefined ? floors * STOREY : y0 + WALL_H };
+    const c = new Vector3((box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2, (box.z0 + box.z1) / 2);
+    const radius = 0.5 * Math.hypot(box.x1 - box.x0, box.y1 - box.y0, box.z1 - box.z0);
+    const fov = "fov" in camera ? (camera.fov as number) : 32;
+    const dist = (radius / Math.tan(((fov / 2) * Math.PI) / 180)) * 1.08;
+    const dir = new Vector3(Math.cos(shot.tilt) * Math.cos(shot.turn), Math.sin(shot.tilt), Math.cos(shot.tilt) * Math.sin(shot.turn));
+    camera.position.copy(c).addScaledVector(dir, dist);
+    camera.lookAt(c);
+    camera.updateProjectionMatrix();
+  }, [camera, layout, W, D, shot]);
+  useEffect(() => {
+    if (!onShot) return;
+    const t = setTimeout(() => onShot(gl.domElement.toDataURL("image/png")), 1800);
+    return () => clearTimeout(t);
+  }, [gl, onShot]);
+  return null;
+}
+
 // Showcase: the camera moves on its own, circling the building slowly while drifting in close and back out again,
 // like a film of an architect's model. Nobody steers it.
 function Tour({ layout }: { layout: Layout }) {
@@ -636,14 +681,15 @@ export default function HouseScene(props: Props) {
   const h = props.layout.floors.length * STOREY;
   const orbit = props.mode === "orbit";
   const showcase = props.mode === "showcase";
+  const still = props.mode === "shot";
   const top = props.layout.floors.at(-1)?.level ?? 0;
   const building = (
     <Building
       layout={props.layout}
       colors={colors}
       look={look}
-      cutaway={(orbit || showcase) && props.cutaway}
-      upTo={orbit || showcase ? props.upTo : "all"}
+      cutaway={(orbit || showcase || still) && props.cutaway}
+      upTo={orbit || showcase || still ? props.upTo : "all"}
       extraPlants={props.extraPlants}
       onPick={props.onPick}
     />
@@ -651,8 +697,9 @@ export default function HouseScene(props: Props) {
   return (
     <Canvas
       shadows
-      camera={{ fov: orbit ? 45 : showcase ? 38 : props.mode === "explore" ? 72 : 82, near: 0.05, far: 300, position: [W * 1.6, h * 2.2 + 6, D * 1.9] }}
-      dpr={[1, 2]}
+      camera={{ fov: orbit ? 45 : showcase ? 38 : still ? 32 : props.mode === "explore" ? 72 : 82, near: 0.05, far: 300, position: [W * 1.6, h * 2.2 + 6, D * 1.9] }}
+      // A picture to save is drawn at twice the screen's resolution, so it stays sharp in the PDF.
+      dpr={still ? 2 : [1, 2]}
       gl={{ preserveDrawingBuffer: true }}
     >
       {!props.sketch && <color attach="background" args={["#dfe8f3"]} />}
@@ -680,6 +727,11 @@ export default function HouseScene(props: Props) {
             {building}
             <Tour layout={props.layout} />
           </>
+        ) : still ? (
+          <>
+            {building}
+            <ShotCam layout={props.layout} shot={props.shot ?? SHOTS.above} onShot={props.onShot} />
+          </>
         ) : props.mode === "explore" ? (
           <>
             {building}
@@ -696,7 +748,7 @@ export default function HouseScene(props: Props) {
       {props.sketch && <SketchMaterial />}
       {props.sketch ? (
         <EffectComposer multisampling={4}>
-          <SketchFx />
+          <SketchFx print={props.sketch === "print"} />
         </EffectComposer>
       ) : (
         <EffectComposer multisampling={4}>

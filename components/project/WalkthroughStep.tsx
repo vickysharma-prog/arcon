@@ -69,6 +69,47 @@ export function WalkthroughStep({
   const [go, setGo] = useState<{ x: number; z: number; key: number }>();
   const box = useRef<HTMLDivElement>(null);
   const style = useMemo(() => lookOf(brief, taste), [brief, taste]);
+
+  // Download the walk as a video: the walk starts again from the street and the browser records the 3D canvas
+  // until it ends, then saves the file. No server involved.
+  const recorder = useRef<MediaRecorder | null>(null);
+  const [recording, setRecording] = useState(false);
+  const record = () => {
+    tick();
+    setMode("walk");
+    setFinished(false);
+    setGuide(false);
+    setPlaying(true);
+    setRestart((r) => r + 1);
+    setTimeout(() => {
+      const canvas = box.current?.querySelector("canvas");
+      if (!canvas || typeof MediaRecorder === "undefined") return;
+      const type = ["video/mp4;codecs=avc1", "video/mp4", "video/webm;codecs=vp9", "video/webm"].find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
+      const rec = new MediaRecorder(canvas.captureStream(30), { mimeType: type, videoBitsPerSecond: 8_000_000 });
+      const chunks: Blob[] = [];
+      rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      rec.onstop = () => {
+        setRecording(false);
+        if (!chunks.length || recorder.current !== rec) return;
+        const blob = new Blob(chunks, { type: rec.mimeType });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `${(title ?? "Arcon").replace(/[^\w\s-]+/g, "").trim() || "Arcon"} walkthrough.${rec.mimeType.includes("mp4") ? "mp4" : "webm"}`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+      };
+      recorder.current = rec;
+      rec.start(500);
+      setRecording(true);
+    }, 400);
+  };
+  const stopRecording = (save: boolean) => {
+    const rec = recorder.current;
+    if (!rec || rec.state === "inactive") return;
+    if (!save) recorder.current = null;
+    rec.stop();
+  };
+  useEffect(() => () => stopRecording(false), []);
   useEffect(() => {
     const on = () => setFull(document.fullscreenElement === box.current);
     document.addEventListener("fullscreenchange", on);
@@ -114,6 +155,16 @@ export function WalkthroughStep({
             </button>
           ))}
         </div>
+        {recording ? (
+          <button onClick={() => stopRecording(false)} className="flex items-center gap-2 rounded-full border border-red-400/60 px-4 py-2 text-sm text-red-500">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
+            Recording the walk · {Math.round(progress * 100)}% · Cancel
+          </button>
+        ) : (
+          <button onClick={record} className="rounded-full border border-line px-4 py-2 text-sm transition hover:border-accent hover:text-accent">
+            ⬇ Download video
+          </button>
+        )}
         {next && (
           <button onClick={next.go} className="rounded-full bg-btn px-6 py-2.5 text-btn-ink transition hover:opacity-90">
             {next.label}
@@ -142,6 +193,13 @@ export function WalkthroughStep({
           go={go}
           onPose={setPose}
           onEnd={() => {
+            // A recording ends with the walk, and the file downloads.
+            if (recorder.current?.state === "recording") {
+              stopRecording(true);
+              setPlaying(false);
+              setFinished(true);
+              return;
+            }
             // When the walk ends, hand over the controls: look around from any angle.
             setPlaying(false);
             setFinished(true);

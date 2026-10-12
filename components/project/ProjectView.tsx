@@ -13,6 +13,7 @@ import type { Layout } from "@/lib/layout/schema";
 import type { Project } from "@/lib/project/store";
 import { canLeave, isStep, nextStep, STEPS, type StepId } from "./steps";
 import { Workspace } from "./Workspace";
+import { ExportStep } from "./ExportStep";
 import { WalkthroughStep } from "./WalkthroughStep";
 import { CheckPlan } from "@/components/import/CheckPlan";
 import { importedOf } from "@/lib/plan-import/edits";
@@ -183,9 +184,14 @@ export function ProjectView({ id }: { id: string }) {
               <p className="rounded-full border border-leaf/50 bg-leaf/5 px-4 py-1.5 text-sm text-leaf">
                 ✓ Your {edited === 1 ? "change is" : `${edited} changes are`} in. The walkthrough, budget and shopping list are all updated.
               </p>
-              <button type="button" onClick={() => setStep("workspace")} className="rounded-full px-3 py-1.5 text-sm text-ink-soft transition hover:text-ink">
-                ← Back to Make changes
-              </button>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setStep("workspace")} className="rounded-full px-3 py-1.5 text-sm text-ink-soft transition hover:text-ink">
+                  ← Back to Make changes
+                </button>
+                <button type="button" onClick={() => setStep("drawings")} className="rounded-full border border-accent/50 px-4 py-1.5 text-sm text-accent transition hover:bg-accent hover:text-btn-ink">
+                  Done? Share &amp; export →
+                </button>
+              </div>
             </div>
           )}
           {step === "brief" && <BriefStep p={p} brief={p.brief} />}
@@ -223,7 +229,7 @@ export function ProjectView({ id }: { id: string }) {
             />
           )}
           {step === "shop" && <ShoppingStep id={p.id} location={p.site.location} tier={tier} onTier={setTier} />}
-          {step === "drawings" && <Coming title="Your drawings" text="Plans you can download and share with your architect or builder." />}
+          {step === "drawings" && <ExportStep p={p} tier={tier} onWalkthrough={() => setStep("walkthrough")} />}
           {step === "workspace" && <Workspace
               p={p}
               tier={tier}

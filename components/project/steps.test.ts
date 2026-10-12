@@ -3,13 +3,13 @@ import assert from "node:assert/strict";
 import { canLeave, isStep, nextStep, STEPS } from "./steps.ts";
 
 test("steps run in the agreed order", () => {
-  assert.deepEqual(STEPS.map((s) => s.id), ["brief", "plans", "walkthrough", "budget", "shop", "drawings", "workspace"]);
+  assert.deepEqual(STEPS.map((s) => s.id), ["brief", "plans", "walkthrough", "budget", "shop", "workspace", "drawings"]);
 });
 
-test("next moves forward and stops at the workspace", () => {
+test("next moves forward and ends at share and export, the way out of the loop", () => {
   assert.equal(nextStep("brief"), "plans");
-  assert.equal(nextStep("drawings"), "workspace");
-  assert.equal(nextStep("workspace"), null);
+  assert.equal(nextStep("workspace"), "drawings");
+  assert.equal(nextStep("drawings"), null);
 });
 
 test("the plans step needs a chosen plan before moving on", () => {

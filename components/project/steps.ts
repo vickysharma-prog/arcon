@@ -1,12 +1,13 @@
-// The wizard after the interview: one screen per step, Next only, changes happen in the workspace at the end.
+// The steps after the questions: one screen per step, Next only. Changes happen in the workspace near the end, and
+// the last step takes the design away: sketches, plans, the PDF pack, a DXF and the walkthrough video.
 export const STEPS = [
   { id: "brief", label: "Your style" },
   { id: "plans", label: "Plans" },
   { id: "walkthrough", label: "Walkthrough" },
   { id: "budget", label: "Budget" },
   { id: "shop", label: "Shopping list" },
-  { id: "drawings", label: "Drawings" },
   { id: "workspace", label: "Make changes" },
+  { id: "drawings", label: "Share & export" },
 ] as const;
 
 export type StepId = (typeof STEPS)[number]["id"];

@@ -2,6 +2,18 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-15: Share & export, and the walkthrough video (D2 and the video half of C2)
+
+Vicky: after the changes loop there has to be a way out, with designs people can share. The last step is now "Share
+& export", after "Make changes", and the note after saving changes links to it. It draws hand-drawn sketches of the
+design in the browser (each floor from above with the walls cut, the other side, close-ups of the two biggest rooms
+with their furniture, the street), framed to fit whatever the size, on white at twice the screen's resolution with
+the line weight scaled to match. Each downloads as a PNG; Share sends them from the phone or computer. A PDF pack
+(cover with style and Qloo taste words, sketches, a plan per floor, the room list, the budget by trade) prints from
+the browser's own Save as PDF. A DXF of the plan (rooms, names, areas, doors, windows, a layer each) opens in CAD.
+The walkthrough has "Download video": the walk restarts and the browser records the 3D canvas to an MP4 (WebM where
+MP4 isn't supported) that saves when the walk ends.
+
 ## 2026-10-15: C1, the workspace ("Make it yours")
 
 Edits to the chosen plan, all instant. Tap a room on the plan for Bigger, Smaller, Rename or Remove; add a room;
