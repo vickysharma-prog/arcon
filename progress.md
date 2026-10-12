@@ -2,6 +2,17 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-15 (early morning): The hero becomes a hand-drawn sketch
+
+Vicky asked for the 3D model as an architect's hand drawing in the site's ink and blue. The scene now has a sketch
+look: it is drawn with surface directions as colours, and a shader turns sharp changes in direction or depth into
+wobbly ink lines with a lighter second stroke, hatches shaded sides in blue, and reveals the drawing with a pen
+sweep. It follows light and dark mode. In the hero it sits straight on the page with no card: the empty space is
+see-through, the edges fade, the camera circles and closes in on its own, floors switch while it is far out, and
+the plan of the shown floor sits beside it. Tried crossing fact strips under the hero; Vicky found them loud, so
+they are gone. The header turns to frosted glass on scroll, and the hero fits phone screens. Checked live in light,
+dark and phone width with no console errors.
+
 ## 2026-10-14 (late night): The landing page
 
 Vicky: the home page should open with the logo and a tech sound, explain what Arcon does, show pricing and a way
