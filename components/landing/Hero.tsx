@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { AnimatePresence, motion, useMotionValue, useReducedMotion, useSpring } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState, type PointerEvent } from "react";
 import { Logo } from "@/components/Logo";
 import { ProfileMenu } from "@/components/ProfileMenu";
@@ -143,33 +143,5 @@ export function Hero() {
         </motion.div>
       </div>
     </section>
-  );
-}
-
-// A soft blue light that follows the pointer across the whole page, on devices with a mouse.
-export function CursorGlow() {
-  const still = useReducedMotion();
-  const x = useMotionValue(-400);
-  const y = useMotionValue(-400);
-  const sx = useSpring(x, { stiffness: 220, damping: 28 });
-  const sy = useSpring(y, { stiffness: 220, damping: 28 });
-  const [mouse, setMouse] = useState(false);
-  useEffect(() => {
-    if (still || !matchMedia("(pointer: fine)").matches) return;
-    setMouse(true);
-    const move = (e: globalThis.PointerEvent) => {
-      x.set(e.clientX);
-      y.set(e.clientY);
-    };
-    window.addEventListener("pointermove", move, { passive: true });
-    return () => window.removeEventListener("pointermove", move);
-  }, [still, x, y]);
-  if (!mouse) return null;
-  return (
-    <motion.div
-      aria-hidden
-      className="pointer-events-none fixed left-0 top-0 z-30 h-[180px] w-[180px] rounded-full"
-      style={{ x: sx, y: sy, translateX: "-50%", translateY: "-50%", background: "radial-gradient(circle, color-mix(in srgb, var(--accent) 20%, transparent), transparent 70%)" }}
-    />
   );
 }
