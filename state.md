@@ -1,52 +1,58 @@
 # State
 
-Where Arcon stands right now. Updated as we go (Vicky's rule): progress, context and decisions.
+Where Arcon stands right now (updated 12 Oct, end of day). Dated detail is in progress.md; the plan and
+decisions are in private/plan.md.
 
-## Done
+## Live
 
-- Next.js 16.4 app, live at arcon-ten.vercel.app, auto-deploying from GitHub.
-- Qloo client with a shared Supabase cache, limiter and retry; three-layer taste engine.
-- Supabase tables and migrations; model picker (Gemini now, any model by one setting).
-- Interviewer agent (eve) with voice and text: project, people, needs, how you live (homes), taste, budget.
-  15 evals including adversarial ones.
-- Design step: brief, room program, and three plans picked for how the user lives:
-  - four layout concepts (central hall to the street or garden, open great room, split plan);
-  - ranked from the interview and the Qloo taste, each with reasons in the user's own words;
-  - each card shows what that plan does best and gives up against the other two.
-- Architect rules in the validator and tests (stairwell, doors, room sizes, front door, en-suites,
-  furniture on walls, walk never through a wall). Fuzz test on 600 random programs per run.
-- 3D: taste-styled furniture and walls, U stair, Walk through (a real route), Explore inside, Look around
-  with section cut, room labels and Whole house. Plans and wording work for every space type.
-- 149 unit tests passing.
+arcon-ten.vercel.app, auto-deploying from GitHub (main). 273 unit tests pass; build is clean.
 
-## In progress
+## Built
 
-- Accounts, studio, site and pricing (seven parts, private/plan.md). Parts 1 (accounts: email and password, Google live, role and profile) and 2 (roles, team panel, invite links with QR) are built. Next: part 3, review (share links, comments, approval).
+- **Landing:** logo intro with sound, hand-drawn 3D hero with its plan, how it works, Qloo taste flow, features,
+  audience, pricing, sign-up.
+- **"Let's get to know you":** fixed questions with the terminal animation and sound, taste picks confirmed with
+  Qloo, live taste card, voice mode. AI only after the questions. Or upload your own plan (A4).
+- **Design:** brief and style from Qloo signals (taste trail, style words, moodboard), three plans ranked for how
+  you live with trade-offs, 3D walkthrough, budget by room and market (eight markets, local currency), greenery
+  and timeline, shopping list with Qloo brands and local stores.
+- **Make changes:** instant edits (tap a room or type), versions with undo; plan, 3D, budget and shopping list
+  follow. Save leads back to the walkthrough.
+- **Share & export:** hand-drawn sketches, floor plans, details, PDF pack, DXF, walkthrough video; Arcon
+  watermark on every download.
+- **Accounts (part 1):** email and password, Google (live), Apple (button ready, needs a paid Apple developer
+  account). Role at sign-up (homeowner, business owner, architect, builder) and a short profile; logos for studios
+  and builders. Guest projects move into the account. /home and /account. Email confirmation is off (Vicky, 12 Oct).
+- **Teams (part 2):** roles owner, architect, client, builder, viewer, checked on every project route. "Team on
+  this project" in the profile menu: invite links with QR codes, one use, 7 days. Join page. Others see the
+  owner's name ("Vicky's design", "Vicky's style").
 
-- Qloo deep dive done; Q2 to Q11 planned (private/plan.md, Qloo everywhere). Q11 taste trail, Q3 style words, Q2 moodboard, B2 budget, Q4 tier, B3 timeline and greenery, Q6 eco brands and nurseries, M1 motion pass, B4 shopping list with 3D click, Q5 brand alternatives built. G1 (any project type) parked on branch g1-any-project until the seven types are solid.
-- A5: how a business runs. Built: save_running tool, ranking with the user's words, program sizing, evals.
-- A4: bring your own plan. Built and working end to end (upload at /start/plan, Gemini reads it, snap cleans it, Check your plan screen, taste, then the user's plan plus two engine alternatives). Checked live end to end (upload, check, design, plans) and with a PDF. Taste questions: all three required, each looked up by kind and shown to the user before use. Later polish: show the uploaded image beside the read plan (needs file storage).
+## Next (the seven-part plan, private/plan.md)
 
-## Next
+3. Review: share links, comments pinned to rooms, send for review, approve and lock the version, bell.
+4. Studio for architects: clients by stage, "New client" in person or by link, studio branding.
+5. Site tracking, full: phases, tasks, crew, attendance, materials and orders, photos, alerts, client progress.
+6. Pricing: PayPal sandbox, plan limits, "Are you a judge? Click here" demo mode with showcase projects.
+7. Phone app (PWA).
 
-- A5: business "how you run it" interview step.
-- B1 to B4: taste card and moodboard, budget, greenery and timeline, shopping list.
-- Then the workspace with the designer agent.
+Then: D3 neighbourhood (Q8, Q9), E2 (taste quiz, exterior, day and night), Q7 and Q10, F1 quality,
+C2b photoreal renders on about $10 of paid Gemini credit (28 to 29 Oct), F2 polish, video, README, submit.
 
 ## Known issues
 
 - Some 3D details Vicky flagged are still to revisit (task: leftovers from the 3D review).
-- Brand filter lets French Connection and Homestyler through (B1).
-- Demo projects pile up in Supabase; cleanup script pending (F1).
-- Photoreal render: planned for 28 to 29 Oct on about $10 of paid Gemini credit (plan in private/plan.md).
-
-## Known limits of the free model tier
-
-- Gemini free tier limits are per project, per model; the daily quota resets at midnight Pacific.
-- Evals run one at a time; the judge uses `gemini-3.1-flash-lite`.
+- Test projects and test accounts (arcon.test.*@example.com) live in Supabase; cleanup script pending (F1).
+- Google's sign-in page names the Supabase address, not "Arcon"; changing it needs Supabase's paid custom domain.
+- The project page still has two old lint errors about state set in effects (not new).
 
 ## Waiting on
 
-- Vicky: Supabase Auth URL settings, Google OAuth keys, Apple developer account (paid, optional), PayPal sandbox keys.
+- Vicky: PayPal sandbox keys (for part 6). Apple developer account only if Apple sign-in is wanted.
+- Final model choice around 20 to 25 Oct. Gemini free quota limits the design step.
 
-- Nothing blocking. Final model choice around 20 to 25 Oct.
+## Testing notes
+
+- Test accounts: `node --env-file=.env.local scripts/test-users.ts <role> [redirect]` prints a sign-in link;
+  the test password is in `.env.local` only.
+- `scripts/copy-project.ts` copies a finished project to a test account; `scripts/release-test-projects.ts` and
+  `scripts/guest-link.ts` hand claimed guest projects back.

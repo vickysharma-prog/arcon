@@ -10,4 +10,8 @@ Built for the Qloo Agentic Hackathon 2026. Qloo's taste graph is the engine behi
 
 ## Setup
 
-Copy `.env.example` to `.env` and fill in your keys. Never commit `.env`.
+1. `npm install`
+2. Copy `.env.example` to `.env` and `.env.local` and fill in your keys. Never commit them.
+3. `npm run migrate` creates the database tables in Supabase.
+4. `npm run dev`, then open http://localhost:3000.
+5. `npm test` runs the unit tests.
