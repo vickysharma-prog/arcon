@@ -53,7 +53,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
     else {
       // The plain rules couldn't read it: one model call, mapped to the same changes.
       try {
-        const asked = await ask(body.data.text, current, chatModel());
+        // A full model first: the lite ones are slower here. Others stand in when one is busy or out of quota.
+        const asked = await ask(body.data.text, current, chatModel(process.env, { tools: true }));
         if ("none" in asked) return Response.json({ error: asked.none, suggestions: suggestions(current) }, { status: 422 });
         change = asked;
       } catch {

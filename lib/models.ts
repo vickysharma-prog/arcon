@@ -22,10 +22,13 @@ export function route(env: Record<string, string | undefined> = process.env): Ro
 // daily quota, so a busy day on one (evals, a demo) doesn't stop the interview. ARCON_FALLBACK_MODELS overrides.
 const GEMINI_FALLBACKS = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-2.5-flash"];
 
-/** A quota or rate-limit error: worth trying another model. Anything else is a real failure and is passed on. */
+/**
+ * A quota, rate-limit or "too busy right now" error: worth trying another model. Anything else (a bad request, a bad
+ * key) is a real failure and is passed on.
+ */
 export const isQuota = (e: unknown) => {
   const err = e as { statusCode?: number; message?: string } | null;
-  return err?.statusCode === 429 || /quota|rate.?limit|resource.?exhausted|429/i.test(String(err?.message ?? e));
+  return err?.statusCode === 429 || err?.statusCode === 503 || /quota|rate.?limit|resource.?exhausted|429|high demand|overloaded|unavailable/i.test(String(err?.message ?? e));
 };
 
 type Model = Exclude<LanguageModel, string>;

@@ -45,6 +45,8 @@ export function ProjectView({ id }: { id: string }) {
   const extraPlants = useMemo(() => choicesOf(greenTicked({ green })).extra, [green]);
   const [choosing, setChoosing] = useState<number | null>(null);
   const [started, setStarted] = useState(false);
+  // How many changes were just made in "Make changes", shown on the steps that now reflect them.
+  const [edited, setEdited] = useState(0);
   const key = `arcon-step-${id}`;
 
   const setStep = (s: StepId) => {
@@ -176,6 +178,16 @@ export function ProjectView({ id }: { id: string }) {
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="flex-1"
         >
+          {edited > 0 && (step === "walkthrough" || step === "budget" || step === "shop") && (
+            <div className="mx-auto mb-3 flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4">
+              <p className="rounded-full border border-leaf/50 bg-leaf/5 px-4 py-1.5 text-sm text-leaf">
+                ✓ Your {edited === 1 ? "change is" : `${edited} changes are`} in. The walkthrough, budget and shopping list are all updated.
+              </p>
+              <button type="button" onClick={() => setStep("workspace")} className="rounded-full px-3 py-1.5 text-sm text-ink-soft transition hover:text-ink">
+                ← Back to Make changes
+              </button>
+            </div>
+          )}
           {step === "brief" && <BriefStep p={p} brief={p.brief} />}
           {step === "plans" && <PlansStep p={p} options={p.options} choosing={choosing} choose={choose} />}
           {step === "walkthrough" && (
@@ -212,7 +224,16 @@ export function ProjectView({ id }: { id: string }) {
           )}
           {step === "shop" && <ShoppingStep id={p.id} location={p.site.location} tier={tier} onTier={setTier} />}
           {step === "drawings" && <Coming title="Your drawings" text="Plans you can download and share with your architect or builder." />}
-          {step === "workspace" && <Workspace p={p} tier={tier} ticked={greenTicked(p.interview)} onProject={(next) => setP(next)} />}
+          {step === "workspace" && <Workspace
+              p={p}
+              tier={tier}
+              ticked={greenTicked(p.interview)}
+              onProject={(next) => setP(next)}
+              onDone={(n) => {
+                setEdited(n);
+                setStep("walkthrough");
+              }}
+            />}
         </motion.div>
       </AnimatePresence>
     </div>

@@ -37,7 +37,14 @@ Request: "${text.slice(0, 300)}"`;
 
 /** The change a model reads into the request, or a reason it can't be one. */
 export async function ask(text: string, layout: Layout, model: LanguageModel): Promise<Change | { none: string }> {
-  const { output: o } = await generateText({ model, output: Output.object({ schema: Loose }), prompt: askPrompt(text, layout), maxRetries: 1 });
+  // A lookup, not a design: after 8 seconds the screen offers suggestions instead of keeping someone waiting.
+  const { output: o } = await generateText({
+    model,
+    output: Output.object({ schema: Loose }),
+    prompt: askPrompt(text, layout),
+    maxRetries: 0,
+    abortSignal: AbortSignal.timeout(8000),
+  });
   const ids = new Set(layout.floors.flatMap((f) => f.spaces.map((s) => s.id)));
   const room = o.room && ids.has(o.room) ? o.room : null;
   if (o.op === "resize" && room) return { op: "resize", room, by: o.bigger === false ? 0.8 : 1.25 };

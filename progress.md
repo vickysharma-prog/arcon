@@ -16,7 +16,13 @@ one closest to the current plan, and rooms in an open band keep their row, so a 
 seating area across the café. Across every room of every template, 87% of resizes succeed (the rest say plainly
 why), the median disturbance to other rooms is 0.07, and the slowest edit takes 78 ms.
 
-Open: the model fallback took 15 s on one request (likely a quota fallback); adding a room can still reshape a wing.
+Then, from Vicky's review: the kitchen switch shows only for homes and cafés, named after the room. Adding a room
+tries a few placements and keeps the least disruptive (every add now succeeds; median disturbance 0.15, from 0.19).
+The model fallback was slow because the lite model went first; it now leads with a full model, falls through to the
+next one on "high demand" as well as quota, and gives up after 8 s with suggestions. The instant rules read far more
+phrasing ("somewhere to do yoga", "the kids need more space", "aur jagah chahiye"), so the model is rarely needed.
+"Save & walk through it" takes you to the walkthrough of the changed design, with a note that the budget and
+shopping list are updated too.
 
 ## 2026-10-15: "Let's get to know you" replaces the AI interview
 

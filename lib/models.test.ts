@@ -34,6 +34,7 @@ test("out of quota, the next model answers; a real error is not hidden", async (
   assert.equal(r.text, "from the third");
   await assert.rejects(generateText({ model: withFallback(failing(new Error("bad request")), [answer("never")]), prompt: "hi", maxRetries: 0 }), /bad request/);
   assert.ok(isQuota(quota) && isQuota(new Error("RESOURCE_EXHAUSTED")) && !isQuota(new Error("invalid key")));
+  assert.ok(isQuota(new Error("This model is currently experiencing high demand")) && isQuota(Object.assign(new Error("x"), { statusCode: 503 })));
 });
 
 test("an agent that calls tools never leads with a lite model", async () => {

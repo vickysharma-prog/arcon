@@ -125,11 +125,12 @@ export function applyChange(layout: Layout, change: Change): Edited {
     closedKitchen = !change.open;
   }
   if (change.op === "resize") return resize(layout, change, concept, closedKitchen);
+  if (change.op === "add") return add(layout, change, concept, closedKitchen);
   const program = changeProgram(programOf(layout), change, layout);
   if (typeof program === "string") return { error: program };
   const next = placeConcept(program, layout.shell, concept, { closedKitchen, prefer: keepClose(layout), rows: rowsOf(layout) });
   if (!next) {
-    return { error: change.op === "add" ? "There isn't room for that on this plot. Try making another room smaller first." : "That change doesn't fit this plan." };
+    return { error: "That change doesn't fit this plan." };
   }
   return { layout: { ...next, concept: layout.concept } };
 }
@@ -210,4 +211,29 @@ function floorUpheaval(before: Floor, after: Floor, span: number, except?: strin
     n++;
   }
   return n ? total / n : 0;
+}
+
+/**
+ * A new room. Its area changes how much width the open band gets, which can ripple through every room, so a few
+ * placements are tried (its usual zone or a nearby one, a little smaller, the other floor of a two-storey home) and
+ * the one that disturbs the rest of the plan least wins, with a small cost for straying from the usual size and zone.
+ */
+function add(layout: Layout, change: Extract<Change, { op: "add" }>, concept: ConceptId, closedKitchen: boolean): Edited {
+  const base = changeProgram(programOf(layout), change, layout);
+  if (typeof base === "string") return { error: base };
+  const added = base.rooms.at(-1)!;
+  const zones = [...new Set([added.zone, ...(added.zone === "public" ? ["private"] : added.zone === "private" ? ["service", "public"] : ["private"])])] as ProgramRoom["zone"][];
+  const floors = base.floors > 1 ? [added.floor, 1 - added.floor] : [added.floor];
+  let best: { layout: Layout; score: number } | null = null;
+  for (const zone of zones)
+    for (const floor of floors)
+      for (const k of [1, 0.8, 0.65]) {
+        const program = { ...base, rooms: [...base.rooms.slice(0, -1), { ...added, zone, floor, area: added.area * k }] };
+        const next = placeConcept(program, layout.shell, concept, { closedKitchen, prefer: keepClose(layout), rows: rowsOf(layout) });
+        if (!next) continue;
+        const score = upheaval(layout, next) + 0.3 * Math.abs(Math.log(k)) + (zone === added.zone ? 0 : 0.08) + (floor === added.floor ? 0 : 0.05);
+        if (!best || score < best.score) best = { layout: next, score };
+      }
+  if (!best) return { error: "There isn't room for that on this plot. Try making another room smaller first." };
+  return { layout: { ...best.layout, concept: layout.concept } };
 }

@@ -15,15 +15,20 @@ const norm = (s: string) =>
 
 // Words for each kind of room, in the three languages.
 const KIND_WORDS: Record<string, string[]> = {
-  kitchen: ["kitchen", "rasoi", "रसोई", "किचन"],
-  living: ["living", "lounge", "drawing room", "sitting room", "family room", "लिविंग"],
-  dining: ["dining", "डाइनिंग"],
-  bedroom: ["bedroom", "bed room", "बेडरूम", "कमरा"],
+  kitchen: ["kitchen", "rasoi", "pantry", "kitchenette", "रसोई", "किचन"],
+  living: ["living", "lounge", "drawing room", "sitting room", "family room", "hangout", "लिविंग"],
+  dining: ["dining", "seating", "seats", "tables", "to sit", "sit down", "eat", "डाइनिंग"],
+  counter: ["counter", "service counter", "till", "cash"],
+  retail: ["sales floor", "shop floor", "retail", "display", "showroom"],
+  reception: ["reception", "lobby", "waiting", "front desk"],
+  fitting: ["fitting", "trial room", "changing room", "ट्रायल"],
+  workspace: ["workspace", "desks", "open office", "work area"],
+  bedroom: ["bedroom", "bed room", "kids", "kid s", "children", "sleep", "बेडरूम", "कमरा"],
   "guest-room": ["guest room", "guest bedroom", "गेस्ट रूम"],
   bath: ["bathroom", "bath", "toilet", "washroom", "restroom", "बाथरूम", "शौचालय"],
   office: ["study", "office", "home office", "स्टडी", "ऑफ़िस"],
   prayer: ["prayer", "pooja", "puja", "mandir", "पूजा", "मंदिर"],
-  gym: ["gym", "जिम"],
+  gym: ["gym", "yoga", "workout", "exercise", "fitness", "जिम", "योग"],
   media: ["media", "theatre", "theater", "tv room"],
   storage: ["store room", "storage", "store", "स्टोर"],
   laundry: ["laundry", "utility"],
@@ -31,11 +36,11 @@ const KIND_WORDS: Record<string, string[]> = {
 };
 
 const has = (t: string, words: RegExp) => words.test(t);
-const BIGGER = / (bigger|larger|more space|increase|expand|enlarge|wider|grow|bada|badi|bara|bari|zyada|jyada|बड़ा|बड़ी|ज़्यादा) /;
+const BIGGER = / (bigger|larger|more space|more room|roomier|spacious|increase|expand|enlarge|wider|grow|bada|badi|bara|bari|zyada|jyada|jagah|बड़ा|बड़ी|ज़्यादा|जगह) /;
 const MUCH = / (much|a lot|lot|double|bahut|kaafi|बहुत) /;
 const SMALLER = / (smaller|reduce|shrink|less space|tighter|chhota|chota|chhoti|choti|kam|छोटा|छोटी|कम) /;
 const REMOVE = / (remove|delete|get rid|drop|don t need|dont need|do not need|no need for|hatao|hata do|hatado|nikal|nikalo|nahi chahiye|हटाओ|हटा दो|नहीं चाहिए) /;
-const ADD = / (add|need|want|include|put in|give me|chahiye|banao|bana do|jodo|add karo|जोड़ो|चाहिए|बनाओ) /;
+const ADD = / (add|need|want|include|put in|give me|somewhere to|a place to|space for a|room for a|chahiye|banao|bana do|jodo|add karo|जोड़ो|चाहिए|बनाओ) /;
 
 /** The room the words name: by its own name first ("bedroom 2"), then by kind ("the kitchen", "main bedroom"). */
 export function roomIn(text: string, layout: Layout): Space | null {
@@ -47,7 +52,7 @@ export function roomIn(text: string, layout: Layout): Space | null {
   if (byName[0]) return byName[0];
   for (const [kind, words] of Object.entries(KIND_WORDS)) {
     if (!words.some((w) => t.includes(norm(w)))) continue;
-    const same = rooms.filter((r) => r.kind === kind || (kind === "office" && r.kind === "workspace"));
+    const same = rooms.filter((r) => r.kind === kind || (kind === "office" && r.kind === "workspace") || (kind === "workspace" && r.kind === "office"));
     if (!same.length) continue;
     // "the bedroom", "main bedroom": the biggest one; "small bedroom": the smallest.
     const bySize = [...same].sort((a, b) => b.rect.w * b.rect.h - a.rect.w * a.rect.h);
@@ -106,11 +111,11 @@ export function understand(text: string, layout: Layout): Change | null {
 /** Things to try, shown under the box: real rooms from this plan, so every one works. */
 export function suggestions(layout: Layout): string[] {
   const rooms = layout.floors.flatMap((f) => f.spaces).filter((s) => s.zone !== "circulation");
-  const kitchen = rooms.find((r) => r.kind === "kitchen");
+  const home = ["house", "apartment", "studio"].includes(layout.spaceType);
+  const kitchen = home || layout.spaceType === "cafe" ? rooms.find((r) => r.kind === "kitchen") : undefined;
   const biggest = [...rooms].sort((a, b) => b.rect.w * b.rect.h - a.rect.w * a.rect.h)[0];
   const out: string[] = [];
   if (kitchen) out.push(`Make the ${kitchen.name.toLowerCase()} bigger`);
-  const home = ["house", "apartment", "studio"].includes(layout.spaceType);
   if (!home) out.push(rooms.some((r) => r.kind === "meeting") ? "Add a store room" : "Add a meeting room");
   else if (!rooms.some((r) => r.kind === "office")) out.push("Add a study");
   else out.push("Add a guest room");

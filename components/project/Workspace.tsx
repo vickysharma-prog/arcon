@@ -42,7 +42,7 @@ type Version = { version: number; note: string; created_at: string };
 // "Make it yours": change the chosen plan by tapping a room or typing what you want, and see the plan, the 3D model,
 // the budget, the timeline and the green score follow at once. Each change is worked out in the browser first, so it
 // shows instantly; the server works it out again, saves it as a version, and can step back with Undo.
-export function Workspace<P extends Project>({ p, tier, ticked, onProject }: { p: P; tier: Tier | null; ticked: Ticked; onProject: (p: P) => void }) {
+export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDone }: { p: P; tier: Tier | null; ticked: Ticked; onProject: (p: P) => void; onDone: (changes: number) => void }) {
   const still = useReducedMotion();
   const layout = p.options?.[p.chosen_option ?? 0];
   const [view, setView] = useState<"plan" | "3d">("plan");
@@ -53,6 +53,8 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject }: { p
   const [busy, setBusy] = useState<string | null>(null);
   const [versions, setVersions] = useState<Version[]>([]);
   const [hints, setHints] = useState<string[] | null>(null);
+  // Changes saved since opening the workspace, for the note on the walkthrough afterwards.
+  const [made, setMade] = useState(0);
 
   const loadVersions = useCallback(() => {
     void fetch(`/api/projects/${p.id}/edit`)
@@ -85,6 +87,7 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject }: { p
         }
         onProject({ ...p, ...out.project });
         setNote({ text: out.note });
+        setMade((n) => Math.max(0, n + ("undo" in body ? -1 : 1)));
         setHints(null);
         okSound();
         loadVersions();
@@ -132,8 +135,9 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject }: { p
 
   const rooms = useMemo(() => (layout ? layout.floors.flatMap((f) => f.spaces.filter((s) => s.zone !== "circulation").map((s) => ({ ...s, level: f.level }))) : []), [layout]);
   const room = rooms.find((r) => r.id === selected) ?? null;
-  const kitchen = rooms.find((r) => r.kind === "kitchen");
   const home = HOME_TYPES.has(p.space_type ?? "house");
+  // Open or closed is a choice for a home's kitchen or a café's; an office pantry isn't offered it.
+  const kitchen = home || p.space_type === "cafe" ? rooms.find((r) => r.kind === "kitchen") : undefined;
 
   // The numbers along the bottom, worked out from the plan as it is now.
   const market = marketOf(p.site.location);
@@ -163,6 +167,7 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject }: { p
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent">Workspace</p>
           <h1 className="mt-1 font-serif text-4xl">Make it yours</h1>
         </div>
+        <div className="flex flex-wrap items-center gap-3">
         <AnimatePresence mode="wait">
           {note && (
             <motion.p
@@ -177,6 +182,11 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject }: { p
             </motion.p>
           )}
         </AnimatePresence>
+        {/* every change is saved as it's made; this is the clear way out to see it */}
+        <button type="button" disabled={!!busy} onClick={() => onDone(made)} className="glow-btn px-5 py-2.5 disabled:opacity-50">
+          Save &amp; walk through it →
+        </button>
+        </div>
       </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[340px_minmax(0,1fr)]">
@@ -234,7 +244,7 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject }: { p
             </div>
             {kitchen && (
               <div className="mt-4 flex items-center justify-between gap-2">
-                <span className="text-sm">Kitchen</span>
+                <span className="text-sm">{kitchen.name}</span>
                 <div className="flex rounded-full border border-line p-0.5 text-sm" role="radiogroup" aria-label="Kitchen">
                   {[
                     [true, "Open"],

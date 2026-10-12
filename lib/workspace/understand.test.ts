@@ -36,6 +36,13 @@ test("adds, removes, renames and the kitchen", () => {
   assert.deepEqual(understand("I want a separate kitchen", house), { op: "kitchen", open: false });
 });
 
+test("everyday phrasing, without the model", () => {
+  assert.deepEqual(understand("I want somewhere to do yoga", house), { op: "add", kind: "gym", name: "Gym" });
+  assert.equal((understand("the kids need more space", house) as { op: string })?.op, "resize");
+  assert.equal(understand("give the living room more room", house)?.op, "resize");
+  assert.equal(understand("living room mein aur jagah chahiye", house)?.op, "resize");
+});
+
 test("things it can't read come back empty, for the model to try", () => {
   assert.equal(understand("", house), null);
   assert.equal(understand("make it feel more like Kyoto", house), null);
