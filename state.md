@@ -36,7 +36,7 @@ Where Arcon stands right now. Updated as we go (Vicky's rule): progress, context
 - Some 3D details Vicky flagged are still to revisit (task: leftovers from the 3D review).
 - Brand filter lets French Connection and Homestyler through (B1).
 - Demo projects pile up in Supabase; cleanup script pending (F1).
-- Photoreal render needs paid image quota (C2).
+- Photoreal render: planned for 28 to 29 Oct on about $10 of paid Gemini credit (plan in private/plan.md).
 
 ## Known limits of the free model tier
 
