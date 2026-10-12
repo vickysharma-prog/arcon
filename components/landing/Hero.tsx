@@ -29,7 +29,7 @@ export function LandingHeader() {
   }, []);
   return (
     <header className={`sticky top-0 z-40 transition-colors duration-300 ${scrolled ? "border-b border-line/60 bg-paper/85 backdrop-blur-md" : "border-b border-transparent"}`}>
-      <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-4 py-4 sm:px-8">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-8 md:grid md:grid-cols-[1fr_auto_1fr]">
         <HomeLink className="justify-self-start">
           <Logo size={28} />
         </HomeLink>
@@ -92,7 +92,7 @@ export function Hero() {
           maskImage: "radial-gradient(ellipse at center, black 30%, transparent 75%)",
         }}
       />
-      <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-10 sm:px-8 lg:grid-cols-[1.05fr_1fr] lg:pt-16">
+      <div className="relative mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-12 px-4 pb-20 pt-10 sm:px-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:pt-16">
         <div>
           <motion.p
             initial={still ? false : { opacity: 0, y: 10 }}
