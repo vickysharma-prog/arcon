@@ -2,6 +2,22 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-15: C1, the workspace ("Make it yours")
+
+Edits to the chosen plan, all instant. Tap a room on the plan for Bigger, Smaller, Rename or Remove; add a room;
+open or close the kitchen; or type what you want ("make the kitchen bigger", "pooja room chahiye", "laundry hatao").
+Plain rules read most requests in English, Hindi and Hinglish; only what they can't read goes to one model call that
+maps it to the same changes. Each edit reads the rooms back out of the plan, changes them and lays them out again
+with the same concept, so every architect rule still holds; the browser shows the result at once and the server
+works it out again and saves it as a version, with Undo. The plan, 3D, budget, timeline and green score follow.
+
+Making edits feel like edits took engine work: the layout engine can now score every valid arrangement and keep the
+one closest to the current plan, and rooms in an open band keep their row, so a bigger kitchen no longer swaps the
+seating area across the café. Across every room of every template, 87% of resizes succeed (the rest say plainly
+why), the median disturbance to other rooms is 0.07, and the slowest edit takes 78 ms.
+
+Open: the model fallback took 15 s on one request (likely a quota fallback); adding a room can still reshape a wing.
+
 ## 2026-10-15: "Let's get to know you" replaces the AI interview
 
 Vicky: the interview was slow and irritating, the first thing a user sees. It is now a fixed script

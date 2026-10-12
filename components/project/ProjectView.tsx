@@ -12,6 +12,7 @@ import { compare, sayClaim } from "@/lib/design/compare";
 import type { Layout } from "@/lib/layout/schema";
 import type { Project } from "@/lib/project/store";
 import { canLeave, isStep, nextStep, STEPS, type StepId } from "./steps";
+import { Workspace } from "./Workspace";
 import { WalkthroughStep } from "./WalkthroughStep";
 import { CheckPlan } from "@/components/import/CheckPlan";
 import { importedOf } from "@/lib/plan-import/edits";
@@ -211,7 +212,7 @@ export function ProjectView({ id }: { id: string }) {
           )}
           {step === "shop" && <ShoppingStep id={p.id} location={p.site.location} tier={tier} onTier={setTier} />}
           {step === "drawings" && <Coming title="Your drawings" text="Plans you can download and share with your architect or builder." />}
-          {step === "workspace" && <Coming title="Make it yours" text="Ask for any change and watch the plan, 3D model and budget update." />}
+          {step === "workspace" && <Workspace p={p} tier={tier} ticked={greenTicked(p.interview)} onProject={(next) => setP(next)} />}
         </motion.div>
       </AnimatePresence>
     </div>

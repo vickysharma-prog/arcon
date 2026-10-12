@@ -87,3 +87,19 @@ export async function latestVersion(projectId: string): Promise<{ version: numbe
   );
   return rows[0] ?? null;
 }
+
+/** The saved versions of a design, newest first, with what changed in each. */
+export const listVersions = (projectId: string) =>
+  must<{ version: number; note: string; created_at: string }[]>(
+    supabaseAdmin().from("project_versions").select("version, note, created_at").eq("project_id", projectId).order("version", { ascending: false }).limit(30),
+  );
+
+/** Steps back one version: the newest is deleted and the one before it returned, or null if there's nothing to undo. */
+export async function undoVersion(projectId: string): Promise<{ version: number; layout: Layout } | null> {
+  const rows = await must<{ version: number; layout: Layout }[]>(
+    supabaseAdmin().from("project_versions").select("version, layout").eq("project_id", projectId).order("version", { ascending: false }).limit(2),
+  );
+  if (rows.length < 2) return null;
+  await must(supabaseAdmin().from("project_versions").delete().eq("project_id", projectId).eq("version", rows[0].version));
+  return rows[1];
+}

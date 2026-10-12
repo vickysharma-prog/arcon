@@ -77,7 +77,7 @@ function wing(rooms: ProgramRoom[], box: Box, D: number, front: number, stairs: 
 // (x = box.x0), which is the street side when a deep lot is laid out turned.
 function band(
   rooms: ProgramRoom[], box: Box, D: number, front: number, livingAt: "front" | "back", entry: boolean,
-  backBox: Box = box, wings: ("left" | "right")[] = ["right"], entryWall: "front" | "end" = "front",
+  backBox: Box = box, wings: ("left" | "right")[] = ["right"], entryWall: "front" | "end" = "front", rows?: Record<string, "front" | "back">,
 ): Floor {
   const split = front + HALL;
   const living = rooms.filter((r) => r.kind === "living" || r.kind === "lounge" || r.kind === "reception");
@@ -89,6 +89,14 @@ function band(
   const farShare = livingAt === "front" ? (D - split) / D : split / D;
   const target = sum(rooms) * farShare;
   for (const r of rest) (Math.abs(sum(far) + r.area - target) < Math.abs(sum(far) - target) ? far : near).push(r);
+  // After an edit, rooms that already had a row keep it; only new rooms are placed by size.
+  if (rows) {
+    const nearSide = livingAt === "front" ? "front" : "back";
+    const all = [...near, ...far];
+    const isNear = (r: ProgramRoom) => (rows[r.id] ? rows[r.id] === nearSide : near.includes(r));
+    near = all.filter(isNear);
+    far = all.filter((r) => !isNear(r));
+  }
   if (!near.length) [near, far] = [far.slice(0, 1), far.slice(1)];
   // Keep the kitchen away from the wings, so bedrooms and baths open off the living or dining area instead.
   const awayFromWings = (row: ProgramRoom[]) => {
@@ -283,23 +291,23 @@ function bandWidth(area: number, total: number, W: number, reserve: number, shar
 }
 
 /** How the floor is shared out: the band's share of the width, and the left wing's share of what's left. */
-type Fit = { share?: number; left?: number; wing?: WingStyle; compact?: boolean; deep?: boolean };
+type Fit = { share?: number; left?: number; wing?: WingStyle; compact?: boolean; deep?: boolean; rows?: Record<string, "front" | "back"> };
 type Floorplan = (level: number, rooms: ProgramRoom[], shell: Shell, stairs: boolean, front: number, fit: Fit) => Floor;
 
 const hallFloor = (publicSide: "front" | "back"): Floorplan => (level, rooms, shell, stairs, front) =>
   placeFloor(level, rooms, shell, stairs, { publicSide, mirror: false, serviceWithPublic: false }, front);
 
-const greatRoom: Floorplan = (level, rooms, shell, stairs, front, { share, wing: wingStyle = "hall", compact = false, deep = false }) => {
+const greatRoom: Floorplan = (level, rooms, shell, stairs, front, { share, wing: wingStyle = "hall", compact = false, deep = false, rows }) => {
   const pub = rooms.filter((r) => r.zone === "public");
   const priv = rooms.filter((r) => r.zone !== "public");
   if (!pub.length || !priv.length) return hallFloor("front")(level, rooms, shell, stairs, front, {});
   const bw = bandWidth(sum(pub), sum(rooms), shell.width, wingMin(stairs), share);
   const wingBox = { x0: bw, x1: shell.width };
   if (stairs && compact) {
-    const b = band(pub, { x0: 0, x1: bw }, shell.depth, front, "front", level === 0, { x0: 0, x1: shell.width }, ["right"], deep ? "end" : "front");
+    const b = band(pub, { x0: 0, x1: bw }, shell.depth, front, "front", level === 0, { x0: 0, x1: shell.width }, ["right"], deep ? "end" : "front", rows);
     return merge(level, b, stairsWing(priv, wingBox, shell.depth, front, b, "hall"));
   }
-  const b = band(pub, { x0: 0, x1: bw }, shell.depth, front, "front", level === 0, undefined, ["right"], deep ? "end" : "front");
+  const b = band(pub, { x0: 0, x1: bw }, shell.depth, front, "front", level === 0, undefined, ["right"], deep ? "end" : "front", rows);
   return merge(level, b, makeWing(priv, wingBox, shell.depth, b, "right", stairs, "hall", front, wingStyle, ensuiteFor(rooms)));
 };
 
@@ -320,7 +328,7 @@ const splitPlan: Floorplan = (level, rooms, shell, stairs, front, fit) => {
   const box = { x0: lw, x1: lw + bw };
   const style = fit.wing ?? "hall";
   const compact = stairs && !!fit.compact;
-  const b = band(pub, box, shell.depth, front, "front", level === 0, compact ? { x0: box.x0, x1: W } : box, ["left", "right"]);
+  const b = band(pub, box, shell.depth, front, "front", level === 0, compact ? { x0: box.x0, x1: W } : box, ["left", "right"], "front", fit.rows);
   const l = makeWing(left, { x0: 0, x1: lw }, shell.depth, b, "left", false, "hall-2", front, style, ensuiteFor(rooms));
   const r = compact ? stairsWing(right, { x0: box.x1, x1: W }, shell.depth, front, b, "hall") : makeWing(right, { x0: box.x1, x1: W }, shell.depth, b, "right", stairs, "hall", front, style, ensuiteFor(rooms));
   return merge(level, b, l, r);
@@ -334,7 +342,16 @@ const PLANS: Record<ConceptId, Floorplan> = {
 };
 
 /** A closed kitchen keeps its walls even in an open-plan concept. */
-export type Tweaks = { closedKitchen?: boolean };
+export type Tweaks = {
+  closedKitchen?: boolean;
+  /**
+   * Score a floor (in the building's own coordinates), lower is better: every arrangement that passes the rules is
+   * scored and the best kept, instead of the first. The workspace uses it to keep an edited plan close to how it was.
+   */
+  prefer?: (floor: Floor) => number;
+  /** Which row of an open band each room sat in before an edit, so rooms keep their places when sizes change. */
+  rows?: Record<string, "front" | "back">;
+};
 
 /**
  * The layout for one concept, or null when the rooms can't fit it on this shell. Each floor tries a few
@@ -351,7 +368,7 @@ export function placeConcept(program: Program, shell: Shell, concept: ConceptId,
     : [false, true].flatMap((compact) =>
         (["hall", "gallery"] as const).flatMap((wing) => shares.flatMap((share) => lefts.map((left) => ({ share, left, wing, compact })))),
       );
-  const fits = fitsFor.map((f) => ({ ...f, deep }));
+  const fits = fitsFor.map((f) => ({ ...f, deep, rows: tweaks.rows }));
   const stairs = program.floors > 1;
   let front: number;
   try {
@@ -364,6 +381,7 @@ export function placeConcept(program: Program, shell: Shell, concept: ConceptId,
   for (let level = 0; level < program.floors; level++) {
     const rooms = program.rooms.filter((r) => r.floor === level);
     let found: Floor | null = null;
+    let bestScore = Infinity;
     for (const fit of fits) {
       const label = `floor ${level} ${fit.compact ? "compact " : ""}${fit.wing ?? ""} ${fit.share ?? "auto"}/${fit.left ?? "auto"}`;
       try {
@@ -371,8 +389,18 @@ export function placeConcept(program: Program, shell: Shell, concept: ConceptId,
         if (tweaks.closedKitchen) f = { ...f, spaces: f.spaces.map((s) => (s.kind === "kitchen" ? { ...s, open: false } : s)) };
         const errors = validate({ spaceType: program.spaceType, shell: frame, floors: [f] });
         if (!errors.length) {
-          found = f;
-          break;
+          if (!tweaks.prefer) {
+            found = f;
+            break;
+          }
+          const placed = deep ? transpose({ spaceType: program.spaceType, shell: frame, floors: [f] }, shell).floors[0] : f;
+          const score = tweaks.prefer(placed);
+          if (score < bestScore) {
+            bestScore = score;
+            found = f;
+          }
+          if (score === 0) break;
+          continue;
         }
         why.push(`${label}: ${errors.slice(0, 3).join("; ")}`);
       } catch (e) {
