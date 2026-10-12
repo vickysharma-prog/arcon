@@ -161,13 +161,40 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
         </div>
       </section>
 
+      <section className="mt-10">
+        <h2 className="font-serif text-2xl">The details</h2>
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            ["Floor area", area(cost.area, units)],
+            ["Rooms", String(rooms.length)],
+            ["Floors", String(layout.floors.length)],
+            ["Budget", `${money(cost.total.low, market)} to ${money(cost.total.high, market)}`],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-2xl border border-line bg-paper-raised p-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">{label}</p>
+              <p className="mt-1 font-serif text-2xl leading-tight">{value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-4 lg:grid-cols-[3fr_2fr]">
+          <div className="rounded-2xl border border-line bg-paper-raised p-5">
+            <h3 className="text-xs uppercase tracking-widest text-ink-soft">Rooms and areas</h3>
+            <RoomTable rooms={rooms} units={units} />
+          </div>
+          <div className="rounded-2xl border border-line bg-paper-raised p-5">
+            <h3 className="text-xs uppercase tracking-widest text-ink-soft">Budget by trade</h3>
+            <BudgetTable cost={cost} market={market} tier={active} />
+          </div>
+        </div>
+      </section>
+
       {/* the PDF: printed on white whatever the theme, one section per page */}
       <div className="print-sheet" aria-hidden>
         <section className="print-page">
           <p className="text-xs uppercase tracking-[0.3em]">Arcon · design pack</p>
           <h1 className="mt-2 font-serif text-5xl">{title}</h1>
           <p className="mt-2">
-            {[p.site.location, brief?.name && `${brief.name} style`, `${Math.round(cost.area)} m²`, new Date().toLocaleDateString()].filter(Boolean).join(" · ")}
+            {[p.site.location, brief?.name && `${brief.name} style`, area(cost.area, units), new Date().toLocaleDateString()].filter(Boolean).join(" · ")}
           </p>
           {brief?.summary && <p className="mt-4 max-w-2xl">{brief.summary}</p>}
           {words.length > 0 && <p className="mt-2 text-sm">Taste words, read through Qloo: {words.join(", ")}</p>}
@@ -191,46 +218,79 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
         ))}
         <section className="print-page">
           <h2 className="font-serif text-3xl">Rooms</h2>
-          <table className="mt-4 w-full text-sm">
-            <thead>
-              <tr className="border-b text-left">
-                <th className="py-1">Room</th>
-                <th>Floor</th>
-                <th>Size</th>
-                <th className="text-right">Area</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rooms.map((r) => (
-                <tr key={r.id} className="border-b">
-                  <td className="py-1">{r.name}</td>
-                  <td>{r.level ? "Upstairs" : "Ground"}</td>
-                  <td>
-                    {r.rect.w.toFixed(1)} × {r.rect.h.toFixed(1)} m
-                  </td>
-                  <td className="text-right">{(r.rect.w * r.rect.h).toFixed(1)} m²</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <RoomTable rooms={rooms} units={units} />
           <h2 className="mt-10 font-serif text-3xl">Budget</h2>
-          <p className="mt-2">
-            {TIER_NAMES[active]} finish: <strong>{money(cost.total.low, market)} to {money(cost.total.high, market)}</strong>, including fees. An early estimate, not a quote.
-          </p>
-          <table className="mt-3 w-full text-sm">
-            <tbody>
-              {Object.entries(cost.byCategory)
-                .filter(([, v]) => (v ?? 0) > 0)
-                .map(([k, v]) => (
-                  <tr key={k} className="border-b">
-                    <td className="py-1">{CATEGORY_NAMES[k as keyof typeof CATEGORY_NAMES]}</td>
-                    <td className="text-right">{money(v ?? 0, market)}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+          <BudgetTable cost={cost} market={market} tier={active} />
         </section>
       </div>
     </main>
+  );
+}
+
+const FT = 3.28084;
+/** An area in the plan's units: "306 sq ft" or "28.4 m²". */
+const area = (m2: number, units: "imperial" | "metric") => (units === "imperial" ? `${Math.round(m2 * FT * FT).toLocaleString()} sq ft` : `${m2.toFixed(1)} m²`);
+const length = (m: number, units: "imperial" | "metric") => (units === "imperial" ? `${(m * FT).toFixed(1)} ft` : `${m.toFixed(1)} m`);
+
+type Room = { id: string; name: string; level: number; rect: { w: number; h: number } };
+
+// Every room with its floor, size and area, and the total; the same table on screen and in the PDF.
+function RoomTable({ rooms, units }: { rooms: Room[]; units: "imperial" | "metric" }) {
+  const total = rooms.reduce((t, r) => t + r.rect.w * r.rect.h, 0);
+  return (
+    <table className="mt-3 w-full text-sm">
+      <thead>
+        <tr className="border-b border-line text-left text-ink-soft">
+          <th className="py-1.5 font-normal">Room</th>
+          <th className="font-normal">Floor</th>
+          <th className="font-normal">Size</th>
+          <th className="text-right font-normal">Area</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rooms.map((r) => (
+          <tr key={r.id} className="border-b border-line">
+            <td className="py-1.5">{r.name}</td>
+            <td>{r.level ? "Upstairs" : "Ground"}</td>
+            <td>
+              {length(r.rect.w, units)} × {length(r.rect.h, units)}
+            </td>
+            <td className="text-right tabular-nums">{area(r.rect.w * r.rect.h, units)}</td>
+          </tr>
+        ))}
+        <tr className="font-medium">
+          <td className="py-1.5" colSpan={3}>
+            Rooms in total
+          </td>
+          <td className="text-right tabular-nums">{area(total, units)}</td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
+function BudgetTable({ cost, market, tier }: { cost: ReturnType<typeof estimate>; market: ReturnType<typeof marketOf>; tier: Tier }) {
+  return (
+    <>
+      <p className="mt-3 text-sm">
+        {TIER_NAMES[tier]} finish:{" "}
+        <strong>
+          {money(cost.total.low, market)} to {money(cost.total.high, market)}
+        </strong>
+        , including fees. An early estimate, not a quote.
+      </p>
+      <table className="mt-3 w-full text-sm">
+        <tbody>
+          {Object.entries(cost.byCategory)
+            .filter(([, v]) => (v ?? 0) > 0)
+            .map(([k, v]) => (
+              <tr key={k} className="border-b border-line">
+                <td className="py-1.5">{CATEGORY_NAMES[k as keyof typeof CATEGORY_NAMES]}</td>
+                <td className="text-right tabular-nums">{money(v ?? 0, market)}</td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
+    </>
   );
 }
