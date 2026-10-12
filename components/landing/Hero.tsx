@@ -28,7 +28,7 @@ export function LandingHeader() {
     return () => window.removeEventListener("scroll", on);
   }, []);
   return (
-    <header className={`sticky top-0 z-40 transition-colors duration-300 ${scrolled ? "bg-gradient-to-b from-paper via-paper/85 to-transparent" : ""}`}>
+    <header className={`sticky top-0 z-40 transition-colors duration-300 ${scrolled ? "border-b border-line/60 bg-paper/85 backdrop-blur-md" : "border-b border-transparent"}`}>
       <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto_1fr] items-center px-4 py-4 sm:px-8">
         <HomeLink className="justify-self-start">
           <Logo size={28} />
