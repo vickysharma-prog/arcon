@@ -21,7 +21,7 @@ Where Arcon stands right now. Updated as we go (Vicky's rule): progress, context
 
 ## In progress
 
-- Accounts, studio, site and pricing (seven parts, private/plan.md). Part 1, accounts, is built: email and password, Google and Apple (keys pending), role and profile, guest projects claimed, /home and /account. Next: part 2, roles and invites.
+- Accounts, studio, site and pricing (seven parts, private/plan.md). Parts 1 (accounts: email and password, Google live, role and profile) and 2 (roles, team panel, invite links with QR) are built. Next: part 3, review (share links, comments, approval).
 
 - Qloo deep dive done; Q2 to Q11 planned (private/plan.md, Qloo everywhere). Q11 taste trail, Q3 style words, Q2 moodboard, B2 budget, Q4 tier, B3 timeline and greenery, Q6 eco brands and nurseries, M1 motion pass, B4 shopping list with 3D click, Q5 brand alternatives built. G1 (any project type) parked on branch g1-any-project until the seven types are solid.
 - A5: how a business runs. Built: save_running tool, ranking with the user's words, program sizing, evals.

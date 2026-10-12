@@ -2,6 +2,23 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: Roles and invites (part 2)
+
+- Each project has a team: the owner plus an architect, client, builder or viewers. One table (lib/project/access.ts)
+  says what each role may do, and every project route checks it: viewing routes need "view", design changes need
+  "edit". A client or viewer can look but can't choose a plan, make changes or invite; their project page hides
+  "Make changes".
+- The Team button on every project opens a panel: who is on it, and "Invite someone" with a role, a link and a
+  QR code. Each link works once, for 7 days, and can be cancelled. The owner can remove people.
+- The invite link opens a "You're invited" page naming the project, who sent it and the role. People without an
+  account create one (or sign in) and come straight back to join.
+- Home lists projects you were invited to, with "You're the client" (or architect, builder).
+- A signed-out visitor to a project sees "This project is private" with a sign-in button.
+
+Tested on localhost with test owner and client accounts: invite link and QR, the join page signed out, sign up,
+profile, join, the client's view (200), and choose, edit and invite refused (404) for the client; the owner sees
+the client in the team; the used link isn't listed as waiting. 273 tests pass.
+
 ## 2026-10-16: Accounts (part 1 of the accounts, studio, site and pricing plan)
 
 Vicky asked to plan the rest of the product before building more. The plan (private/plan.md, "Accounts, studio,

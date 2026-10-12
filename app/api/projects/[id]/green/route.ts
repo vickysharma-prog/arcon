@@ -23,7 +23,7 @@ const Body = z.object({ ticked: z.array(z.object({ id: z.string().max(160), labe
 
 // Saves the greenery changes the client ticked; the 3D places the plants they add.
 export async function POST(request: Request, ctx: RouteContext<"/api/projects/[id]/green">) {
-  const p = await ownedProject((await ctx.params).id, request.headers.get("cookie"));
+  const p = await ownedProject((await ctx.params).id, request.headers.get("cookie"), "edit");
   if (!p) return Response.json({ error: "not found" }, { status: 404 });
   const body = Body.safeParse(await request.json().catch(() => null));
   if (!body.success) return Response.json({ error: "That change couldn't be saved." }, { status: 400 });

@@ -6,7 +6,7 @@ import { chatModel } from "@/lib/models";
 export const maxDuration = 300;
 
 export async function POST(request: Request, ctx: RouteContext<"/api/projects/[id]/design">) {
-  const p = await ownedProject((await ctx.params).id, request.headers.get("cookie"));
+  const p = await ownedProject((await ctx.params).id, request.headers.get("cookie"), "edit");
   if (!p) return Response.json({ error: "not found" }, { status: 404 });
   try {
     return Response.json(publicProject(await designProject(p.id, chatModel())));

@@ -15,7 +15,7 @@ const Body = z.object({
 });
 
 export async function POST(request: Request, ctx: RouteContext<"/api/projects/[id]/import">) {
-  const p = await ownedProject((await ctx.params).id, request.headers.get("cookie"));
+  const p = await ownedProject((await ctx.params).id, request.headers.get("cookie"), "edit");
   if (!p) return Response.json({ error: "not found" }, { status: 404 });
   const body = Body.safeParse(await request.json().catch(() => null));
   if (!body.success) return Response.json({ error: "Something in the form isn't right. Please check it and try again." }, { status: 400 });

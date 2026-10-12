@@ -11,7 +11,9 @@ import type { Brief } from "@/lib/design/brief";
 import { compare, sayClaim } from "@/lib/design/compare";
 import type { Layout } from "@/lib/layout/schema";
 import type { Project } from "@/lib/project/store";
-import { canLeave, isStep, nextStep, STEPS, type StepId } from "./steps";
+import { canLeave, isStep, STEPS, type StepId } from "./steps";
+import { TeamButton } from "./TeamPanel";
+import { can, ROLE_NAME, type ProjectRole } from "@/lib/project/access";
 import { Workspace } from "./Workspace";
 import { ExportStep } from "./ExportStep";
 import { WalkthroughStep } from "./WalkthroughStep";
@@ -29,7 +31,7 @@ import { choicesOf, type Ticked } from "@/lib/green/improve";
 
 const greenTicked = (interview: Record<string, unknown> | null | undefined): Ticked => (Array.isArray(interview?.green) ? (interview.green as Ticked) : []);
 
-type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null };
+type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null; role?: ProjectRole };
 
 const WORK = ["read", "taste", "brief", "program", "plans"]; // progress ticks while the design request runs
 
@@ -91,7 +93,7 @@ export function ProjectView({ id }: { id: string }) {
   useEffect(() => {
     fetch(`/api/projects/${id}`)
       .then(async (res) => {
-        if (!res.ok) throw new Error("We couldn't find this project in this browser.");
+        if (!res.ok) throw new Error("private");
         const body: View = await res.json();
         setP(body);
       })
@@ -105,6 +107,16 @@ export function ProjectView({ id }: { id: string }) {
     setChoosing(null);
   };
 
+  if (error === "private")
+    return (
+      <main className="mx-auto max-w-xl px-4 py-24 text-center">
+        <p className="font-serif text-4xl">This project is private</p>
+        <p className="mt-3 text-ink-soft">Sign in with the account it belongs to, or ask its owner for an invite link.</p>
+        <a href={`/login?next=${encodeURIComponent(`/project/${id}`)}`} className="glow-btn mt-6 inline-block rounded-full px-6 py-3">
+          Sign in
+        </a>
+      </main>
+    );
   if (error)
     return (
       <main className="mx-auto max-w-xl px-4 py-24 text-center">
@@ -119,11 +131,22 @@ export function ProjectView({ id }: { id: string }) {
 
   // A plan the user uploaded is checked first: rooms, size and a few loves for the styling.
   const imported = p ? importedOf(p.interview) : null;
-  if (p && imported && !imported.confirmed)
+  // What this person may do here: clients and viewers look and comment, they don't change the design.
+  const role = p?.role ?? "owner";
+  const editor = can(role, "edit");
+  if (p && imported && !imported.confirmed && editor)
     return <CheckPlan id={id} imported={imported} units={p.site.units ?? "imperial"} onDone={(next) => setP(next as View)} />;
 
   // A design that hasn't been made yet waits for one click: the reveal starts on the user's cue,
   // and that click is what lets the browser play its sounds.
+  if (p && (!p.brief || !p.options?.length) && !editor)
+    return (
+      <main className="mx-auto max-w-xl px-4 py-24 text-center">
+        <AnimatedMark size={90} growing={false} />
+        <p className="mt-8 font-serif text-4xl">The design is on its way</p>
+        <p className="mt-3 text-ink-soft">{p.title ?? "This project"} hasn&apos;t been designed yet. You&apos;ll see it here as soon as it is.</p>
+      </main>
+    );
   if (p && (!p.brief || !p.options?.length) && !started)
     return (
       <Ready
@@ -137,10 +160,15 @@ export function ProjectView({ id }: { id: string }) {
     );
   if (!p || !p.brief || !p.options?.length) return <Processing p={p} done={work >= WORK.length} />;
 
-  const next = nextStep(step);
+  const steps = editor ? STEPS : STEPS.filter((s) => s.id !== "workspace");
+  const next = steps[steps.findIndex((s) => s.id === step) + 1]?.id ?? null;
   return (
     <div className="flex flex-1 flex-col">
-      <Progress step={step} onJump={(s) => STEPS.findIndex((x) => x.id === s) <= STEPS.findIndex((x) => x.id === step) && setStep(s)} />
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-end gap-3 px-4 pb-2">
+        {role !== "owner" && <span className="rounded-full bg-accent/10 px-3 py-1 text-xs text-accent">You&apos;re the {ROLE_NAME[role].toLowerCase()}</span>}
+        <TeamButton id={p.id} />
+      </div>
+      <Progress steps={steps} step={step} onJump={(s) => steps.findIndex((x) => x.id === s) <= steps.findIndex((x) => x.id === step) && setStep(s)} />
       {/* Next sits top right on every step (the walkthrough puts it in its own top row), and stays in reach while scrolling. */}
       {next && step !== "walkthrough" && (
         <div className="sticky top-0 z-20 bg-paper/90 backdrop-blur">
@@ -151,7 +179,7 @@ export function ProjectView({ id }: { id: string }) {
               disabled={!canLeave(step, p)}
               className="rounded-full bg-btn px-6 py-2.5 text-btn-ink transition hover:opacity-90 disabled:opacity-30"
             >
-              Next: {STEPS.find((s) => s.id === next)?.label}
+              Next: {steps.find((s) => s.id === next)?.label}
             </button>
           </div>
         </div>
@@ -195,7 +223,7 @@ export function ProjectView({ id }: { id: string }) {
             </div>
           )}
           {step === "brief" && <BriefStep p={p} brief={p.brief} />}
-          {step === "plans" && <PlansStep p={p} options={p.options} choosing={choosing} choose={choose} />}
+          {step === "plans" && <PlansStep p={p} options={p.options} choosing={choosing} choose={editor ? choose : null} />}
           {step === "walkthrough" && (
             <WalkthroughStep
               layout={p.options[p.chosen_option ?? 0]}
@@ -210,7 +238,7 @@ export function ProjectView({ id }: { id: string }) {
               option={p.chosen_option ?? 0}
               planName={p.options[p.chosen_option ?? 0]?.concept?.name}
               changePlan={() => setStep("plans")}
-              next={next ? { label: `Next: ${STEPS.find((s) => s.id === next)?.label}`, go: () => setStep(next) } : undefined}
+              next={next ? { label: `Next: ${steps.find((s) => s.id === next)?.label}`, go: () => setStep(next) } : undefined}
             />
           )}
           {step === "budget" && p.options?.[p.chosen_option ?? 0] && (
@@ -230,7 +258,7 @@ export function ProjectView({ id }: { id: string }) {
           )}
           {step === "shop" && <ShoppingStep id={p.id} location={p.site.location} tier={tier} onTier={setTier} />}
           {step === "drawings" && <ExportStep p={p} tier={tier} onWalkthrough={() => setStep("walkthrough")} />}
-          {step === "workspace" && <Workspace
+          {step === "workspace" && editor && <Workspace
               p={p}
               tier={tier}
               ticked={greenTicked(p.interview)}
@@ -281,12 +309,12 @@ function Processing({ p, done }: { p: View | null; done: boolean }) {
   );
 }
 
-function Progress({ step, onJump }: { step: StepId; onJump: (s: StepId) => void }) {
-  const at = STEPS.findIndex((s) => s.id === step);
+function Progress({ steps, step, onJump }: { steps: readonly (typeof STEPS)[number][]; step: StepId; onJump: (s: StepId) => void }) {
+  const at = steps.findIndex((s) => s.id === step);
   return (
     <nav aria-label="Progress" className="mx-auto w-full max-w-6xl px-4 pb-2">
       <ol className="flex gap-1.5">
-        {STEPS.map((s, i) => (
+        {steps.map((s, i) => (
           <li key={s.id} className="flex-1">
             <button onClick={() => onJump(s.id)} disabled={i > at} className="w-full text-left disabled:cursor-default" aria-current={i === at ? "step" : undefined}>
               <span className={`block h-1 rounded-full ${i <= at ? "bg-accent" : "bg-line"}`} />
@@ -419,7 +447,7 @@ function BriefStep({ p, brief: b }: { p: View; brief: Brief }) {
   );
 }
 
-function PlansStep({ p, options, choosing, choose }: { p: View; options: Layout[]; choosing: number | null; choose: (i: number) => void }) {
+function PlansStep({ p, options, choosing, choose }: { p: View; options: Layout[]; choosing: number | null; choose: ((i: number) => void) | null }) {
   const units = p.site.units ?? "imperial";
   const personal = options.some((o) => o.concept);
   // What each plan does best and gives up, measured against the others.
@@ -494,11 +522,11 @@ function PlansStep({ p, options, choosing, choose }: { p: View; options: Layout[
               </div>
             ))}
             <button
-              onClick={() => choose(i)}
-              disabled={choosing !== null}
+              onClick={() => choose?.(i)}
+              disabled={choosing !== null || !choose}
               className={`mt-4 w-full rounded-full px-4 py-2.5 ${p.chosen_option === i ? "bg-accent text-paper" : "border border-ink text-ink"} disabled:opacity-50`}
             >
-              {p.chosen_option === i ? "Chosen" : choosing === i ? "Saving…" : "Choose this plan"}
+              {p.chosen_option === i ? "Chosen" : choosing === i ? "Saving…" : choose ? "Choose this plan" : "Not chosen"}
             </button>
           </motion.article>
         ))}
