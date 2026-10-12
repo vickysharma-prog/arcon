@@ -19,15 +19,17 @@ export default function PrivacyPage() {
 
         <h2 className="mt-10 font-serif text-3xl">What we store</h2>
         <ul className="mt-3 list-disc space-y-2 pl-5">
-          <li>Your project: its type, size, location, the answers you give in the interview, and the designs Arcon makes.</li>
+          <li>Your project: its type, size, location, the answers you give, the changes you make, and the designs Arcon makes.</li>
           <li>The places, brands, films and music you name, used to work out your style.</li>
         </ul>
         <p className="mt-3">We store this in a database hosted in the United States. We don&apos;t sell it or share it for advertising.</p>
 
         <h2 className="mt-10 font-serif text-3xl">Who processes it</h2>
         <p className="mt-3">
-          To run Arcon, your messages go to the AI model that powers the interview, and the things you love are looked up in a
-          taste database. Voice input and speech use your browser&apos;s built-in speech features.
+          The things you love are looked up in a taste database as you name them. When Arcon designs your space, your
+          project&apos;s answers go to an AI model to write the brief and plan the rooms, and a change you type that
+          Arcon can&apos;t read on its own goes to the same model. Voice input and speech use your browser&apos;s
+          built-in speech features.
         </p>
 
         <h2 className="mt-10 font-serif text-3xl">Deleting your data</h2>

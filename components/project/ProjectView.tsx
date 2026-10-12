@@ -223,7 +223,7 @@ function Ready({ title, onStart }: { title?: string | null; onStart: () => void 
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
       <AnimatedMark size={110} growing={false} />
-      <p className="mt-8 font-mono text-xs uppercase tracking-[0.3em] text-ink-soft">Interview complete</p>
+      <p className="mt-8 font-mono text-xs uppercase tracking-[0.3em] text-ink-soft">All set</p>
       <h1 className="mt-3 font-serif text-5xl sm:text-6xl">
         <Decode text={`Ready to see ${title ?? "your space"}?`} />
       </h1>

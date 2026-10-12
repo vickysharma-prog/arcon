@@ -283,7 +283,7 @@ function Cube() {
 const AUDIENCE = [
   { title: "Homeowners", body: "Planning a new build or a big renovation, and want to see it before anyone builds it." },
   { title: "Cafés, hotels, shops and offices", body: "Arcon asks how you run the place and who your guests are, then plans for both." },
-  { title: "Architects and designers", body: "Send clients the interview, start from their taste, and present three options on day one." },
+  { title: "Architects and designers", body: "Send clients the questions, start from their taste, and present three options on day one." },
   { title: "Builders", body: "A clear plan, budget and timeline to quote from, all in one shared project." },
 ];
 
@@ -304,7 +304,7 @@ export function Audience() {
 }
 
 const PLANS = [
-  { name: "Free", price: "$0", per: "", for: "Anyone", cta: "Start free", features: ["The interview and your taste profile", "Your design brief", "One 2D plan", "A 3D preview"] },
+  { name: "Free", price: "$0", per: "", for: "Anyone", cta: "Start free", features: ["Your questions and taste profile", "Your design brief", "One 2D plan", "A 3D preview"] },
   { name: "Owner", price: "$29", per: "/month", alt: "or $149 per project", for: "Homeowners and small businesses", cta: "Start with Owner", featured: true, features: ["Unlimited edits", "Full 3D and walkthrough", "Budget and timeline", "Shopping list", "Share with your builder"] },
   { name: "Pro", price: "$99", per: "/month per seat", for: "Architects and interior designers", cta: "Start with Pro", features: ["Everything in Owner", "Interview links for clients", "Drawings pack", "Branded reviews", "10 active projects"] },
   { name: "Build", price: "$299", per: "/month per company", for: "Builders and contractors", cta: "Start with Build", features: ["Everything in Pro", "Site tracking", "Crews and materials", "Progress updates for clients"] },

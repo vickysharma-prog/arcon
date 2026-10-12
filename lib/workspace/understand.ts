@@ -110,7 +110,9 @@ export function suggestions(layout: Layout): string[] {
   const biggest = [...rooms].sort((a, b) => b.rect.w * b.rect.h - a.rect.w * a.rect.h)[0];
   const out: string[] = [];
   if (kitchen) out.push(`Make the ${kitchen.name.toLowerCase()} bigger`);
-  if (!rooms.some((r) => r.kind === "office")) out.push("Add a study");
+  const home = ["house", "apartment", "studio"].includes(layout.spaceType);
+  if (!home) out.push(rooms.some((r) => r.kind === "meeting") ? "Add a store room" : "Add a meeting room");
+  else if (!rooms.some((r) => r.kind === "office")) out.push("Add a study");
   else out.push("Add a guest room");
   if (kitchen) out.push(kitchen.open === false ? "Open up the kitchen" : "Give the kitchen its own room");
   if (biggest && biggest !== kitchen) out.push(`Make the ${biggest.name.toLowerCase()} smaller`);
