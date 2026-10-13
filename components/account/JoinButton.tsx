@@ -17,7 +17,7 @@ export function JoinButton({ token }: { token: string }) {
       return setError(body.error ?? "Couldn't join. Please try again.");
     }
     ok();
-    window.location.assign(`/project/${body.projectId}`);
+    window.location.assign(body.next ?? `/project/${body.projectId}`);
   }
 
   return (

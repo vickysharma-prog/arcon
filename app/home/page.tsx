@@ -8,6 +8,7 @@ import { currentUser } from "@/lib/auth/server";
 import { getProfile, projectsOf, type Profile, type ProjectCard } from "@/lib/account/profile";
 import { STAGES, stageOf } from "@/lib/project/stage";
 import { ROLE_SHORT } from "@/lib/account/roles";
+import { NewClient } from "@/components/account/NewClient";
 import { memberProjects } from "@/lib/project/team";
 import { ROLE_NAME, type ProjectRole } from "@/lib/project/access";
 
@@ -67,9 +68,13 @@ async function HomePageBody() {
             <Link href="/start/plan" className="rounded-full border border-line px-5 py-2.5 text-sm transition hover:border-accent hover:text-accent">
               Upload a plan
             </Link>
-            <Link href="/start" className="glow-btn rounded-full px-5 py-2.5 text-sm">
-              + New design
-            </Link>
+            {pro ? (
+              <NewClient />
+            ) : (
+              <Link href="/start" className="glow-btn rounded-full px-5 py-2.5 text-sm">
+                + New design
+              </Link>
+            )}
           </div>
         </div>
       </Reveal>
@@ -94,11 +99,21 @@ async function HomePageBody() {
 
       {projects.length === 0 ? (
         <Reveal delay={0.1} className="mt-10 rounded-3xl border border-dashed border-line p-10 text-center">
-          <p className="font-serif text-3xl">Nothing here yet</p>
-          <p className="mx-auto mt-2 max-w-md text-ink-soft">Answer a few questions about you and your space. Arcon turns your taste into a floor plan, a 3D walkthrough and a budget.</p>
-          <Link href="/start" className="glow-btn mt-6 inline-block rounded-full px-6 py-3">
-            Start your first design
-          </Link>
+          <p className="font-serif text-3xl">{pro ? "No clients yet" : "Nothing here yet"}</p>
+          <p className="mx-auto mt-2 max-w-md text-ink-soft">
+            {pro
+              ? "Add a client: answer Let's get to know you with them, or send them a link. Arcon designs around their taste, and the project lands here."
+              : "Answer a few questions about you and your space. Arcon turns your taste into a floor plan, a 3D walkthrough and a budget."}
+          </p>
+          <div className="mt-6 flex justify-center">
+            {pro ? (
+              <NewClient />
+            ) : (
+              <Link href="/start" className="glow-btn inline-block rounded-full px-6 py-3">
+                Start your first design
+              </Link>
+            )}
+          </div>
         </Reveal>
       ) : (
         // One-time users get large cards with the progress strip; pros a denser grid.

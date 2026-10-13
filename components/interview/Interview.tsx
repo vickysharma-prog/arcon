@@ -60,6 +60,8 @@ export function Interview() {
   const [projectId, setProjectId] = useState<string | null>(null);
   const [taste, setTaste] = useState<TasteView | null>(null);
   const spoken = useRef(new Set<string>());
+  // Answering for a project a pro set up ("New client"): its id, and whose it is.
+  const [into, setInto] = useState<{ id: string; whose: string | null } | null>(null);
   const q = next(answers);
   const say = (k: keyof typeof SAY) => SAY[k][lang];
 
@@ -68,6 +70,17 @@ export function Interview() {
       const saved = localStorage.getItem(LANG_KEY);
       if (saved) setLang(langOf(saved).id);
     } catch {}
+    // /start?project=… fills that project; the type and city the pro already gave are answered.
+    const id = new URLSearchParams(location.search).get("project");
+    if (!id) return;
+    fetch(`/api/projects/${id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((p) => {
+        if (!p || p.status !== "interview") return;
+        setInto({ id, whose: p.whose ?? p.designed_for ?? null });
+        setAnswers((a) => ({ ...(p.space_type ? { type: p.space_type } : {}), ...(p.site?.location ? { city: p.site.location } : {}), ...a }));
+      })
+      .catch(() => {});
   }, []);
 
   const answer = useCallback(
@@ -138,7 +151,7 @@ export function Interview() {
     setFinishing("working");
     transition();
     try {
-      const res = await fetch("/api/interview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ answers, lang }) });
+      const res = await fetch("/api/interview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ answers, lang, projectId: into?.id }) });
       const body = await res.json().catch(() => ({}));
       if (!res.ok || !body.id) throw new Error(body.error ?? "We couldn't start your design.");
       setProjectId(body.id);
@@ -147,7 +160,7 @@ export function Interview() {
       setFailure(e instanceof Error ? e.message : "We couldn't start your design.");
       setFinishing("failed");
     }
-  }, [answers, lang]);
+  }, [answers, lang, into]);
   useEffect(() => {
     if (!q && !projectId && finishing === "idle") void finish();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -201,6 +214,11 @@ export function Interview() {
         style={{ backgroundImage: "linear-gradient(var(--accent) 1px, transparent 1px), linear-gradient(90deg, var(--accent) 1px, transparent 1px)", backgroundSize: "40px 40px", maskImage: "radial-gradient(ellipse at center, black 35%, transparent 80%)" }}
       />
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/3 h-[420px] w-[620px] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,color-mix(in_srgb,var(--accent)_12%,transparent),transparent)]" />
+      {into?.whose && (
+        <p className="relative mx-auto mt-2 w-fit rounded-full border border-accent/40 bg-accent/5 px-4 py-1 font-mono text-xs uppercase tracking-widest text-accent">
+          For {into.whose.split(" ")[0]}&apos;s design
+        </p>
+      )}
 
       <div className="relative mx-auto w-full max-w-6xl px-4 pb-10 sm:px-8">
         {/* the strip: what this is, voice, language */}
@@ -213,9 +231,11 @@ export function Interview() {
             {say("title")}
           </p>
           <div className="flex items-center gap-2">
-            <Link href="/start/plan" className="hidden rounded-full border border-accent/40 bg-paper-raised px-3 py-1.5 text-sm text-accent transition hover:border-accent sm:inline-block">
-              {say("havePlan")} →
-            </Link>
+            {!into && (
+              <Link href="/start/plan" className="hidden rounded-full border border-accent/40 bg-paper-raised px-3 py-1.5 text-sm text-accent transition hover:border-accent sm:inline-block">
+                {say("havePlan")} →
+              </Link>
+            )}
             <button type="button" onClick={voice.toggle} aria-pressed={voice.on} aria-label={voice.on ? "Voice on" : "Voice off"} className="rounded-full border border-line bg-paper-raised px-3 py-1.5 text-sm text-ink-soft transition hover:border-accent hover:text-ink">
               {voice.on ? "🔊" : "🔇"}
             </button>

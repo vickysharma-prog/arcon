@@ -2,6 +2,24 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-13: R3a, New client (Studio)
+
+- Architects and builders get "+ New client" on My projects: the client's name, the kind of project and the
+  city. The project belongs to the pro (their plan or trial carries it) and is named for the client ("Priya's
+  house", "Priya's design" everywhere). Then either "Fill it in together now" (Let's get to know you opens for
+  that project) or "Send them a link" (a client invite with a QR code).
+- The client signs up through the link, joins, and lands straight on Let's get to know you with "For Priya's
+  design"; the type and city are already answered. Their answers fill the pro's project instead of making a new
+  one, and a second submission is refused. They can start the first design themselves.
+- A project still waiting for answers shows "Waiting for Priya's answers" with both buttons.
+- Fixed: after designing or choosing a plan the page forgot who was looking (a client saw the owner's steps).
+- Rule saved (Vicky): every screen, button and loader gets the techy sound and animation.
+
+Tested locally: the test architect (trial) adds Priya by link, sees the waiting screen; a new test account joins,
+lands on the questions with the badge and type and city filled, submits a full answer set into the same project,
+starts the design, and sees "Priya's design, You're the client" with the budget open through the pro's trial.
+284 tests pass.
+
 ## 2026-10-13: R2, the project thread
 
 - Every project has a Thread tab (and a Thread card on Overview, with the unread count): one chat for everyone

@@ -15,6 +15,7 @@ import { canLeave, isStep, STEPS, type StepId } from "./steps";
 import { can, ROLE_NAME, type ProjectRole } from "@/lib/project/access";
 import { Workspace } from "./Workspace";
 import { ProjectHome } from "./ProjectHome";
+import { Waiting } from "./Waiting";
 import { ExportStep } from "./ExportStep";
 import { WalkthroughStep } from "./WalkthroughStep";
 import { CheckPlan } from "@/components/import/CheckPlan";
@@ -32,6 +33,9 @@ import { choicesOf, type Ticked } from "@/lib/green/improve";
 const greenTicked = (interview: Record<string, unknown> | null | undefined): Ticked => (Array.isArray(interview?.green) ? (interview.green as Ticked) : []);
 
 type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null; role?: ProjectRole; unlocked?: boolean; whose?: string | null; unread?: number };
+
+// Routes that change the design answer with the project alone; who is looking (role, name, lock, unread) stays.
+const keep = (old: View | null, next: View): View => (old ? { ...next, role: old.role, whose: old.whose, unlocked: old.unlocked, unread: old.unread } : next);
 
 const WORK = ["read", "taste", "brief", "program", "plans"]; // progress ticks while the design request runs
 
@@ -96,7 +100,7 @@ export function ProjectView({ id }: { id: string }) {
       // Let the engine log finish typing before the reveal, even when the design comes back fast.
       await new Promise((r) => setTimeout(r, Math.max(900, 6500 - (performance.now() - started))));
       chime();
-      setP(body);
+      setP((old) => keep(old, body));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Design failed");
     } finally {
@@ -117,7 +121,10 @@ export function ProjectView({ id }: { id: string }) {
   const choose = async (option: number) => {
     setChoosing(option);
     const res = await fetch(`/api/projects/${id}/choose`, { method: "POST", body: JSON.stringify({ option }) });
-    if (res.ok) setP(await res.json());
+    if (res.ok) {
+      const next = await res.json();
+      setP((old) => keep(old, next));
+    }
     setChoosing(null);
   };
 
@@ -149,11 +156,13 @@ export function ProjectView({ id }: { id: string }) {
   const role = p?.role ?? "owner";
   const editor = can(role, "edit");
   if (p && imported && !imported.confirmed && editor)
-    return <CheckPlan id={id} imported={imported} units={p.site.units ?? "imperial"} onDone={(next) => setP(next as View)} />;
+    return <CheckPlan id={id} imported={imported} units={p.site.units ?? "imperial"} onDone={(next) => setP((old) => keep(old, next as View))} />;
 
   // A design that hasn't been made yet waits for one click: the reveal starts on the user's cue,
   // and that click is what lets the browser play its sounds.
-  if (p && (!p.brief || !p.options?.length) && !editor)
+  // A pro's project for a client that still waits for Let's get to know you.
+  if (p && p.status === "interview") return <Waiting id={p.id} whose={p.whose ?? p.designed_for ?? null} role={role} />;
+  if (p && (!p.brief || !p.options?.length) && !editor && role !== "client")
     return (
       <main className="mx-auto max-w-xl px-4 py-24 text-center">
         <AnimatedMark size={90} growing={false} />
@@ -251,7 +260,7 @@ export function ProjectView({ id }: { id: string }) {
           p={d}
           tier={tier}
           ticked={greenTicked(d.interview)}
-          onProject={(next) => setP(next)}
+          onProject={(next) => setP((old) => keep(old, next))}
           onDone={(n) => {
             setEdited(n);
             setStep("walkthrough");

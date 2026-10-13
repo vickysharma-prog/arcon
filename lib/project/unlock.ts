@@ -7,7 +7,7 @@ import type { Project } from "./store.ts";
 type Pro = { plan: string; plan_until: string | null; trial_until: string | null; demo: boolean };
 
 /** When this person's pro access ends: a live Studio or Build plan, else their trial. */
-const proUntil = (p: Pro) => {
+export const proUntil = (p: Pick<Pro, "plan" | "plan_until" | "trial_until">) => {
   const plan = p.plan === "pro" || p.plan === "build" ? p.plan_until : null;
   return [plan, p.trial_until].filter(Boolean).sort().at(-1) ?? null;
 };
@@ -28,3 +28,6 @@ export async function unlockProject(id: string) {
   const { error } = await supabaseAdmin().from("projects").update({ unlocked_at: new Date().toISOString() }).eq("id", id).is("unlocked_at", null);
   if (error) throw new Error(error.message);
 }
+
+/** Whether a pro's plan or trial is live right now (or they're a demo account). */
+export const proActive = (p: Pro | null) => !!p && (p.demo || isUnlocked({}, [proUntil(p)]));
