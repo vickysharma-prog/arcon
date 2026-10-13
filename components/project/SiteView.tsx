@@ -28,7 +28,7 @@ type Site = {
   money: { labour: number; materials: number; spent: number; budget: { low: number; high: number } | null; currency: string };
   alerts: { kind: string; text: string }[];
 };
-type Data = { site: Site | null; runs: boolean; status: string; roster: Crew[] };
+type Data = { site: Site | null; runs: boolean; status: string; roster: Crew[]; steps: Steps };
 
 const SECTIONS = [
   ["today", "Today"],
@@ -45,7 +45,7 @@ const input = "rounded-full border border-line bg-paper px-3 py-1.5 text-sm outl
 
 // The building site. The builder runs it here (phases, tasks, crew and attendance, materials and orders, photo
 // updates); the owner, client and architect follow it read only. Every change posts what matters in the thread.
-export function SiteView({ projectId, onStatus }: { projectId: string; onStatus: (s: string) => void }) {
+export function SiteView({ projectId, onStatus, onPlans, onTeam }: { projectId: string; onStatus: (s: string) => void; onPlans?: () => void; onTeam?: () => void }) {
   const [data, setData] = useState<Data | null>(null);
   const [section, setSection] = useState<Section>("today");
   const [busy, setBusy] = useState(false);
@@ -85,6 +85,17 @@ export function SiteView({ projectId, onStatus }: { projectId: string; onStatus:
     [projectId, load],
   );
 
+  /** Send the design for review, or approve it, from the site's first screen (the thread shows it too). */
+  const review = async (action: "send" | "approve") => {
+    setBusy(true);
+    setError(null);
+    const res = await fetch(`/api/projects/${projectId}/review`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) });
+    setBusy(false);
+    if (!res.ok) setError((await res.json().catch(() => ({}))).error ?? "That didn't go through.");
+    else ok();
+    await load();
+  };
+
   if (!data)
     return (
       <div className="grid place-items-center py-16">
@@ -92,7 +103,7 @@ export function SiteView({ projectId, onStatus }: { projectId: string; onStatus:
       </div>
     );
   const { site, runs } = data;
-  if (!site) return <NotStarted runs={runs} status={data.status} act={act} busy={busy} error={error} />;
+  if (!site) return <NotStarted data={data} act={act} busy={busy} error={error} review={review} onPlans={onPlans} onTeam={onTeam} />;
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-16">
@@ -131,32 +142,114 @@ export function SiteView({ projectId, onStatus }: { projectId: string; onStatus:
 
 type Act = (body: Record<string, unknown>, sound?: boolean) => Promise<boolean>;
 
-function NotStarted({ runs, status, act, busy, error }: { runs: boolean; status: string; act: Act; busy: boolean; error: string | null }) {
+type Steps = { chosen: boolean; canSend: boolean; approves: boolean; builder: boolean; owner: boolean; selfBuild: boolean };
+
+/** Before the site starts: the three steps to get building, each with what to do next. */
+function NotStarted({ data, act, busy, error, review, onPlans, onTeam }: { data: Data; act: Act; busy: boolean; error: string | null; review: (action: "send" | "approve") => void; onPlans?: () => void; onTeam?: () => void }) {
   const [start, setStart] = useState(localDay());
-  return (
-    <main className="mx-auto max-w-xl px-4 py-16 text-center">
-      <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">The building site</p>
-      <h2 className="mt-3 font-serif text-4xl">
-        <Decode text={runs ? "Ready to start building?" : "The site hasn't started yet"} />
-      </h2>
-      <p className="mt-3 text-ink-soft">
-        {runs
-          ? "Arcon sets out the phases from the design's timeline and takes the materials off the approved plan, with quantities and costs. You can change all of it."
-          : "When the builder starts the site, its progress, photos and costs show here and in the thread."}
-      </p>
-      {runs && status === "approved" && (
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+  const { runs, status, steps: s } = data;
+  const approved = status === "approved" || status === "building" || status === "done";
+  const sent = status === "review" || approved;
+  const step = !s.chosen ? 0 : !approved ? 1 : 2;
+  const btn = "glow-btn rounded-full px-5 py-2 text-sm disabled:opacity-60";
+  const quiet = "rounded-full border border-line px-5 py-2 text-sm transition hover:border-accent disabled:opacity-60";
+
+  const rows: { title: string; done: boolean; body: React.ReactNode }[] = [
+    {
+      title: "Pick a plan",
+      done: s.chosen,
+      body: onPlans && (
+        <button onClick={onPlans} className={btn}>
+          See the plans
+        </button>
+      ),
+    },
+    {
+      title: "Approve the design",
+      done: approved,
+      body:
+        status === "review" ? (
+          s.approves ? (
+            <button onClick={() => review("approve")} disabled={busy} className={btn}>
+              Approve this design
+            </button>
+          ) : (
+            <p className="text-sm text-ink-soft">Waiting for the client to approve it in the thread.</p>
+          )
+        ) : !sent && s.canSend ? (
+          <button onClick={() => review("send")} disabled={busy} className={btn}>
+            Send for review
+          </button>
+        ) : (
+          <p className="text-sm text-ink-soft">The design is being finished; it comes for review in the thread.</p>
+        ),
+    },
+    {
+      title: "Start building",
+      done: false,
+      body: runs ? (
+        <div className="flex flex-wrap items-center gap-2">
           <label className="text-sm text-ink-soft" htmlFor="start">
             Start on
           </label>
           <input id="start" type="date" value={start} onChange={(e) => setStart(e.target.value)} className={input} />
-          <button onClick={() => act({ op: "start", start })} disabled={busy} className="glow-btn rounded-full px-6 py-2.5 text-sm disabled:opacity-60">
+          <button onClick={() => act({ op: "start", start })} disabled={busy || !approved} className={btn}>
             {busy ? "Setting up…" : "Start the site"}
           </button>
+          {s.selfBuild && (
+            <button onClick={() => act({ op: "self", on: false }, false)} disabled={busy} className="text-xs text-ink-soft underline">
+              Leave it to a builder instead
+            </button>
+          )}
         </div>
-      )}
+      ) : s.owner ? (
+        <div className="flex flex-wrap gap-2">
+          <button onClick={() => act({ op: "self", on: true })} disabled={busy} className={btn}>
+            I&apos;m managing the build myself
+          </button>
+          {!s.builder && onTeam && (
+            <button onClick={onTeam} className={quiet}>
+              Invite my builder
+            </button>
+          )}
+        </div>
+      ) : (
+        <p className="text-sm text-ink-soft">{s.builder ? "The builder starts the site from here." : "Once a builder joins, they start the site from here."}</p>
+      ),
+    },
+  ];
+
+  return (
+    <main className="mx-auto max-w-2xl px-4 py-12">
+      <p className="text-center font-mono text-xs uppercase tracking-[0.3em] text-accent">The building site</p>
+      <h2 className="mt-3 text-center font-serif text-4xl">
+        <Decode text={runs && approved ? "Ready to start building?" : "Three steps to the site"} />
+      </h2>
+      <p className="mx-auto mt-3 max-w-xl text-center text-ink-soft">
+        Once building starts, this is where it runs: phases from the design&apos;s timeline, materials taken off the approved plan with
+        quantities and costs, crew and attendance, orders, and photo updates everyone can follow.
+      </p>
+      <ol className="mt-8 grid gap-3">
+        {rows.map((r, i) => (
+          <motion.li
+            key={r.title}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.06 * i }}
+            className={`rounded-2xl border bg-paper-raised p-4 ${i === step ? "border-accent/60" : "border-line"}`}
+          >
+            <div className="flex items-center gap-3">
+              <span className={`grid size-7 shrink-0 place-items-center rounded-full font-mono text-xs ${r.done ? "bg-leaf text-white" : i === step ? "bg-accent text-white" : "bg-line/60 text-ink-soft"}`}>
+                {r.done ? "✓" : i + 1}
+              </span>
+              <h3 className={`font-medium ${i > step ? "text-ink-soft" : ""}`}>{r.title}</h3>
+            </div>
+            {i === step && <div className="mt-3 pl-10">{r.body}</div>}
+          </motion.li>
+        ))}
+      </ol>
       {error && (
-        <p role="alert" className="mt-3 text-sm text-red-600">
+        <p role="alert" className="mt-3 text-center text-sm text-red-600">
           {error}
         </p>
       )}

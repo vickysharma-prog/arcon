@@ -58,7 +58,7 @@ export function ProjectHome({
   onTour: () => void;
 }) {
   const unlocked = !!p.unlocked;
-  const tabs = tabsFor(role, unlocked, p.status);
+  const tabs = tabsFor(role, unlocked);
   const active: Tab = pane ? (tabs.find((t) => t.id === pane) ?? tabs[0]) : (tabs.find((t) => t.steps.includes(step)) ?? tabs[0]);
   const stage = stageOf(p);
   const label = (s: string) => (s === "brief" ? (whose ? `${whose}'s style` : "Style") : s === "walkthrough" ? "3D" : (STEPS.find((x) => x.id === s)?.label ?? s));
@@ -134,7 +134,7 @@ export function ProjectHome({
       {/* No exit animation: the 3D's room labels are separate React roots and break if kept alive while leaving. */}
       <motion.div key={pane ?? step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="flex-1 pt-4">
           {active.id === "site" ? (
-            <SiteView projectId={p.id} onStatus={onStatus} />
+            <SiteView projectId={p.id} onStatus={onStatus} onPlans={() => setStep("plans")} onTeam={() => setTeam(true)} />
           ) : active.id === "thread" ? (
             <ThreadView
               key={discuss?.id ?? "thread"}

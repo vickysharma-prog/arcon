@@ -59,4 +59,5 @@ export function labourCost(rows: { present: boolean; hours: number; day_rate: nu
 }
 
 /** Who runs the site: the builder on it, or the pro who owns the project (a builder's own design-and-build job). */
-export const runsSite = (role: string, mode: "owner" | "pro") => role === "builder" || (role === "owner" && mode === "pro");
+/** Who runs the site: the builder, the pro who owns the project, or an owner managing the build themselves. */
+export const runsSite = (role: string, mode: "owner" | "pro", selfBuild = false) => role === "builder" || (role === "owner" && (mode === "pro" || selfBuild));

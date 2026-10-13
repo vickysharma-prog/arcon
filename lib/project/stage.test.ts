@@ -25,13 +25,13 @@ test("the next step is said to the person reading it", () => {
 
 test("tabs by role: viewers only look; only editors get Make changes; money and files lock until unlocked", () => {
   const ids = (role: Parameters<typeof tabsFor>[0], unlocked = true) => tabsFor(role, unlocked).map((t) => t.id);
-  assert.deepEqual(ids("owner"), ["overview", "design", "thread", "money", "files"]);
+  assert.deepEqual(ids("owner"), ["overview", "design", "thread", "site", "money", "files"]);
   assert.deepEqual(ids("viewer"), ["overview", "design", "thread"]);
   assert.ok(tabsFor("architect", true)[1].steps.includes("workspace"));
   assert.ok(!tabsFor("client", true)[1].steps.includes("workspace"));
-  assert.deepEqual(tabsFor("builder", true, "building").map((t) => t.id), ["overview", "design", "thread", "site", "money", "files"]);
-  assert.ok(!tabsFor("owner", true, "ready").some((t) => t.id === "site"));
-  assert.ok(!tabsFor("viewer", true, "building").some((t) => t.id === "site"));
+  assert.deepEqual(tabsFor("builder", true).map((t) => t.id), ["overview", "design", "thread", "site", "money", "files"]);
+  assert.ok(tabsFor("owner", true).some((t) => t.id === "site")); // shown early, with the steps to get building
+  assert.ok(!tabsFor("viewer", true).some((t) => t.id === "site"));
   const locked = tabsFor("owner", false);
   assert.deepEqual(locked.filter((t) => t.locked).map((t) => t.id), ["money", "files"]);
 });

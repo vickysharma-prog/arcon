@@ -23,6 +23,7 @@ export type Project = {
   chosen_option: number | null;
   unlocked_at?: string | null; // paid once for this project (pros' plans unlock it too: lib/project/unlock.ts)
   toured_at?: string | null; // the guided steps are done; the project opens on its home
+  self_build?: boolean; // the owner runs the site themselves
   designed_for?: string | null; // the person it was designed for, when a pro created it
 };
 

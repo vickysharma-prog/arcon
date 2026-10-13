@@ -2,7 +2,8 @@ import { z } from "zod";
 import { accessTo, userOf } from "@/lib/auth/request";
 import { runsSite } from "@/lib/site/progress";
 import { siteOf, startSite } from "@/lib/site/store";
-import { nameOf, postEvent } from "@/lib/project/thread";
+import { decides, nameOf, peopleOn, postEvent } from "@/lib/project/thread";
+import { can } from "@/lib/project/access";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { updateProject } from "@/lib/project/store";
 
@@ -16,17 +17,30 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
   const a = await accessTo((await ctx.params).id, cookie(request));
   if (!a || a.role === "viewer") return Response.json({ error: "not found" }, { status: 404 });
   const me = await userOf(cookie(request));
-  const runs = runsSite(a.role, a.project.mode);
+  const p = a.project;
+  const runs = runsSite(a.role, p.mode, p.self_build);
   const today = Day.safeParse(new URL(request.url).searchParams.get("today")).data;
-  const [site, roster] = await Promise.all([
-    siteOf(a.project, today),
+  const [site, roster, people, approves] = await Promise.all([
+    siteOf(p, today),
     runs && me ? db().from("crew").select("id, name, trade, phone, day_rate").eq("owner_id", me).eq("active", true).order("name").then((r) => r.data ?? []) : [],
+    peopleOn(p),
+    decides(p, a.role),
   ]);
-  return Response.json({ site, runs, status: a.project.status, roster });
+  // What it takes to get building, for the screen before the site starts.
+  const steps = {
+    chosen: p.chosen_option !== null,
+    canSend: can(a.role, "review"),
+    approves,
+    builder: people.some((x) => x.role === "builder"),
+    owner: a.role === "owner",
+    selfBuild: !!p.self_build,
+  };
+  return Response.json({ site, runs, status: p.status, roster, steps });
 }
 
 const Photo = z.object({ path: z.string().max(300), name: z.string().max(200), type: z.string().max(100), size: z.number().int().min(0).max(10_485_760) });
 const Op = z.discriminatedUnion("op", [
+  z.object({ op: z.literal("self"), on: z.boolean() }),
   z.object({ op: z.literal("start"), start: Day }),
   z.object({ op: z.literal("phase"), id: Id, pct: z.number().int().min(0).max(100).optional(), start_date: Day.optional(), end_date: Day.optional() }),
   z.object({ op: z.literal("task.add"), title: z.string().trim().min(1).max(120), phase_id: Id.nullable().optional(), crew_id: Id.nullable().optional(), due: Day.nullable().optional() }),
@@ -50,11 +64,17 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
   const a = await accessTo(id, cookie(request));
   const me = await userOf(cookie(request));
   if (!a || !me) return bad("not found", 404);
-  if (!runsSite(a.role, a.project.mode)) return bad("Only the builder runs the site.", 403);
   const body = Op.safeParse(await request.json().catch(() => null));
   if (!body.success) return bad("That wasn't understood.");
   const o = body.data;
   const p = a.project;
+  // The owner decides to run the build themselves (or leaves it to a builder), before the site starts.
+  if (o.op === "self") {
+    if (a.role !== "owner") return bad("Only the owner decides who runs the build.", 403);
+    await updateProject(id, { self_build: o.on });
+    return Response.json({ ok: true });
+  }
+  if (!runsSite(a.role, p.mode, p.self_build)) return bad("Only the builder runs the site.", 403);
   const who = { id: me, name: await nameOf(me) };
   // Every row a request names must belong to this project (or, for crew, to this builder).
   const ours = async (table: string, rowId: number) => !!(await db().from(table).select("id").eq("id", rowId).eq("project_id", id).maybeSingle()).data;

@@ -33,7 +33,8 @@ R1 is built (13 Oct): My projects for everyone, the project home with tabs, the 
 per-project unlocking with pros' trials. R2 is built too: the project thread with room tags, files, events,
 review and approval inside it, and the bell. R3 is built (14 Oct): New client (together or by link), the
 pros directory by Qloo taste match with requests, fees by milestone, studio branding and handing over.
-R4 is built and browser tested (14 Oct): the building site in full.
+R4 is built and browser tested (14 Oct): the building site in full. The Site tab now shows on every project
+with the three steps to get building, and an owner can manage the build themselves.
 Next: R5, pricing with PayPal sandbox; the judges' demo is brainstormed first.
 
 Vicky found the shared flow confusing, so the app now behaves differently for each person. Decided 13 Oct

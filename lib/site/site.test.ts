@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { dayIn, seedMaterials, seedPhases } from "./plan.ts";
-import { alertsFor, currentPhase, expectedPct, labourCost, overallPct, stockOf, type PhaseRow } from "./progress.ts";
+import { alertsFor, currentPhase, runsSite, expectedPct, labourCost, overallPct, stockOf, type PhaseRow } from "./progress.ts";
 import { timeline } from "../budget/timeline.ts";
 import { estimate, marketOf } from "../budget/costs.ts";
 import { placeConcept } from "../layout/concepts.ts";
@@ -70,4 +70,13 @@ test("today is the person's own day, not the server's", () => {
   assert.equal(dayIn("America/New_York", late), "2026-10-13");
   assert.equal(dayIn(undefined, late), "2026-10-13");
   assert.equal(dayIn("Not/AZone", late), "2026-10-13");
+});
+
+test("the builder runs the site; an owner only in pro mode or when managing the build themselves", () => {
+  assert.ok(runsSite("builder", "owner"));
+  assert.ok(!runsSite("owner", "owner"));
+  assert.ok(runsSite("owner", "owner", true));
+  assert.ok(runsSite("owner", "pro"));
+  assert.ok(!runsSite("client", "owner", true));
+  assert.ok(!runsSite("architect", "pro", true));
 });

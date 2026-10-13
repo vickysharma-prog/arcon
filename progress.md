@@ -2,6 +2,22 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-14: Site tracking easy to find, and owners can run their own build
+
+Vicky couldn't find site tracking on the live site: the Site tab only appeared after the design was approved, and
+only a builder could start it.
+- The Site tab shows on every project now (not to viewers). Until building starts it shows three steps with the
+  next action on each: pick a plan, approve the design (Send for review and Approve work right there), start
+  building.
+- "I'm managing the build myself": an owner without a builder gets the builder's tools on their project (crew,
+  attendance, materials, orders, updates). They can hand it back to a builder before the site starts. Stored as
+  projects.self_build (migration 013).
+- Only the owner can switch this; everyone else still can't change the site (checked on the server).
+
+Tested: 302 unit tests (who runs the site, the tabs); in the browser as a homeowner on a copy of a test project:
+Site tab before review, Send for review, Approve, "I'm managing the build myself", Start the site, and the full
+site screen opened with phases and materials.
+
 ## 2026-10-14: R4, the building site (full)
 
 - A Site tab once the design is approved. The builder (or the pro who owns the project) runs it; the owner, client
