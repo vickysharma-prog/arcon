@@ -2,6 +2,19 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-14: R3c, fees by milestone
+
+- A Fees card on Overview for the pro and the person paying (hidden for viewers). The pro sets out one total fee
+  and Arcon splits it: design 30%, approval of the final design 40%, handover 30%, in the local currency.
+- Each milestone goes Planned, Billed (the pro), Paid to confirm ("I've paid", the client), Received (the pro
+  confirms; a pro can also confirm a payment that came in before the client said so). Each step is checked against
+  who is asking and where the milestone is, posts in the thread, and the card shows how much has come in.
+- A pro's own client projects open on the project home, and only ask "Who will build this?".
+
+Tested locally on Priya's house: the architect sets out ₹2,50,000 (₹75,000 / ₹1,00,000 / ₹75,000) and bills
+Design; Priya marks it paid (and can't bill); the architect confirms; "₹75,000 of ₹2,50,000 received"; all three
+steps in the thread. 294 tests pass.
+
 ## 2026-10-14: R3b, finding a pro by taste
 
 - "Who will design and build this with you?" on Overview for an owner without an architect (then a builder):

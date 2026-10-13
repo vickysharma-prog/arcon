@@ -185,8 +185,9 @@ export function ProjectView({ id }: { id: string }) {
 
   // Someone else's project reads as theirs: "Vicky's style", "Vicky's design".
   const whose = p.whose ?? null;
-  // The guided steps run until the creator reaches Share & export; then, and for everyone else, the project home.
-  const home = (role !== "owner" || !!p.toured_at) && !touring;
+  // The guided steps run until the creator reaches Share & export; then, for everyone else, and for a pro's client
+  // projects (the pro knows their way around), the project home.
+  const home = (role !== "owner" || !!p.toured_at || p.mode === "pro") && !touring;
   const steps = (editor ? STEPS : STEPS.filter((s) => s.id !== "workspace")).map((s) => (s.id === "brief" && whose ? { ...s, label: `${whose}'s style` } : s)) as typeof STEPS[number][];
   const next = steps[steps.findIndex((s) => s.id === step) + 1]?.id ?? null;
   // One step's screen, shown in the guided tour or inside a tab of the project home.

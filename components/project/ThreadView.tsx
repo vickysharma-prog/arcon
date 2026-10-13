@@ -33,7 +33,7 @@ type Thread = {
 };
 export type Room = { id: string; name: string; level: number };
 
-const ICON: Record<string, string> = { chose: "◧", changed: "✎", joined: "＋", review: "⧉", approved: "✓", changes: "↺" };
+const ICON: Record<string, string> = { chose: "◧", changed: "✎", joined: "＋", review: "⧉", approved: "✓", changes: "↺", fee: "¤" };
 
 const time = (iso: string) => {
   const d = new Date(iso);

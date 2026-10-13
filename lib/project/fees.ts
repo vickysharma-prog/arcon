@@ -1,0 +1,50 @@
+// Fee milestones between a pro and the person paying them. The pro bills, the payer says they've paid, the pro
+// confirms they received it; every step is on record. Pure rules, shared by the browser and the server.
+
+export type FeeStatus = "planned" | "billed" | "claimed" | "received";
+export type FeeAction = "bill" | "paid" | "received";
+export type FeeSide = "pro" | "payer" | null;
+
+/** Who someone is for fees on this project: the pro who runs it, the person who pays, or neither. */
+export function sideOf(role: string, mode: "owner" | "pro"): FeeSide {
+  if (role === "architect" || role === "builder") return "pro";
+  if (role === "owner") return mode === "pro" ? "pro" : "payer"; // a pro's own project: they bill its client
+  if (role === "client") return "payer";
+  return null;
+}
+
+/** The next status after an action, or null when that side can't take it from here. */
+export function step(status: FeeStatus, action: FeeAction, side: FeeSide): FeeStatus | null {
+  if (side === "pro" && action === "bill" && status === "planned") return "billed";
+  if (side === "payer" && action === "paid" && status === "billed") return "claimed";
+  // A pro can confirm a payment the client marked, or one that came in before the client said so.
+  if (side === "pro" && action === "received" && (status === "claimed" || status === "billed")) return "received";
+  return null;
+}
+
+/** The buttons a person sees on a milestone. */
+export function actionsFor(status: FeeStatus, side: FeeSide): FeeAction[] {
+  return (["bill", "paid", "received"] as const).filter((a) => step(status, a, side));
+}
+
+/** A common split of a total fee: design, approval, handover. Rounds so the parts add up to the total. */
+export function standardSplit(total: number): { label: string; amount: number }[] {
+  const parts = [
+    { label: "Design", share: 0.3 },
+    { label: "Approval of the final design", share: 0.4 },
+    { label: "Handover", share: 0.3 },
+  ];
+  const out = parts.map((p) => ({ label: p.label, amount: Math.round(total * p.share) }));
+  out[out.length - 1].amount += Math.round(total) - out.reduce((s, p) => s + p.amount, 0);
+  return out;
+}
+
+export const STATUS_LABEL: Record<FeeStatus, string> = { planned: "Planned", billed: "Billed", claimed: "Paid, to confirm", received: "Received" };
+
+export const money = (amount: number, currency: string) => {
+  try {
+    return new Intl.NumberFormat(currency === "INR" ? "en-IN" : "en", { style: "currency", currency, maximumFractionDigits: 0 }).format(amount);
+  } catch {
+    return `${currency} ${Math.round(amount)}`;
+  }
+};

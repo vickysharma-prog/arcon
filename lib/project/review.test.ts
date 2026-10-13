@@ -8,6 +8,8 @@ test("events read as plain sentences in the thread", () => {
   assert.equal(eventText({ type: "changes", version: 3 }, "Priya"), "Priya asked for changes to version 3.");
   assert.equal(eventText({ type: "changed", version: 4, note: "Kitchen bigger" }, "Ana"), "Ana changed the design: Kitchen bigger (version 4).");
   assert.equal(eventText({ type: "joined", role: "builder" }, "Raj"), "Raj joined as the builder.");
+  assert.equal(eventText({ type: "fee", action: "bill", label: "Design", amount: "₹75,000" }, "Ana"), "Ana billed Design: ₹75,000.");
+  assert.equal(eventText({ type: "fee", action: "paid", label: "Design", amount: "₹75,000" }, "Priya"), "Priya marked Design as paid (₹75,000).");
 });
 
 test("review only once a plan is chosen, and not twice", () => {

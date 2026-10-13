@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { STEPS, type StepId } from "./steps";
 import { TeamPanel } from "./TeamPanel";
 import { ThreadView, type Room } from "./ThreadView";
+import { Fees } from "./Fees";
 import type { Layout } from "@/lib/layout/schema";
 import { ROLE_NAME, can, type ProjectRole } from "@/lib/project/access";
 import { nextLine, STAGES, stageOf, tabsFor, unlockPrice, type Tab } from "@/lib/project/stage";
@@ -20,6 +21,7 @@ type Home = {
   unlocked?: boolean;
   unread?: number;
   pros?: string[];
+  mode?: "owner" | "pro";
   options?: Layout[] | null;
   site: { location?: string; units?: "imperial" | "metric" };
 };
@@ -160,6 +162,7 @@ function Overview({ p, role, unlocked, go, onThread, onTeam, onUnlocked, onTour 
         </div>
       )}
       {role === "owner" && <WhoBuilds p={p} onTeam={onTeam} />}
+      {role !== "viewer" && <Fees projectId={p.id} location={p.site.location} />}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {cards.map((c) => (
           <button
@@ -224,7 +227,8 @@ function Unlock({ p, role, onUnlocked }: { p: Home; role: ProjectRole; onUnlocke
 // "Who will build this?" for an owner without an architect or builder yet: invite your own, let Arcon suggest
 // pros by taste, or not yet (hidden on this device until the next stage).
 function WhoBuilds({ p, onTeam }: { p: Home; onTeam: () => void }) {
-  const need = !p.pros?.includes("architect") && stageOf(p) < 3 ? "architect" : !p.pros?.includes("builder") ? "builder" : null;
+  // A pro's own client project already has its designer; it only ever needs a builder.
+  const need = p.mode !== "pro" && !p.pros?.includes("architect") && stageOf(p) < 3 ? "architect" : !p.pros?.includes("builder") ? "builder" : null;
   const key = `arcon-who-${p.id}-${need}-${stageOf(p)}`;
   const [hidden, setHidden] = useState(() => {
     try {

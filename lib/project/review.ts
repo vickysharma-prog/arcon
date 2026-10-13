@@ -9,7 +9,8 @@ export type ThreadEvent =
   | { type: "joined"; role: string }
   | { type: "review"; version: number }
   | { type: "approved"; version: number; note?: string | null }
-  | { type: "changes"; version: number; note?: string | null };
+  | { type: "changes"; version: number; note?: string | null }
+  | { type: "fee"; action: "added" | "bill" | "paid" | "received"; label: string; amount: string };
 
 /** One line for the thread: "Priya approved version 3." */
 export function eventText(e: ThreadEvent, who: string): string {
@@ -26,6 +27,14 @@ export function eventText(e: ThreadEvent, who: string): string {
       return `${who} approved version ${e.version}.${e.note ? ` "${e.note}"` : ""}`;
     case "changes":
       return `${who} asked for changes to version ${e.version}.${e.note ? ` "${e.note}"` : ""}`;
+    case "fee":
+      return e.action === "added"
+        ? `${who} set out the fees: ${e.label} (${e.amount}).`
+        : e.action === "bill"
+          ? `${who} billed ${e.label}: ${e.amount}.`
+          : e.action === "paid"
+            ? `${who} marked ${e.label} as paid (${e.amount}).`
+            : `${who} confirmed receiving ${e.label} (${e.amount}).`;
   }
 }
 
