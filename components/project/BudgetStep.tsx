@@ -161,7 +161,7 @@ export function BudgetStep({ tier, onTier, id, layout, location, interview, brie
             <tbody>
               {[...e.rooms].sort((a, b) => b.total - a.total).map((r, i) => (
                 <motion.tr
-                  key={r.id}
+                  key={`${r.id}-${i}`}
                   className="border-t border-line transition-colors first:border-0 hover:bg-accent/5"
                   initial={still ? false : { opacity: 0, x: -12 }}
                   whileInView={{ opacity: 1, x: 0 }}

@@ -11,6 +11,8 @@ import { ROLE_SHORT } from "@/lib/account/roles";
 import { NewClient } from "@/components/account/NewClient";
 import { Requests } from "@/components/pros/Requests";
 import { sitesToday } from "@/lib/site/store";
+import { dayIn } from "@/lib/site/plan";
+import { cookies } from "next/headers";
 import { memberProjects } from "@/lib/project/team";
 import { PageLoading } from "@/components/fx/PageLoading";
 import { Decode } from "@/components/fx/Decode";
@@ -58,7 +60,7 @@ async function HomePageBody() {
   const stage = (p: Card) => stageOf(p as Parameters<typeof stageOf>[0]);
   const byStage = STAGES.map((s, i) => ({ ...s, n: projects.filter((p) => stage(p) === i).length }));
   // Builders: today on each site that is being built.
-  const sites = profile.role === "builder" ? await sitesToday(projects.filter((p) => p.status === "building").map((p) => p.id)) : [];
+  const sites = profile.role === "builder" ? await sitesToday(projects.filter((p) => p.status === "building").map((p) => p.id), dayIn((await cookies()).get("arcon_tz")?.value)) : [];
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8">

@@ -38,6 +38,8 @@ export function ProfileMenu() {
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // The server reads this to know which day "today" is for this person.
+    document.cookie = `arcon_tz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}; path=/; max-age=31536000; samesite=lax`;
     fetch("/api/me")
       .then((r) => (r.ok ? r.json() : null))
       .then((m) => m && setMe(m))

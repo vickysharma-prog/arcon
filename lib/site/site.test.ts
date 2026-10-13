@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { seedMaterials, seedPhases } from "./plan.ts";
+import { dayIn, seedMaterials, seedPhases } from "./plan.ts";
 import { alertsFor, currentPhase, expectedPct, labourCost, overallPct, stockOf, type PhaseRow } from "./progress.ts";
 import { timeline } from "../budget/timeline.ts";
 import { estimate, marketOf } from "../budget/costs.ts";
@@ -62,4 +62,12 @@ test("a calm site has no alerts; weekends don't count for attendance", () => {
 test("stock and labour add up", () => {
   assert.deepEqual(stockOf({ needed: 100, ordered: 70, delivered: 50, used: 20 }), { onSite: 30, coming: 20, toOrder: 30 });
   assert.equal(labourCost([{ present: true, hours: 8, day_rate: 1000 }, { present: true, hours: 4, day_rate: 1000 }, { present: false, hours: 8, day_rate: 1000 }]), 1500);
+});
+
+test("today is the person's own day, not the server's", () => {
+  const late = new Date("2026-10-13T22:16:00Z"); // 3:46am on the 14th in India
+  assert.equal(dayIn("Asia/Kolkata", late), "2026-10-14");
+  assert.equal(dayIn("America/New_York", late), "2026-10-13");
+  assert.equal(dayIn(undefined, late), "2026-10-13");
+  assert.equal(dayIn("Not/AZone", late), "2026-10-13");
 });

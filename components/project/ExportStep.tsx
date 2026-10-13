@@ -281,8 +281,8 @@ function RoomTable({ rooms, units }: { rooms: Room[]; units: "imperial" | "metri
         </tr>
       </thead>
       <tbody>
-        {rooms.map((r) => (
-          <tr key={r.id} className="border-b border-line">
+        {rooms.map((r, i) => (
+          <tr key={`${r.id}-${i}`} className="border-b border-line">
             <td className="py-1.5">{r.name}</td>
             <td>{r.level ? "Upstairs" : "Ground"}</td>
             <td>

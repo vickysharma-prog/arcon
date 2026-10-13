@@ -26,8 +26,18 @@ One entry per working session, newest at the top. Date, what got done, what brok
 
 Tested: 300 unit tests (phase seeding, materials take-off, expected progress, alerts including weekends, stock,
 labour); the site started and read against the real database on the test Austin house (7 phases, 9 materials,
-USD budget, the "nobody on site" alert); production build. Not yet tested in the browser: the local server was
-stopped for low memory.
+USD budget, the "nobody on site" alert); production build.
+
+Browser test on localhost as the builder: set a phase to 40%, added a task and moved it to Doing, added a tiler
+and marked him on site (labour $120, the alert cleared), ordered the flooring and marked it delivered (218 on site,
+spend $14,944), posted an update with a photo (phase to 60%, built 6%). As the client: everything read only, the
+update and photo in Updates and in the thread, and the server refuses a client's change (403).
+
+Fixed from the test:
+- My projects counted "on site today" by the server's UTC day, so early morning in India it showed 0. The browser
+  now keeps its time zone in a cookie and the server works out the person's own day (with a test).
+- The budget, greenery and export tables gave rooms that repeat on each floor (stairs, hall) the same key, which
+  React warned about.
 
 ## 2026-10-14: R3d, studio branding and handing over; the techy pass
 

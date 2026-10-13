@@ -6,6 +6,8 @@ const sql = postgres(process.env.POSTGRES_URL_NON_POOLING!, { ssl: "require", ma
 const dir = new URL("../db/migrations/", import.meta.url);
 
 await sql`create table if not exists _migrations (name text primary key, applied_at timestamptz default now())`;
+// Row-level security on, no policies: only the database owner (this script) can touch it, not the public API.
+await sql`alter table _migrations enable row level security`;
 const done = new Set((await sql`select name from _migrations`).map((r) => r.name));
 
 for (const name of readdirSync(dir).filter((f) => f.endsWith(".sql")).sort()) {

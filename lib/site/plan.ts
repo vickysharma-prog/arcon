@@ -12,6 +12,15 @@ export type SeedMaterial = { name: string; unit: string; needed: number; unitCos
 const day = 86_400_000;
 export const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 
+/** The calendar day in a time zone (the browser sends its own), so "today" on the server matches the person's day. */
+export function dayIn(tz: string | undefined, d = new Date()) {
+  try {
+    return tz ? new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(d) : isoDay(d);
+  } catch {
+    return isoDay(d);
+  }
+}
+
 /** The site's phases: everything after design, shifted so the first one starts on `start`. */
 export function seedPhases(t: Timeline, start: Date): SeedPhase[] {
   const site = t.phases.filter((p) => p.id !== "design");

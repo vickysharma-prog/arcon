@@ -117,7 +117,7 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
         <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {g.rooms.map((r, i) => (
             <motion.li
-              key={r.id}
+              key={`${r.id}-${i}`}
               className="rounded-xl border border-line p-3 text-sm transition-colors hover:border-leaf/60"
               initial={still ? false : { opacity: 0, y: 12 }}
               whileInView={{ opacity: 1, y: 0 }}
