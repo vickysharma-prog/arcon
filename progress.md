@@ -38,6 +38,9 @@ Fixed from the test:
   now keeps its time zone in a cookie and the server works out the person's own day (with a test).
 - The budget, greenery and export tables gave rooms that repeat on each floor (stairs, hall) the same key, which
   React warned about.
+- Supabase warned that one public table had row-level security off. It was `_migrations` (only the names of the
+  migration files, created by the migrate script). RLS is on now, and the migrate script switches it on itself.
+  Checked: every public table has RLS, and the public key reads nothing from `_migrations` or `projects`.
 
 ## 2026-10-14: R3d, studio branding and handing over; the techy pass
 
