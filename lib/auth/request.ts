@@ -1,5 +1,6 @@
 import { getProject, type Project } from "../project/store.ts";
 import { roleFor } from "../project/team.ts";
+import { unlockedFor } from "../project/unlock.ts";
 import { can, type Action, type ProjectRole } from "../project/access.ts";
 import { GUEST_COOKIE, readCookie, USER_COOKIE, verifyGuest, verifyUser } from "./guest.ts";
 
@@ -19,21 +20,24 @@ export async function whoOf(cookieHeader: string | null) {
 
 // The project and the sender's role on it, if they may do `action`. Anything else is null, so a stranger
 // can't tell a missing project from someone else's, and a viewer can't tell an edit route exists.
-export async function accessTo(id: string, cookieHeader: string | null, action: Action = "view"): Promise<{ project: Project; role: ProjectRole } | null> {
+// `paid`: the route is part of what unlocking opens (budget, shopping, changes, invites), so a locked project is refused.
+export async function accessTo(id: string, cookieHeader: string | null, action: Action = "view", paid = false): Promise<{ project: Project; role: ProjectRole } | null> {
   if (!UUID.test(id)) return null;
   const who = await whoOf(cookieHeader);
   if (!who.userId && !who.guestId) return null;
   try {
     const project = await getProject(id);
     const role = await roleFor(project, who);
-    return role && can(role, action) ? { project, role } : null;
+    if (!role || !can(role, action)) return null;
+    if (paid && !(await unlockedFor(project))) return null;
+    return { project, role };
   } catch {
     return null;
   }
 }
 
 /** The project, if the sender may do `action` on it (viewing by default). */
-export const ownedProject = async (id: string, cookieHeader: string | null, action: Action = "view") => (await accessTo(id, cookieHeader, action))?.project ?? null;
+export const ownedProject = async (id: string, cookieHeader: string | null, action: Action = "view", paid = false) => (await accessTo(id, cookieHeader, action, paid))?.project ?? null;
 
 // What the browser may see: no owner or guest ids.
 export const publicProject = ({ owner_id: _o, guest_id: _g, ...rest }: Project) => rest;

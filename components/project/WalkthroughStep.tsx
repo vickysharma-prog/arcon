@@ -33,14 +33,16 @@ const HouseScene = dynamic(() => import("@/components/three/HouseScene"), {
 });
 
 export function WalkthroughStep({
-  layout, brief, taste, title, option = 0, planName, changePlan, next, extraPlants, projectId, location, tier, spaceType,
+  layout, brief, taste, title, option = 0, planName, changePlan, next, extraPlants, projectId, location, tier, spaceType, preview = false,
 }: {
   layout: Layout; spaceType?: string | null; extraPlants?: Record<string, number>; projectId?: string; location?: string | null; tier?: string | null; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null;
   /** Which of the three plan options this is, and a way back to pick another. */
   option?: number; planName?: string; changePlan?: () => void;
   next?: { label: string; go: () => void };
+  /** Not unlocked yet: the 3D can only be looked at from outside. */
+  preview?: boolean;
 }) {
-  const [mode, setMode] = useState<Mode>("walk");
+  const [mode, setMode] = useState<Mode>(preview ? "orbit" : "walk");
   // "Whole café", "Whole office": the button that steps back out names what was designed.
   const whole = `Whole ${WHOLE[spaceType ?? ""] ?? "space"}`;
   const [playing, setPlaying] = useState(true);
@@ -161,15 +163,18 @@ export function WalkthroughStep({
               key={m}
               role="radio"
               aria-checked={mode === m}
+              disabled={preview && m !== "orbit"}
+              title={preview && m !== "orbit" ? "Unlock the project to walk inside" : undefined}
               onClick={() => {
                 setMode(m);
                 if (m === "orbit" && !finished) setGuide(true);
-              }} className={`rounded-full px-4 py-1.5 text-sm ${mode === m ? "bg-btn text-btn-ink" : "text-ink-soft hover:text-ink"}`}>
+              }} className={`rounded-full px-4 py-1.5 text-sm disabled:cursor-not-allowed disabled:opacity-50 ${mode === m ? "bg-btn text-btn-ink" : "text-ink-soft hover:text-ink"}`}>
               {m === "walk" ? "Walk through" : m === "explore" ? "Explore inside" : "Look around"}
+              {preview && m !== "orbit" && " 🔒"}
             </button>
           ))}
         </div>
-        {recording ? (
+        {preview ? null : recording ? (
           <button onClick={() => stopRecording(false)} className="flex items-center gap-2 rounded-full border border-red-400/60 px-4 py-2 text-sm text-red-500">
             <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
             Recording the walk · {Math.round(progress * 100)}% · Cancel

@@ -2,6 +2,26 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-13: R1, each person's space and the project home
+
+- My projects for everyone: every project a person is on, each labelled with their role on it ("Your house",
+  "You're the architect"). Homeowners and business owners get large cards with the progress strip; architects
+  and builders get a tool strip on top with their plan or trial days left and projects by stage.
+- Project home: once the guided steps are done (the creator reaches Share & export, or presses "Go to project
+  home"), a project opens on its home: whose design, a progress bar (Know you, Design, Review, Approved,
+  Building, Moved in), a "Next" line for this person, and tabs: Overview, Design (style, plans, 3D, Make
+  changes), Budget & shopping, Files. The tabs show the same screens as the guided tour. "Take the guided tour
+  again" brings the steps back. Others on the project always land on the home.
+- Unlocking: a new project is a preview (style, plans, 3D looked at from outside). Unlocking ($149 for a home,
+  $299 for a business) opens walking inside, budget, shopping, Make changes, files and invites. The server
+  refuses those routes for a locked project; a pro's live plan or trial unlocks their projects; every project
+  made before today stays unlocked. The Unlock button is free until PayPal checkout (R5) and says so.
+- Pros get a 14-day trial when they sign up as an architect or builder.
+- Fixed a crash: leaving the 3D while a tab or step animated out broke its room labels; the 3D now leaves at once.
+
+Tested locally with the test owner: My projects, a locked project (budget and shopping refused, 3D only from
+outside), Unlock (budget opens), tabs, 3D and back with no errors. 279 tests pass.
+
 ## 2026-10-13: Planning the app around each person
 
 Vicky stopped the review work (part 3) because the flow felt the same for everyone. We planned and grilled the

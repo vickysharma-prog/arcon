@@ -26,7 +26,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
 }
 
 export async function POST(request: Request, ctx: RouteContext<"/api/projects/[id]/edit">) {
-  const p = await ownedProject((await ctx.params).id, request.headers.get("cookie"), "edit");
+  const p = await ownedProject((await ctx.params).id, request.headers.get("cookie"), "edit", true);
   if (!p) return Response.json({ error: "not found" }, { status: 404 });
   const body = Body.safeParse(await request.json().catch(() => null));
   if (!body.success) return Response.json({ error: "That change wasn't understood." }, { status: 400 });

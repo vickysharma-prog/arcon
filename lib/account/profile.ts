@@ -32,7 +32,7 @@ export const ProfileInput = z
   }));
 export type ProfileInput = z.infer<typeof ProfileInput>;
 
-export type Profile = ProfileInput & { user_id: string; logo_url: string | null; plan: Plan; plan_until: string | null };
+export type Profile = ProfileInput & { user_id: string; logo_url: string | null; plan: Plan; plan_until: string | null; trial_until: string | null; demo: boolean };
 
 export async function getProfile(userId: string): Promise<Profile | null> {
   const { data, error } = await supabaseAdmin().from("profiles").select().eq("user_id", userId).maybeSingle();
@@ -40,8 +40,14 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   return data as Profile | null;
 }
 
+const TRIAL_DAYS = 14;
+
 export async function saveProfile(userId: string, input: ProfileInput): Promise<Profile> {
-  const { data, error } = await supabaseAdmin().from("profiles").upsert({ user_id: userId, ...input }).select().single();
+  // A pro's 14-day trial starts the first time they say they're an architect or builder; no card needed.
+  const before = await getProfile(userId);
+  const pro = input.role === "architect" || input.role === "builder";
+  const trial = pro && !before?.trial_until ? { trial_until: new Date(Date.now() + TRIAL_DAYS * 86_400_000).toISOString() } : {};
+  const { data, error } = await supabaseAdmin().from("profiles").upsert({ user_id: userId, ...input, ...trial }).select().single();
   if (error) throw new Error(error.message);
   return data as Profile;
 }
@@ -64,12 +70,12 @@ export async function claimGuestProjects(userId: string, guestId: string | null)
   return data.length;
 }
 
-export type ProjectCard = { id: string; title: string | null; space_type: string | null; status: string; mode: string; site: { location?: string }; updated_at: string };
+export type ProjectCard = { id: string; title: string | null; space_type: string | null; status: string; mode: string; site: { location?: string }; updated_at: string; chosen_option: number | null; unlocked_at: string | null; designed_for: string | null };
 
 export async function projectsOf(userId: string): Promise<ProjectCard[]> {
   const { data, error } = await supabaseAdmin()
     .from("projects")
-    .select("id, title, space_type, status, mode, site, updated_at")
+    .select("id, title, space_type, status, mode, site, updated_at, chosen_option, unlocked_at, designed_for")
     .eq("owner_id", userId)
     .order("updated_at", { ascending: false })
     .limit(100);

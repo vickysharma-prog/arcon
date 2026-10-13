@@ -1,0 +1,30 @@
+import { supabaseAdmin } from "../supabase/admin.ts";
+import { isUnlocked } from "./stage.ts";
+import type { Project } from "./store.ts";
+
+// Whether a project is open: paid for, carried by a pro on it with a live plan or trial, or a demo.
+
+type Pro = { plan: string; plan_until: string | null; trial_until: string | null; demo: boolean };
+
+/** When this person's pro access ends: a live Studio or Build plan, else their trial. */
+const proUntil = (p: Pro) => {
+  const plan = p.plan === "pro" || p.plan === "build" ? p.plan_until : null;
+  return [plan, p.trial_until].filter(Boolean).sort().at(-1) ?? null;
+};
+
+export async function unlockedFor(p: Pick<Project, "id" | "owner_id" | "unlocked_at">): Promise<boolean> {
+  if (p.unlocked_at) return true;
+  const db = supabaseAdmin();
+  const { data: members } = await db.from("project_members").select("user_id").eq("project_id", p.id).in("role", ["architect", "builder"]);
+  const ids = [p.owner_id, ...(members ?? []).map((m) => m.user_id)].filter((x): x is string => !!x);
+  if (!ids.length) return false;
+  const { data } = await db.from("profiles").select("plan, plan_until, trial_until, demo").in("user_id", ids);
+  const pros = (data ?? []) as Pro[];
+  return isUnlocked(p, pros.map(proUntil), Date.now(), pros.some((x) => x.demo));
+}
+
+/** Unlock a project by paying for it once. ponytail: free until PayPal checkout lands (R5); then only the webhook calls this. */
+export async function unlockProject(id: string) {
+  const { error } = await supabaseAdmin().from("projects").update({ unlocked_at: new Date().toISOString() }).eq("id", id).is("unlocked_at", null);
+  if (error) throw new Error(error.message);
+}

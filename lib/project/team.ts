@@ -75,11 +75,11 @@ export async function inviteInfo(token: string): Promise<InviteInfo | null> {
   );
   if (!inv || inv.revoked) return null;
   const [project, from] = await Promise.all([
-    must<{ title: string | null; space_type: string | null; site: { location?: string }; owner_id: string | null }>(db().from("projects").select("title, space_type, site, owner_id").eq("id", inv.project_id).single()),
+    must<{ title: string | null; space_type: string | null; site: { location?: string }; owner_id: string | null; designed_for: string | null }>(db().from("projects").select("title, space_type, site, owner_id, designed_for").eq("id", inv.project_id).single()),
     must<{ name: string; company: string | null } | null>(db().from("profiles").select("name, company").eq("user_id", inv.created_by).maybeSingle()),
   ]);
   return {
-    owner: await ownerName(project.owner_id),
+    owner: project.designed_for ?? (await ownerName(project.owner_id)),
     project_id: inv.project_id,
     role: inv.role,
     title: project.title,
@@ -114,10 +114,10 @@ export async function acceptInvite(token: string, userId: string): Promise<{ pro
 
 /** Projects someone was invited to, for their home page. */
 export async function memberProjects(userId: string) {
-  type Card = { id: string; title: string | null; space_type: string | null; status: string; mode: string; site: { location?: string }; updated_at: string; owner_id: string | null };
+  type Card = { id: string; title: string | null; space_type: string | null; status: string; mode: string; site: { location?: string }; updated_at: string; owner_id: string | null; chosen_option: number | null; unlocked_at: string | null; designed_for: string | null };
   // The join returns one project per membership row (an object, though the client types it as a list).
-  const rows = (await must(db().from("project_members").select("role, projects(id, title, space_type, status, mode, site, updated_at, owner_id)").eq("user_id", userId))) as unknown as { role: MemberRole; projects: Card | null }[];
+  const rows = (await must(db().from("project_members").select("role, projects(id, title, space_type, status, mode, site, updated_at, owner_id, chosen_option, unlocked_at, designed_for)").eq("user_id", userId))) as unknown as { role: MemberRole; projects: Card | null }[];
   const cards = rows.filter((r) => r.projects);
-  const names = await Promise.all(cards.map((r) => ownerName(r.projects!.owner_id)));
+  const names = await Promise.all(cards.map((r) => r.projects!.designed_for ?? ownerName(r.projects!.owner_id)));
   return cards.map((r, i) => ({ ...r.projects!, role: r.role, owner: names[i] }));
 }

@@ -14,6 +14,7 @@ import type { Project } from "@/lib/project/store";
 import { canLeave, isStep, STEPS, type StepId } from "./steps";
 import { can, ROLE_NAME, type ProjectRole } from "@/lib/project/access";
 import { Workspace } from "./Workspace";
+import { ProjectHome } from "./ProjectHome";
 import { ExportStep } from "./ExportStep";
 import { WalkthroughStep } from "./WalkthroughStep";
 import { CheckPlan } from "@/components/import/CheckPlan";
@@ -30,7 +31,7 @@ import { choicesOf, type Ticked } from "@/lib/green/improve";
 
 const greenTicked = (interview: Record<string, unknown> | null | undefined): Ticked => (Array.isArray(interview?.green) ? (interview.green as Ticked) : []);
 
-type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null; role?: ProjectRole; ownerName?: string | null };
+type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null; role?: ProjectRole; unlocked?: boolean; whose?: string | null };
 
 const WORK = ["read", "taste", "brief", "program", "plans"]; // progress ticks while the design request runs
 
@@ -49,10 +50,14 @@ export function ProjectView({ id }: { id: string }) {
   const [started, setStarted] = useState(false);
   // How many changes were just made in "Make changes", shown on the steps that now reflect them.
   const [edited, setEdited] = useState(0);
+  // On the project home: the Overview tab, or the tab holding `step`. Taking the guided tour again sets `touring`.
+  const [onOverview, setOnOverview] = useState(true);
+  const [touring, setTouring] = useState(false);
   const key = `arcon-step-${id}`;
 
   const setStep = (s: StepId) => {
     stepSound();
+    setOnOverview(false);
     setStepState(s);
     try {
       sessionStorage.setItem(key, s);
@@ -66,8 +71,15 @@ export function ProjectView({ id }: { id: string }) {
       const asked = new URLSearchParams(location.search).get("step");
       const saved = isStep(asked) ? asked : sessionStorage.getItem(key);
       if (isStep(saved)) setStepState(saved);
+      if (isStep(asked)) setOnOverview(false);
     } catch {}
   }, [key]);
+
+  // Reaching Share & export finishes the guided tour: from the next visit the project opens on its home.
+  const toured = !!p?.toured_at;
+  useEffect(() => {
+    if (step === "drawings" && p?.id && (p.role ?? "owner") === "owner" && !toured) void fetch(`/api/projects/${p.id}/tour`, { method: "POST" }).catch(() => {});
+  }, [step, p?.id, p?.role, toured]);
 
   const design = useCallback(async () => {
     setError(null);
@@ -160,9 +172,99 @@ export function ProjectView({ id }: { id: string }) {
   if (!p || !p.brief || !p.options?.length) return <Processing p={p} done={work >= WORK.length} />;
 
   // Someone else's project reads as theirs: "Vicky's style", "Vicky's design".
-  const whose = role !== "owner" ? (p.ownerName?.split(" ")[0] ?? null) : null;
+  const whose = p.whose ?? null;
+  // The guided steps run until the creator reaches Share & export; then, and for everyone else, the project home.
+  const home = (role !== "owner" || !!p.toured_at) && !touring;
   const steps = (editor ? STEPS : STEPS.filter((s) => s.id !== "workspace")).map((s) => (s.id === "brief" && whose ? { ...s, label: `${whose}'s style` } : s)) as typeof STEPS[number][];
   const next = steps[steps.findIndex((s) => s.id === step) + 1]?.id ?? null;
+  // One step's screen, shown in the guided tour or inside a tab of the project home.
+  const d = p as View & { brief: Brief; options: Layout[] };
+  const body = (s: StepId, guided: boolean) => (
+    <>
+          {edited > 0 && (s === "walkthrough" || s === "budget" || s === "shop") && (
+        <div className="mx-auto mb-3 flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4">
+          <p className="rounded-full border border-leaf/50 bg-leaf/5 px-4 py-1.5 text-sm text-leaf">
+            ✓ Your {edited === 1 ? "change is" : `${edited} changes are`} in. The walkthrough, budget and shopping list are all updated.
+          </p>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setStep("workspace")} className="rounded-full px-3 py-1.5 text-sm text-ink-soft transition hover:text-ink">
+              ← Back to Make changes
+            </button>
+            <button type="button" onClick={() => setStep("drawings")} className="rounded-full border border-accent/50 px-4 py-1.5 text-sm text-accent transition hover:bg-accent hover:text-btn-ink">
+              Done? Share &amp; export →
+            </button>
+          </div>
+        </div>
+      )}
+      {s === "brief" && <BriefStep p={d} brief={d.brief} whose={whose} />}
+      {s === "plans" && <PlansStep p={d} options={d.options} choosing={choosing} choose={editor ? choose : null} />}
+      {s === "walkthrough" && (
+        <WalkthroughStep
+          layout={d.options[d.chosen_option ?? 0]}
+          spaceType={d.space_type}
+          extraPlants={extraPlants}
+          projectId={d.id}
+          location={d.site.location}
+          tier={tier}
+          brief={d.brief}
+          taste={d.taste}
+          title={d.title}
+          option={d.chosen_option ?? 0}
+          planName={d.options[d.chosen_option ?? 0]?.concept?.name}
+          changePlan={() => setStep("plans")}
+          next={guided && next ? { label: `Next: ${steps.find((x) => x.id === next)?.label}`, go: () => setStep(next) } : undefined}
+          preview={!d.unlocked}
+        />
+      )}
+      {s === "budget" && d.options?.[d.chosen_option ?? 0] && (
+        <BudgetStep
+          tier={tier}
+          onTier={setTier}
+          id={d.id}
+          layout={d.options[d.chosen_option ?? 0]}
+          location={d.site.location}
+          interview={d.interview}
+          brief={d.brief}
+          profile={d.taste}
+          lot={d.site.width && d.site.depth ? { width: d.site.width, depth: d.site.depth } : null}
+          ticked={greenTicked(d.interview)}
+          onTicked={(t) => setP((old) => (old ? { ...old, interview: { ...old.interview, green: t } } : old))}
+        />
+      )}
+      {s === "shop" && <ShoppingStep id={d.id} location={d.site.location} tier={tier} onTier={setTier} />}
+      {s === "drawings" && <ExportStep p={d} tier={tier} onWalkthrough={() => setStep("walkthrough")} />}
+      {s === "workspace" && editor && d.unlocked && <Workspace
+          p={d}
+          tier={tier}
+          ticked={greenTicked(d.interview)}
+          onProject={(next) => setP(next)}
+          onDone={(n) => {
+            setEdited(n);
+            setStep("walkthrough");
+          }}
+        />}
+    </>
+  );
+
+  if (home)
+    return (
+      <ProjectHome
+        p={p}
+        role={role}
+        whose={whose}
+        step={step}
+        onOverview={onOverview}
+        setStep={setStep}
+        showOverview={() => setOnOverview(true)}
+        body={(s) => body(s, false)}
+        onUnlocked={() => setP((old) => (old ? { ...old, unlocked: true } : old))}
+        onTour={() => {
+          setTouring(true);
+          setStep("brief");
+        }}
+      />
+    );
+
   return (
     <div className="flex flex-1 flex-col">
       {role !== "owner" && (
@@ -170,6 +272,21 @@ export function ProjectView({ id }: { id: string }) {
           <span className="font-serif text-xl">{whose ? `${whose}'s design` : "Shared design"}</span>
           {whose && <span className="text-ink-soft">designed around {whose}&apos;s taste</span>}
           <span className="rounded-full bg-accent/10 px-3 py-0.5 text-xs text-accent">You&apos;re the {ROLE_NAME[role].toLowerCase()}</span>
+        </div>
+      )}
+      {(step === "drawings" || touring) && (
+        <div className="mx-auto flex w-full max-w-6xl justify-end px-4">
+          <button
+            onClick={() => {
+              setTouring(false);
+              setOnOverview(true);
+              setP((old) => (old ? { ...old, toured_at: old.toured_at ?? new Date().toISOString() } : old));
+              void fetch(`/api/projects/${p.id}/tour`, { method: "POST" }).catch(() => {});
+            }}
+            className="rounded-full border border-accent/50 px-4 py-1.5 text-sm text-accent transition hover:bg-accent hover:text-btn-ink"
+          >
+            Go to project home →
+          </button>
         </div>
       )}
       <Progress steps={steps} step={step} onJump={(s) => steps.findIndex((x) => x.id === s) <= steps.findIndex((x) => x.id === step) && setStep(s)} />
@@ -207,71 +324,12 @@ export function ProjectView({ id }: { id: string }) {
           key={step}
           initial={still ? false : { opacity: 0, y: 18, filter: "blur(8px)" }}
           animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          exit={still ? undefined : { opacity: 0, y: -12, filter: "blur(6px)" }}
+          // The 3D leaves at once: its room labels are separate React roots and break if kept alive while exiting.
+          exit={still || step === "walkthrough" ? undefined : { opacity: 0, y: -12, filter: "blur(6px)" }}
           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="flex-1"
         >
-          {edited > 0 && (step === "walkthrough" || step === "budget" || step === "shop") && (
-            <div className="mx-auto mb-3 flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4">
-              <p className="rounded-full border border-leaf/50 bg-leaf/5 px-4 py-1.5 text-sm text-leaf">
-                ✓ Your {edited === 1 ? "change is" : `${edited} changes are`} in. The walkthrough, budget and shopping list are all updated.
-              </p>
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={() => setStep("workspace")} className="rounded-full px-3 py-1.5 text-sm text-ink-soft transition hover:text-ink">
-                  ← Back to Make changes
-                </button>
-                <button type="button" onClick={() => setStep("drawings")} className="rounded-full border border-accent/50 px-4 py-1.5 text-sm text-accent transition hover:bg-accent hover:text-btn-ink">
-                  Done? Share &amp; export →
-                </button>
-              </div>
-            </div>
-          )}
-          {step === "brief" && <BriefStep p={p} brief={p.brief} whose={whose} />}
-          {step === "plans" && <PlansStep p={p} options={p.options} choosing={choosing} choose={editor ? choose : null} />}
-          {step === "walkthrough" && (
-            <WalkthroughStep
-              layout={p.options[p.chosen_option ?? 0]}
-              spaceType={p.space_type}
-              extraPlants={extraPlants}
-              projectId={p.id}
-              location={p.site.location}
-              tier={tier}
-              brief={p.brief}
-              taste={p.taste}
-              title={p.title}
-              option={p.chosen_option ?? 0}
-              planName={p.options[p.chosen_option ?? 0]?.concept?.name}
-              changePlan={() => setStep("plans")}
-              next={next ? { label: `Next: ${steps.find((s) => s.id === next)?.label}`, go: () => setStep(next) } : undefined}
-            />
-          )}
-          {step === "budget" && p.options?.[p.chosen_option ?? 0] && (
-            <BudgetStep
-              tier={tier}
-              onTier={setTier}
-              id={p.id}
-              layout={p.options[p.chosen_option ?? 0]}
-              location={p.site.location}
-              interview={p.interview}
-              brief={p.brief}
-              profile={p.taste}
-              lot={p.site.width && p.site.depth ? { width: p.site.width, depth: p.site.depth } : null}
-              ticked={greenTicked(p.interview)}
-              onTicked={(t) => setP((old) => (old ? { ...old, interview: { ...old.interview, green: t } } : old))}
-            />
-          )}
-          {step === "shop" && <ShoppingStep id={p.id} location={p.site.location} tier={tier} onTier={setTier} />}
-          {step === "drawings" && <ExportStep p={p} tier={tier} onWalkthrough={() => setStep("walkthrough")} />}
-          {step === "workspace" && editor && <Workspace
-              p={p}
-              tier={tier}
-              ticked={greenTicked(p.interview)}
-              onProject={(next) => setP(next)}
-              onDone={(n) => {
-                setEdited(n);
-                setStep("walkthrough");
-              }}
-            />}
+          {body(step, true)}
         </motion.div>
       </AnimatePresence>
     </div>

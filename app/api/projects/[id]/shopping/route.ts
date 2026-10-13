@@ -6,7 +6,7 @@ import { TIERS, type Tier } from "@/lib/budget/costs";
 export const maxDuration = 60;
 
 export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id]/shopping">) {
-  const p = await ownedProject((await ctx.params).id, request.headers.get("cookie"));
+  const p = await ownedProject((await ctx.params).id, request.headers.get("cookie"), "view", true);
   if (!p) return Response.json({ error: "not found" }, { status: 404 });
   const t = new URL(request.url).searchParams.get("tier");
   const tier = (TIERS as readonly string[]).includes(t ?? "") ? (t as Tier) : undefined;

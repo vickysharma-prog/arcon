@@ -17,7 +17,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
 const Invite = z.object({ role: z.enum(MEMBER_ROLES) });
 
 export async function POST(request: Request, ctx: RouteContext<"/api/projects/[id]/team">) {
-  const a = await accessTo((await ctx.params).id, cookie(request), "invite");
+  const a = await accessTo((await ctx.params).id, cookie(request), "invite", true);
   if (!a) return Response.json({ error: "not found" }, { status: 404 });
   const { userId } = await whoOf(cookie(request));
   if (!userId) return Response.json({ error: "Sign in to invite people, so they know who the invite is from." }, { status: 401 });

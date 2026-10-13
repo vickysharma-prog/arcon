@@ -21,6 +21,9 @@ export type Project = {
   program: Program | null;
   options?: Layout[] | null;
   chosen_option: number | null;
+  unlocked_at?: string | null; // paid once for this project (pros' plans unlock it too: lib/project/unlock.ts)
+  toured_at?: string | null; // the guided steps are done; the project opens on its home
+  designed_for?: string | null; // the person it was designed for, when a pro created it
 };
 
 type Patch = Partial<Omit<Project, "id">>;
