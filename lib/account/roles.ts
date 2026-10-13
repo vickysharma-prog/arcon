@@ -10,3 +10,6 @@ export const ROLE_LABEL: Record<Role, string> = {
   architect: "Architect or interior designer",
   builder: "Builder or contractor",
 };
+
+/** The short name of a role, shown next to a person's name ("Vicky · Architect"). */
+export const ROLE_SHORT: Record<Role, string> = { owner: "Homeowner", business: "Business owner", architect: "Architect", builder: "Builder" };

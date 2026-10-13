@@ -21,7 +21,7 @@ export async function roleFor(p: Pick<Project, "id" | "owner_id" | "guest_id">, 
   return row?.role ?? null;
 }
 
-export type TeamMember = { user_id: string; role: ProjectRole; name: string | null; email: string | null; company: string | null };
+export type TeamMember = { user_id: string; role: ProjectRole; name: string | null; email: string | null; company: string | null; kind: string | null };
 export type OpenInvite = { token: string; role: MemberRole; expires_at: string; created_at: string };
 
 /** Everyone on the project, owner first, with names from their profiles; and the invites nobody has used yet. */
@@ -34,11 +34,11 @@ export async function teamOf(p: Pick<Project, "id" | "owner_id">): Promise<{ mem
   ]);
   const people = [...(p.owner_id ? [{ user_id: p.owner_id, role: "owner" as ProjectRole }] : []), ...rows];
   const ids = people.map((m) => m.user_id);
-  const profiles = ids.length ? await must<{ user_id: string; name: string; company: string | null }[]>(db().from("profiles").select("user_id, name, company").in("user_id", ids)) : [];
+  const profiles = ids.length ? await must<{ user_id: string; name: string; company: string | null; role: string }[]>(db().from("profiles").select("user_id, name, company, role").in("user_id", ids)) : [];
   const emails = await Promise.all(ids.map((id) => db().auth.admin.getUserById(id).then((r) => r.data.user?.email ?? null)));
   const members = people.map((m, i) => {
     const pr = profiles.find((x) => x.user_id === m.user_id);
-    return { ...m, name: pr?.name ?? null, company: pr?.company ?? null, email: emails[i] };
+    return { ...m, name: pr?.name ?? null, company: pr?.company ?? null, kind: pr?.role ?? null, email: emails[i] };
   });
   return { members, invites };
 }

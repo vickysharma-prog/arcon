@@ -5,9 +5,10 @@ import { createPortal } from "react-dom";
 import { AnimatePresence } from "motion/react";
 import { setSound, soundOn, tick } from "./fx/sfx";
 import { TeamPanel } from "./project/TeamPanel";
+import { ROLE_SHORT, type Role } from "@/lib/account/roles";
 
 type Mode = "light" | "dark" | "system";
-type Me = { user: { id: string; email: string | null } | null; profile?: { name: string; company: string | null } | null };
+type Me = { user: { id: string; email: string | null } | null; profile?: { name: string; company: string | null; role: Role } | null };
 const KEY = "arcon-theme";
 
 function apply(mode: Mode) {
@@ -94,7 +95,10 @@ export function ProfileMenu() {
           <div className="border-b border-line px-4 py-3">
             {me?.user ? (
               <>
-                <p className="truncate font-medium">{me.profile?.name ?? me.user.email}</p>
+                <p className="flex items-center gap-2">
+                  <span className="truncate font-medium">{me.profile?.name ?? me.user.email}</span>
+                  {me.profile?.role && <span className="shrink-0 rounded-full bg-accent/10 px-2 py-0.5 text-[11px] text-accent">{ROLE_SHORT[me.profile.role]}</span>}
+                </p>
                 <p className="truncate text-xs text-ink-soft">{me.profile?.company ?? me.user.email}</p>
               </>
             ) : (

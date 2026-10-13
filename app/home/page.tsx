@@ -7,6 +7,7 @@ import { Reveal } from "@/components/fx/Motion";
 import { currentUser } from "@/lib/auth/server";
 import { getProfile, projectsOf, type Profile, type ProjectCard } from "@/lib/account/profile";
 import { STAGES, stageOf } from "@/lib/project/stage";
+import { ROLE_SHORT } from "@/lib/account/roles";
 import { memberProjects } from "@/lib/project/team";
 import { ROLE_NAME, type ProjectRole } from "@/lib/project/access";
 
@@ -57,6 +58,7 @@ async function HomePageBody() {
       <Reveal>
         <p className="text-sm text-ink-soft">
           {greeting()}, {profile.name.split(" ")[0]}
+          <span className="ml-2 rounded-full bg-accent/10 px-2.5 py-0.5 text-xs text-accent">{ROLE_SHORT[profile.role]}</span>
           {profile.company && <> · {profile.company}</>}
         </p>
         <div className="mt-1 flex flex-wrap items-end justify-between gap-4">

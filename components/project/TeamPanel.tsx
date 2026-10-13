@@ -5,8 +5,9 @@ import { motion } from "motion/react";
 import QRCode from "qrcode";
 import { ROLE_CAN, ROLE_NAME, type MemberRole, type ProjectRole } from "@/lib/project/access";
 import { ok, tick } from "@/components/fx/sfx";
+import { ROLE_SHORT, type Role } from "@/lib/account/roles";
 
-type Member = { user_id: string; role: ProjectRole; name: string | null; email: string | null; company: string | null };
+type Member = { user_id: string; role: ProjectRole; name: string | null; email: string | null; company: string | null; kind: Role | null };
 type Invite = { token: string; role: MemberRole; expires_at: string };
 type Team = { role: ProjectRole; signedIn: boolean; me: string | null; members: Member[]; invites: Invite[]; invitable: MemberRole[] };
 
@@ -102,7 +103,7 @@ export function TeamPanel({ id, onClose }: { id: string; onClose: () => void }) 
                       {m.name ?? m.email}
                       {m.user_id === team.me && <span className="text-ink-soft"> (you)</span>}
                     </p>
-                    <p className="truncate text-xs text-ink-soft">{[m.company, m.email].filter(Boolean).join(" · ")}</p>
+                    <p className="truncate text-xs text-ink-soft">{[m.kind && ROLE_SHORT[m.kind], m.company, m.email].filter(Boolean).join(" · ")}</p>
                   </div>
                   <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs text-accent">{ROLE_NAME[m.role]}</span>
                   {team.role === "owner" && m.role !== "owner" && (
