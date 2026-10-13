@@ -12,7 +12,7 @@ export type Project = {
   mode: "owner" | "pro";
   space_type: SpaceType | null;
   title: string | null;
-  status: "interview" | "designing" | "ready";
+  status: "interview" | "designing" | "ready" | "review" | "approved" | "building" | "done";
   site: Site;
   interview: Record<string, unknown>;
   taste_signals: TasteSignal[];

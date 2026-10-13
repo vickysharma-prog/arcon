@@ -2,6 +2,18 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-13: Planning the app around each person
+
+Vicky stopped the review work (part 3) because the flow felt the same for everyone. We planned and grilled the
+whole product around roles: who signs up as what, what each person sees, what they pay, how pros are found, the
+project thread, approvals, fees, and lapsed plans. Every decision is in private/plan.md ("One app, different for
+each person" and "Decisions from the 13 Oct grilling"); the judges' demo is parked for its own brainstorm.
+Decisions stay open to change.
+
+Database changes made today (applied, nothing else built yet): migration 007 (comments, approvals, events, wider
+project status; the comments table will be replaced by the thread) and 008 (unlocked_at, toured_at,
+designed_for on projects, every existing project kept unlocked; trial_until and demo on profiles).
+
 ## 2026-10-16: Roles and invites (part 2)
 
 - Each project has a team: the owner plus an architect, client, builder or viewers. One table (lib/project/access.ts)

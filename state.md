@@ -27,16 +27,25 @@ arcon-ten.vercel.app, auto-deploying from GitHub (main). 273 unit tests pass; bu
   this project" in the profile menu: invite links with QR codes, one use, 7 days. Join page. Others see the
   owner's name ("Vicky's design", "Vicky's style").
 
-## Next (the seven-part plan, private/plan.md)
+## Next: one app, different for each person (planned 13 Oct, private/plan.md)
 
-3. Review: share links, comments pinned to rooms, send for review, approve and lock the version, bell.
-4. Studio for architects: clients by stage, "New client" in person or by link, studio branding.
-5. Site tracking, full: phases, tasks, crew, attendance, materials and orders, photos, alerts, client progress.
-6. Pricing: PayPal sandbox, plan limits, "Are you a judge? Click here" demo mode with showcase projects.
-7. Phone app (PWA).
+Vicky found the shared flow confusing, so the app now behaves differently for each person. Decided 13 Oct
+(full list in private/plan.md, "One app, different for each person" and "Decisions from the 13 Oct grilling"):
+- Sign-up asks the main role. Every project a person is on shows under My projects with their role on it; pros
+  get a tool strip on top (architects: stages, requests, payments; builders: today on site).
+- Pricing: home project $149, business $299 (one time); Studio $99/mo or $990/yr; Build $299/mo or $2,990/yr;
+  14-day trial for pros from sign-up. Free before unlocking: style, 3 plans, 3D from outside.
+- Project page: guided steps the first time, then a project home with tabs for each role.
+- Project thread instead of comments: everyone on the project, room tags, events, photos and files, review and
+  approval inside it, a Team-only channel for pros; the bell for notifications.
+- "Do you have an architect or builder?": invite by link or QR, or Arcon suggests pros by Qloo taste match.
+- Fees tracked by milestone (billed, "I've paid", received). Builders can design and build.
 
-Then: D3 neighbourhood (Q8, Q9), E2 (taste quiz, exterior, day and night), Q7 and Q10, F1 quality,
-C2b photoreal renders on about $10 of paid Gemini credit (28 to 29 Oct), F2 polish, video, README, submit.
+Build order: R1 role spaces and project home, R2 thread, R3 Studio and pros directory, R4 Sites (full tracking),
+R5 pricing with PayPal sandbox (judges' demo brainstormed separately), R6 phone app. Then D3, E2, Q7, Q10, F1,
+C2b photoreal (28 to 29 Oct), F2 and submission.
+
+Everything here is open to change: if something can be better we brainstorm it and update the plan.
 
 ## Known issues
 
