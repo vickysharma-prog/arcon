@@ -19,6 +19,10 @@ export const ProfileInput = z
     units: z.enum(["metric", "imperial"]).default("metric"),
     crew_size: z.coerce.number().int().min(1).max(10000).optional().nullable(),
     trades: z.array(text(40)).max(20).default([]),
+    // Pros only: shown to clients looking for someone ("Suggest someone"), and whether to be listed at all.
+    about: optional(400),
+    fee_note: optional(120),
+    listed: z.boolean().default(true),
   })
   .superRefine((p, ctx) => {
     if ((p.role === "architect" || p.role === "builder") && !p.company)
@@ -29,6 +33,8 @@ export const ProfileInput = z
     // fields that only make sense for builders are dropped for everyone else
     crew_size: p.role === "builder" ? (p.crew_size ?? null) : null,
     trades: p.role === "builder" ? p.trades : [],
+    about: p.role === "architect" || p.role === "builder" ? p.about : null,
+    fee_note: p.role === "architect" || p.role === "builder" ? p.fee_note : null,
   }));
 export type ProfileInput = z.infer<typeof ProfileInput>;
 

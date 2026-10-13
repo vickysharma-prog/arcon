@@ -1,5 +1,6 @@
 import { accessTo, publicProject, userOf } from "@/lib/auth/request";
-import { unreadCount } from "@/lib/project/thread";
+import { peopleOn, unreadCount } from "@/lib/project/thread";
+import { isPro } from "@/lib/project/access";
 import { ownerName } from "@/lib/project/team";
 import { unlockedFor } from "@/lib/project/unlock";
 import { whoseName } from "@/lib/project/stage";
@@ -8,12 +9,15 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
   const a = await accessTo((await ctx.params).id, request.headers.get("cookie"));
   if (!a) return Response.json({ error: "not found" }, { status: 404 });
   const me = await userOf(request.headers.get("cookie"));
-  const [unlocked, owner, unread] = await Promise.all([
+  const [unlocked, owner, unread, people] = await Promise.all([
     unlockedFor(a.project),
     a.role === "owner" && !a.project.designed_for ? null : ownerName(a.project.owner_id),
     me ? unreadCount(a.project.id, me) : 0,
+    peopleOn(a.project),
   ]);
+  // Which pros are on it, for "Who will build this?"
+  const pros = people.filter((x) => isPro(x.role)).map((x) => x.role);
   // Everyone else on the project sees whose design it is ("Vicky's design"); the owner sees "your".
   const whose = a.role === "owner" ? null : whoseName(a.project.designed_for, owner);
-  return Response.json({ ...publicProject(a.project), role: a.role, unlocked, whose, unread });
+  return Response.json({ ...publicProject(a.project), role: a.role, unlocked, whose, unread, pros });
 }

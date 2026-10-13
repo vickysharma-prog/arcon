@@ -15,7 +15,7 @@ const ROLE_LINE: Record<Role, string> = {
 const ROLE_ICON: Record<Role, string> = { owner: "⌂", business: "☕", architect: "✎", builder: "⚒" };
 const TRADES = ["Civil", "Masonry", "Carpentry", "Electrical", "Plumbing", "Tiling", "Painting", "Interiors", "Landscaping"];
 
-type Draft = { role: Role | null; name: string; company: string; city: string; units: "metric" | "imperial"; crew_size: string; trades: string[] };
+type Draft = { role: Role | null; name: string; company: string; city: string; units: "metric" | "imperial"; crew_size: string; trades: string[]; about: string; fee_note: string; listed: boolean };
 
 // Sign-up step 2, and the account page: pick a role, then a short profile for that role.
 export function ProfileForm({ initial, email, next, editing }: { initial: Profile | null; email: string | null; next: string; editing?: boolean }) {
@@ -27,6 +27,9 @@ export function ProfileForm({ initial, email, next, editing }: { initial: Profil
     units: initial?.units ?? "metric",
     crew_size: initial?.crew_size ? String(initial.crew_size) : "",
     trades: initial?.trades ?? [],
+    about: initial?.about ?? "",
+    fee_note: initial?.fee_note ?? "",
+    listed: initial?.listed ?? true,
   });
   const [stage, setStage] = useState<"role" | "details">(initial ? "details" : "role");
   const [logo, setLogo] = useState<string | null>(initial?.logo_url ?? null);
@@ -152,6 +155,22 @@ export function ProfileForm({ initial, email, next, editing }: { initial: Profil
                       })}
                     </div>
                   </fieldset>
+                </>
+              )}
+              {(d.role === "architect" || d.role === "builder") && (
+                <>
+                  <label className="grid gap-1.5 text-sm sm:col-span-2">
+                    About your work <span className="text-xs text-ink-soft">Shown to clients looking for a {d.role === "architect" ? "designer" : "builder"}</span>
+                    <textarea maxLength={400} rows={2} value={d.about} onChange={(e) => set({ about: e.target.value })} className={input} placeholder="Warm, natural homes in Pune since 2015" />
+                  </label>
+                  <label className="grid gap-1.5 text-sm">
+                    Fees
+                    <input maxLength={120} value={d.fee_note} onChange={(e) => set({ fee_note: e.target.value })} className={input} placeholder="From ₹80 per sq ft" />
+                  </label>
+                  <label className="flex items-center gap-3 self-end text-sm">
+                    <input type="checkbox" checked={d.listed} onChange={(e) => set({ listed: e.target.checked })} className="h-4 w-4 accent-[var(--accent)]" />
+                    Suggest me to new clients
+                  </label>
                 </>
               )}
               {pro && (

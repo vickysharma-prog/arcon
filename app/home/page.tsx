@@ -9,6 +9,7 @@ import { getProfile, projectsOf, type Profile, type ProjectCard } from "@/lib/ac
 import { STAGES, stageOf } from "@/lib/project/stage";
 import { ROLE_SHORT } from "@/lib/account/roles";
 import { NewClient } from "@/components/account/NewClient";
+import { Requests } from "@/components/pros/Requests";
 import { memberProjects } from "@/lib/project/team";
 import { ROLE_NAME, type ProjectRole } from "@/lib/project/access";
 
@@ -96,6 +97,8 @@ async function HomePageBody() {
           </ul>
         </Reveal>
       )}
+
+      {pro && <Requests />}
 
       {projects.length === 0 ? (
         <Reveal delay={0.1} className="mt-10 rounded-3xl border border-dashed border-line p-10 text-center">

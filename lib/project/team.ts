@@ -18,7 +18,10 @@ export async function roleFor(p: Pick<Project, "id" | "owner_id" | "guest_id">, 
   if (ownsProject(p, who)) return "owner";
   if (!who.userId) return null;
   const row = await must<{ role: MemberRole } | null>(db().from("project_members").select("role").eq("project_id", p.id).eq("user_id", who.userId).maybeSingle());
-  return row?.role ?? null;
+  if (row) return row.role;
+  // A pro asked to join may look at the design, read only, before saying yes.
+  const { hasOpenRequest } = await import("../pros/directory.ts");
+  return (await hasOpenRequest(p.id, who.userId)) ? "viewer" : null;
 }
 
 export type TeamMember = { user_id: string; role: ProjectRole; name: string | null; email: string | null; company: string | null; kind: string | null };

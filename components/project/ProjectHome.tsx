@@ -19,6 +19,7 @@ type Home = {
   chosen_option: number | null;
   unlocked?: boolean;
   unread?: number;
+  pros?: string[];
   options?: Layout[] | null;
   site: { location?: string; units?: "imperial" | "metric" };
 };
@@ -158,6 +159,7 @@ function Overview({ p, role, unlocked, go, onThread, onTeam, onUnlocked, onTour 
           <Unlock p={p} role={role} onUnlocked={onUnlocked} />
         </div>
       )}
+      {role === "owner" && <WhoBuilds p={p} onTeam={onTeam} />}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {cards.map((c) => (
           <button
@@ -215,6 +217,49 @@ function Unlock({ p, role, onUnlocked }: { p: Home; role: ProjectRole; onUnlocke
           {error}
         </p>
       )}
+    </section>
+  );
+}
+
+// "Who will build this?" for an owner without an architect or builder yet: invite your own, let Arcon suggest
+// pros by taste, or not yet (hidden on this device until the next stage).
+function WhoBuilds({ p, onTeam }: { p: Home; onTeam: () => void }) {
+  const need = !p.pros?.includes("architect") && stageOf(p) < 3 ? "architect" : !p.pros?.includes("builder") ? "builder" : null;
+  const key = `arcon-who-${p.id}-${need}-${stageOf(p)}`;
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return typeof window !== "undefined" && localStorage.getItem(key) === "1";
+    } catch {
+      return false;
+    }
+  });
+  if (!need || hidden) return null;
+  return (
+    <section className="mt-4 rounded-2xl border border-line bg-paper-raised p-5">
+      <p className="font-serif text-2xl">{need === "architect" ? "Who will design and build this with you?" : "Who will build this?"}</p>
+      <p className="mt-1 text-sm text-ink-soft">
+        {need === "architect" ? "Bring in an architect or interior designer to refine the plan and see it through." : "Bring in a builder to price it, plan the site and build it."}
+      </p>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button onClick={() => (tick(), onTeam())} className="glow-btn rounded-full px-5 py-2 text-sm">
+          I have one, invite them
+        </button>
+        <a href={`/pros?project=${p.id}&role=${need}`} onClick={() => tick()} className="rounded-full border border-line px-5 py-2 text-sm transition hover:-translate-y-0.5 hover:border-accent hover:text-accent">
+          Suggest someone who fits my taste
+        </a>
+        <button
+          onClick={() => {
+            tick();
+            setHidden(true);
+            try {
+              localStorage.setItem(key, "1");
+            } catch {}
+          }}
+          className="rounded-full px-4 py-2 text-sm text-ink-soft hover:text-ink"
+        >
+          Not yet
+        </button>
+      </div>
     </section>
   );
 }

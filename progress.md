@@ -2,6 +2,23 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-14: R3b, finding a pro by taste
+
+- "Who will design and build this with you?" on Overview for an owner without an architect (then a builder):
+  invite your own (Team), let Arcon suggest someone, or not yet.
+- Suggest someone (/pros): architects or builders on Arcon with a live plan or trial and a city, ranked by taste
+  match: the client's Qloo style tags against the tags of every project the pro has designed on Arcon (cosine
+  similarity as a percentage), with the words they share ("You both love vintage, unique, artistic"), their past
+  styles, about, fees and project count; the same city counts a little. Each pro has a public page (/pros/id).
+- Asking a pro sends a request with an optional note; the pro sees it under New client requests, can view the
+  design read only, and accepts (joins with the role asked, posted in the thread, the client is told) or declines.
+  Accepting needs a live plan or trial.
+- Pros add "About your work", fees, and "Suggest me to new clients" in Account.
+
+Tested locally: the test owner's card, the directory (Test Studio, 90% match, shared words), a request with a note,
+the architect's request card, read-only view before accepting (edits refused), accept (joined, thread event,
+request cleared), and a builder declining from the button. 289 tests pass.
+
 ## 2026-10-13: R3a, New client (Studio)
 
 - Architects and builders get "+ New client" on My projects: the client's name, the kind of project and the
