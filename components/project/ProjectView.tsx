@@ -31,7 +31,7 @@ import { choicesOf, type Ticked } from "@/lib/green/improve";
 
 const greenTicked = (interview: Record<string, unknown> | null | undefined): Ticked => (Array.isArray(interview?.green) ? (interview.green as Ticked) : []);
 
-type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null; role?: ProjectRole; unlocked?: boolean; whose?: string | null };
+type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null; role?: ProjectRole; unlocked?: boolean; whose?: string | null; unread?: number };
 
 const WORK = ["read", "taste", "brief", "program", "plans"]; // progress ticks while the design request runs
 
@@ -51,13 +51,15 @@ export function ProjectView({ id }: { id: string }) {
   // How many changes were just made in "Make changes", shown on the steps that now reflect them.
   const [edited, setEdited] = useState(0);
   // On the project home: the Overview tab, or the tab holding `step`. Taking the guided tour again sets `touring`.
-  const [onOverview, setOnOverview] = useState(true);
+  const [pane, setPane] = useState<"overview" | "thread" | null>("overview");
+  // A room someone wants to talk about, picked in the 3D ("Discuss this room").
+  const [discuss, setDiscuss] = useState<{ id: string; name: string; level: number } | null>(null);
   const [touring, setTouring] = useState(false);
   const key = `arcon-step-${id}`;
 
   const setStep = (s: StepId) => {
     stepSound();
-    setOnOverview(false);
+    setPane(null);
     setStepState(s);
     try {
       sessionStorage.setItem(key, s);
@@ -71,7 +73,8 @@ export function ProjectView({ id }: { id: string }) {
       const asked = new URLSearchParams(location.search).get("step");
       const saved = isStep(asked) ? asked : sessionStorage.getItem(key);
       if (isStep(saved)) setStepState(saved);
-      if (isStep(asked)) setOnOverview(false);
+      if (isStep(asked)) setPane(null);
+      if (new URLSearchParams(location.search).get("tab") === "thread") setPane("thread");
     } catch {}
   }, [key]);
 
@@ -214,6 +217,17 @@ export function ProjectView({ id }: { id: string }) {
           changePlan={() => setStep("plans")}
           next={guided && next ? { label: `Next: ${steps.find((x) => x.id === next)?.label}`, go: () => setStep(next) } : undefined}
           preview={!d.unlocked}
+          onDiscuss={
+            guided
+              ? undefined
+              : (name) => {
+                  const floor = d.options[d.chosen_option ?? 0].floors.find((f) => f.spaces.some((x) => x.name === name));
+                  const space = floor?.spaces.find((x) => x.name === name);
+                  if (!floor || !space) return;
+                  setDiscuss({ id: space.id, name, level: floor.level });
+                  setPane("thread");
+                }
+          }
         />
       )}
       {s === "budget" && d.options?.[d.chosen_option ?? 0] && (
@@ -253,9 +267,11 @@ export function ProjectView({ id }: { id: string }) {
         role={role}
         whose={whose}
         step={step}
-        onOverview={onOverview}
+        pane={pane}
         setStep={setStep}
-        showOverview={() => setOnOverview(true)}
+        showPane={setPane}
+        discuss={discuss}
+        onStatus={(status) => setP((old) => (old && old.status !== status ? { ...old, status: status as View["status"] } : old))}
         body={(s) => body(s, false)}
         onUnlocked={() => setP((old) => (old ? { ...old, unlocked: true } : old))}
         onTour={() => {
@@ -279,7 +295,7 @@ export function ProjectView({ id }: { id: string }) {
           <button
             onClick={() => {
               setTouring(false);
-              setOnOverview(true);
+              setPane("overview");
               setP((old) => (old ? { ...old, toured_at: old.toured_at ?? new Date().toISOString() } : old));
               void fetch(`/api/projects/${p.id}/tour`, { method: "POST" }).catch(() => {});
             }}

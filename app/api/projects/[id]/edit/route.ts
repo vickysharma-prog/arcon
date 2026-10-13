@@ -5,6 +5,9 @@ import { applyChange, describe, type Change } from "@/lib/workspace/edit";
 import { suggestions, understand } from "@/lib/workspace/understand";
 import { ask } from "@/lib/workspace/ask";
 import { chatModel } from "@/lib/models";
+import { actorOf } from "@/lib/project/actor";
+import { postEvent } from "@/lib/project/thread";
+import { statusAfter } from "@/lib/project/review";
 
 // One change to the chosen plan: a change the workspace built, words someone typed, or undo. The server always
 // works the plan out again itself from the change, so the browser's preview is never trusted as the result.
@@ -68,6 +71,10 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
   // The plan as chosen is the first version, so the first change can always be undone.
   if (!(await latestVersion(p.id))) await saveVersion(p.id, current, "Chose this plan");
   const note = describe(change, current);
-  await saveVersion(p.id, out.layout, note);
+  const version = await saveVersion(p.id, out.layout, note);
+  // A change after review or approval needs approving again; the thread says what changed.
+  const status = statusAfter("edit", p.status);
+  if (status !== p.status) await updateProject(p.id, { status });
+  await postEvent(p, await actorOf(request.headers.get("cookie")), { type: "changed", version, note }).catch((e) => console.warn("thread event failed:", e));
   return Response.json({ project: await save(out.layout), note, change });
 }

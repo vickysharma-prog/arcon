@@ -1,6 +1,7 @@
 import { HomeLink } from "./landing/Intro";
 import { Logo } from "./Logo";
 import { ProfileMenu } from "./ProfileMenu";
+import { NotificationBell } from "./NotificationBell";
 
 export function SiteHeader() {
   return (
@@ -8,7 +9,10 @@ export function SiteHeader() {
       <HomeLink>
         <Logo size={26} />
       </HomeLink>
-      <ProfileMenu />
+      <div className="flex items-center gap-2">
+        <NotificationBell />
+        <ProfileMenu />
+      </div>
     </header>
   );
 }

@@ -54,7 +54,7 @@ export function nextLine(p: { status: Status; chosen_option: number | null }, ro
   }
 }
 
-export type TabId = "overview" | "design" | "money" | "files";
+export type TabId = "overview" | "design" | "thread" | "money" | "files";
 export type Tab = { id: TabId; label: string; steps: readonly string[]; locked: boolean };
 
 /** The tabs on the project home for this person. Locked tabs still show, with an unlock card inside. */
@@ -62,6 +62,7 @@ export function tabsFor(role: ProjectRole, unlocked: boolean): Tab[] {
   const tabs: Tab[] = [
     { id: "overview", label: "Overview", steps: [], locked: false },
     { id: "design", label: "Design", steps: can(role, "edit") ? ["brief", "plans", "walkthrough", "workspace"] : ["brief", "plans", "walkthrough"], locked: false },
+    { id: "thread", label: "Thread", steps: [], locked: false },
   ];
   if (role !== "viewer") {
     tabs.push({ id: "money", label: "Budget & shopping", steps: ["budget", "shop"], locked: !unlocked });

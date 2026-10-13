@@ -2,6 +2,26 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-13: R2, the project thread
+
+- Every project has a Thread tab (and a Thread card on Overview, with the unread count): one chat for everyone
+  on the project. A message can be about a room, picked on the plan (⌂) or with "Discuss this room" in the 3D;
+  "Rooms talked about" filters by room. Photos and files up to 10 MB, stored privately and shown through signed
+  links. Pros get a "Team only" channel when the project has two or more pros.
+- The project's own events post themselves: a plan chosen, a change saved (with its version and note), someone
+  joining, sent for review, approved or changes asked.
+- Review happens in the thread: the architect (or the owner) presses "Send for review"; the client gets a card
+  with a note box, Approve and Ask for changes. When a project has clients only they answer; otherwise the owner
+  does. Approval locks that version ("Version 1 approved by Priya"); any later change moves the project back to
+  Design and needs approving again.
+- The bell in the header lists what happened on your projects and opens the thread.
+- The unused comments table is replaced by messages (migration 009).
+
+Tested locally with the test owner and client: tag the kitchen, post, send for review (stage moves to Review),
+the client's bell shows all three, the client approves with a note (stage Approved, approval line and event in
+the thread), a photo shared from the browser and through the API, a file from another project refused.
+282 tests pass.
+
 ## 2026-10-13: R1, each person's space and the project home
 
 - My projects for everyone: every project a person is on, each labelled with their role on it ("Your house",

@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { STEPS, type StepId } from "./steps";
 import { TeamPanel } from "./TeamPanel";
+import { ThreadView, type Room } from "./ThreadView";
+import type { Layout } from "@/lib/layout/schema";
 import { ROLE_NAME, can, type ProjectRole } from "@/lib/project/access";
 import { nextLine, STAGES, stageOf, tabsFor, unlockPrice, type Tab } from "@/lib/project/stage";
 import { ok, tick } from "@/components/fx/sfx";
@@ -16,7 +18,9 @@ type Home = {
   status: Parameters<typeof stageOf>[0]["status"];
   chosen_option: number | null;
   unlocked?: boolean;
-  options?: { concept?: { name?: string } }[] | null;
+  unread?: number;
+  options?: Layout[] | null;
+  site: { location?: string; units?: "imperial" | "metric" };
 };
 
 // A project once its guided steps are done: whose it is, where it is in its life, and tabs for this person.
@@ -26,9 +30,11 @@ export function ProjectHome({
   role,
   whose,
   step,
-  onOverview,
+  pane,
   setStep,
-  showOverview,
+  showPane,
+  discuss,
+  onStatus,
   body,
   onUnlocked,
   onTour,
@@ -37,16 +43,18 @@ export function ProjectHome({
   role: ProjectRole;
   whose: string | null;
   step: StepId;
-  onOverview: boolean;
+  pane: "overview" | "thread" | null;
   setStep: (s: StepId) => void;
-  showOverview: () => void;
+  showPane: (pane: "overview" | "thread") => void;
+  discuss: Room | null;
+  onStatus: (status: string) => void;
   body: (s: StepId) => ReactNode;
   onUnlocked: () => void;
   onTour: () => void;
 }) {
   const unlocked = !!p.unlocked;
   const tabs = tabsFor(role, unlocked);
-  const active: Tab = onOverview ? tabs[0] : (tabs.find((t) => t.steps.includes(step)) ?? tabs[0]);
+  const active: Tab = pane ? (tabs.find((t) => t.id === pane) ?? tabs[0]) : (tabs.find((t) => t.steps.includes(step)) ?? tabs[0]);
   const stage = stageOf(p);
   const label = (s: string) => (s === "brief" ? (whose ? `${whose}'s style` : "Style") : s === "walkthrough" ? "3D" : (STEPS.find((x) => x.id === s)?.label ?? s));
   const [team, setTeam] = useState(false);
@@ -77,12 +85,13 @@ export function ProjectHome({
           {tabs.map((t) => (
             <button
               key={t.id}
-              onClick={() => (t.id === "overview" ? (tick(), showOverview()) : setStep(t.steps[0] as StepId))}
+              onClick={() => (t.id === "overview" || t.id === "thread" ? (tick(), showPane(t.id)) : setStep(t.steps[0] as StepId))}
               aria-current={active.id === t.id ? "page" : undefined}
               className={`-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm transition ${active.id === t.id ? "border-accent text-ink" : "border-transparent text-ink-soft hover:text-ink"}`}
             >
               {t.label}
               {t.locked && <span aria-label="locked"> 🔒</span>}
+              {t.id === "thread" && !!p.unread && pane !== "thread" && <span className="ml-1.5 rounded-full bg-accent px-1.5 py-0.5 text-[11px] text-white">{p.unread}</span>}
             </button>
           ))}
         </nav>
@@ -104,9 +113,18 @@ export function ProjectHome({
       </header>
 
       {/* No exit animation: the 3D's room labels are separate React roots and break if kept alive while leaving. */}
-      <motion.div key={onOverview ? "overview" : step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="flex-1 pt-4">
-          {active.id === "overview" ? (
-            <Overview p={p} role={role} unlocked={unlocked} go={(s) => setStep(s)} onTeam={() => setTeam(true)} onUnlocked={onUnlocked} onTour={onTour} />
+      <motion.div key={pane ?? step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="flex-1 pt-4">
+          {active.id === "thread" ? (
+            <ThreadView
+              key={discuss?.id ?? "thread"}
+              projectId={p.id}
+              layout={p.chosen_option !== null ? (p.options?.[p.chosen_option] ?? null) : null}
+              units={p.site.units ?? (p.site.location && /\b(US|USA|TX|CA|NY|FL)\b/.test(p.site.location) ? "imperial" : "metric")}
+              room={discuss}
+              onStatus={onStatus}
+            />
+          ) : active.id === "overview" ? (
+            <Overview p={p} role={role} unlocked={unlocked} go={(s) => setStep(s)} onThread={() => showPane("thread")} onTeam={() => setTeam(true)} onUnlocked={onUnlocked} onTour={onTour} />
           ) : active.locked || (step === "workspace" && !unlocked) ? (
             <div className="mx-auto max-w-6xl px-4 py-8">
               <Unlock p={p} role={role} onUnlocked={onUnlocked} />
@@ -120,11 +138,12 @@ export function ProjectHome({
   );
 }
 
-function Overview({ p, role, unlocked, go, onTeam, onUnlocked, onTour }: { p: Home; role: ProjectRole; unlocked: boolean; go: (s: StepId) => void; onTeam: () => void; onUnlocked: () => void; onTour: () => void }) {
+function Overview({ p, role, unlocked, go, onThread, onTeam, onUnlocked, onTour }: { p: Home; role: ProjectRole; unlocked: boolean; go: (s: StepId) => void; onThread: () => void; onTeam: () => void; onUnlocked: () => void; onTour: () => void }) {
   const plan = p.chosen_option !== null ? p.options?.[p.chosen_option]?.concept?.name : null;
   const cards: { title: string; text: string; to?: StepId; action?: () => void; locked?: boolean }[] = [
     { title: "Design", text: plan ? `${plan}: style, plans and 3D` : "Style, plans and 3D", to: "brief" },
     ...(role !== "viewer" ? [{ title: "Budget & shopping", text: "Cost by room and the shopping list", to: "budget" as StepId, locked: !unlocked }] : []),
+    { title: "Thread", text: p.unread ? `${p.unread} new message${p.unread === 1 ? "" : "s"}` : "Talk with everyone on the project; reviews happen here", action: onThread },
     { title: "Team", text: "Who's on this project, and invite people", action: onTeam },
     ...(role !== "viewer" ? [{ title: "Files", text: "PDF, CAD drawing, sketches, video", to: "drawings" as StepId, locked: !unlocked }] : []),
   ];

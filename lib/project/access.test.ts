@@ -2,14 +2,14 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { can, invitable, type Action, type ProjectRole } from "./access.ts";
 
-const ALL: Action[] = ["view", "comment", "edit", "invite", "approve", "site"];
+const ALL: Action[] = ["view", "comment", "edit", "invite", "approve", "site", "message", "review"];
 const allowed = (role: ProjectRole) => ALL.filter((a) => can(role, a));
 
 test("each role can do exactly its part", () => {
   assert.deepEqual(allowed("owner"), ALL);
-  assert.deepEqual(allowed("architect"), ["view", "comment", "edit", "invite"]);
-  assert.deepEqual(allowed("client"), ["view", "comment", "approve"]);
-  assert.deepEqual(allowed("builder"), ["view", "comment", "site"]);
+  assert.deepEqual(allowed("architect"), ["view", "comment", "edit", "invite", "message", "review"]);
+  assert.deepEqual(allowed("client"), ["view", "comment", "approve", "message"]);
+  assert.deepEqual(allowed("builder"), ["view", "comment", "site", "message"]);
   assert.deepEqual(allowed("viewer"), ["view"]);
 });
 

@@ -33,7 +33,7 @@ const HouseScene = dynamic(() => import("@/components/three/HouseScene"), {
 });
 
 export function WalkthroughStep({
-  layout, brief, taste, title, option = 0, planName, changePlan, next, extraPlants, projectId, location, tier, spaceType, preview = false,
+  layout, brief, taste, title, option = 0, planName, changePlan, next, extraPlants, projectId, location, tier, spaceType, preview = false, onDiscuss,
 }: {
   layout: Layout; spaceType?: string | null; extraPlants?: Record<string, number>; projectId?: string; location?: string | null; tier?: string | null; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null;
   /** Which of the three plan options this is, and a way back to pick another. */
@@ -41,6 +41,8 @@ export function WalkthroughStep({
   next?: { label: string; go: () => void };
   /** Not unlocked yet: the 3D can only be looked at from outside. */
   preview?: boolean;
+  /** Open the project thread about the room being looked at. */
+  onDiscuss?: (room: string) => void;
 }) {
   const [mode, setMode] = useState<Mode>(preview ? "orbit" : "walk");
   // "Whole café", "Whole office": the button that steps back out names what was designed.
@@ -244,6 +246,17 @@ export function WalkthroughStep({
               <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-accent" />
               {room}
             </div>
+            {onDiscuss && room !== "Outside" && (
+              <button
+                onClick={() => {
+                  setPlaying(false);
+                  onDiscuss(room);
+                }}
+                className="absolute left-4 top-14 rounded-full bg-btn px-4 py-1.5 text-sm text-btn-ink shadow"
+              >
+                💬 Discuss this room
+              </button>
+            )}
             <div className="absolute right-4 top-4 flex items-center gap-2">
               <p className="pointer-events-none rounded-full bg-paper/85 px-4 py-1.5 text-sm text-ink-soft backdrop-blur">Hold and drag to look around</p>
               <FullButton full={full} onClick={toggleFull} />
@@ -274,6 +287,11 @@ export function WalkthroughStep({
                 <span className="mr-2 inline-block h-2 w-2 rounded-full bg-leaf" />
                 {room}
               </div>
+              {onDiscuss && room !== "Outside" && (
+                <button onClick={() => onDiscuss(room)} className="rounded-full bg-btn px-4 py-1.5 text-sm text-btn-ink shadow">
+                  💬 Discuss this room
+                </button>
+              )}
               {floors > 1 && (
                 <div role="radiogroup" aria-label="Floor" className="flex gap-1 rounded-full bg-paper/85 p-1 backdrop-blur">
                   {layout.floors.map((f) => (

@@ -107,8 +107,12 @@ export async function acceptInvite(token: string, userId: string): Promise<{ pro
     return mine ? { projectId: mine.project_id } : { error: "This invite has already been used or has expired. Ask for a new one." };
   }
   const project = await must<{ owner_id: string | null }>(db().from("projects").select("owner_id").eq("id", inv.project_id).single());
-  if (project.owner_id !== userId && MEMBER_ROLES.includes(inv.role))
+  if (project.owner_id !== userId && MEMBER_ROLES.includes(inv.role)) {
     await must(db().from("project_members").upsert({ project_id: inv.project_id, user_id: userId, role: inv.role, invited_by: inv.created_by }));
+    const { postEvent, nameOf } = await import("./thread.ts");
+    const full = await must<{ id: string; owner_id: string | null; title: string | null }>(db().from("projects").select("id, owner_id, title").eq("id", inv.project_id).single());
+    await postEvent(full, { id: userId, name: await nameOf(userId) }, { type: "joined", role: inv.role }).catch((e) => console.warn("thread event failed:", e));
+  }
   return { projectId: inv.project_id };
 }
 

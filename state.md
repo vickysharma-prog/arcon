@@ -30,7 +30,8 @@ arcon-ten.vercel.app, auto-deploying from GitHub (main). 273 unit tests pass; bu
 ## Next: one app, different for each person (planned 13 Oct, private/plan.md)
 
 R1 is built (13 Oct): My projects for everyone, the project home with tabs, the guided steps only the first time,
-per-project unlocking with pros' trials. Next: R2, the project thread.
+per-project unlocking with pros' trials. R2 is built too: the project thread with room tags, files, events,
+review and approval inside it, and the bell. Next: R3, Studio and the pros directory.
 
 Vicky found the shared flow confusing, so the app now behaves differently for each person. Decided 13 Oct
 (full list in private/plan.md, "One app, different for each person" and "Decisions from the 13 Oct grilling"):

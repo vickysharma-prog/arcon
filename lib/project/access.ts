@@ -11,13 +11,15 @@ export type Action =
   | "edit" // change the design: choose a plan, make changes, re-run, tick greenery
   | "invite" // add people and see the team
   | "approve"
-  | "site"; // run the building site
+  | "site" // run the building site
+  | "message" // post in the project thread
+  | "review"; // send the design for the client's review
 
 const RULES: Record<ProjectRole, readonly Action[]> = {
-  owner: ["view", "comment", "edit", "invite", "approve", "site"],
-  architect: ["view", "comment", "edit", "invite"],
-  client: ["view", "comment", "approve"],
-  builder: ["view", "comment", "site"],
+  owner: ["view", "comment", "edit", "invite", "approve", "site", "message", "review"],
+  architect: ["view", "comment", "edit", "invite", "message", "review"],
+  client: ["view", "comment", "approve", "message"],
+  builder: ["view", "comment", "site", "message"],
   viewer: ["view"],
 };
 
@@ -44,3 +46,6 @@ export const ROLE_CAN: Record<MemberRole, string> = {
   builder: "Sees the approved design and runs the site",
   viewer: "Can look, nothing else",
 };
+
+/** The pros on a project: only they see the team-only channel, and only when there are two or more of them. */
+export const isPro = (role: ProjectRole | null | undefined) => role === "architect" || role === "builder";

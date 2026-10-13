@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { ownedProject, publicProject } from "@/lib/auth/request";
 import { chooseOption } from "@/lib/design/run";
+import { actorOf } from "@/lib/project/actor";
+import { postEvent } from "@/lib/project/thread";
 
 const Body = z.object({ option: z.number().int().min(0).max(2) });
 
@@ -10,7 +12,11 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
   const body = Body.safeParse(await request.json().catch(() => null));
   if (!body.success) return Response.json({ error: "option must be 0, 1 or 2" }, { status: 400 });
   try {
-    return Response.json(publicProject(await chooseOption(p.id, body.data.option)));
+    const chosen = await chooseOption(p.id, body.data.option);
+    // The thread records it; a failure there never undoes the choice.
+    const plan = chosen.options?.[body.data.option]?.concept?.name ?? `option ${body.data.option + 1}`;
+    if (p.chosen_option !== body.data.option) await postEvent(chosen, await actorOf(request.headers.get("cookie")), { type: "chose", plan }).catch((e) => console.warn("thread event failed:", e));
+    return Response.json(publicProject(chosen));
   } catch (e) {
     return Response.json({ error: e instanceof Error ? e.message : "could not choose" }, { status: 422 });
   }
