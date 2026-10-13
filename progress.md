@@ -2,6 +2,33 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-14: R4, the building site (full)
+
+- A Site tab once the design is approved. The builder (or the pro who owns the project) runs it; the owner, client
+  and architect follow it read only.
+- Start the site on a chosen day: phases come from the design's timeline with real dates (everything after
+  design), and the main materials are taken off the approved plan with quantities and unit costs from the budget
+  (flooring, paint, tiles, electrical and plumbing points, kitchen units, bathroom fittings, furniture, plants;
+  cement and steel for a new build). The project moves to Building.
+- Today: what needs attention (late or behind phases, overdue tasks, low stock for the phase in hand, nobody on
+  site on a weekday), who is on site (tap to mark), tasks due.
+- Phases and tasks: each phase's progress against where it should be by its dates; tasks with due dates and who
+  does them; finishing a phase starts the next, and the last one finishes the build (status Done).
+- Crew: the builder's roster is kept across sites (name, trade, phone, day rate); attendance by day; labour cost
+  from the days worked.
+- Materials: needed, ordered, delivered, used, still to order; orders with supplier, cost and arrival date, marked
+  delivered once (stock adds up).
+- Updates: a note and photos (the phone camera opens on mobile) and the phase's new %, shown to everyone and
+  posted in the thread.
+- Money: labour plus material orders against the budget.
+- The client's Overview shows a Building card (%, what is happening now, the latest update and photo); the builder's
+  My projects shows Today on site for every active site.
+
+Tested: 300 unit tests (phase seeding, materials take-off, expected progress, alerts including weekends, stock,
+labour); the site started and read against the real database on the test Austin house (7 phases, 9 materials,
+USD budget, the "nobody on site" alert); production build. Not yet tested in the browser: the local server was
+stopped for low memory.
+
 ## 2026-10-14: R3d, studio branding and handing over; the techy pass
 
 - The studio behind a design (the architect on it, or the pro who owns it) shows to its clients: "Designed with

@@ -29,6 +29,9 @@ test("tabs by role: viewers only look; only editors get Make changes; money and 
   assert.deepEqual(ids("viewer"), ["overview", "design", "thread"]);
   assert.ok(tabsFor("architect", true)[1].steps.includes("workspace"));
   assert.ok(!tabsFor("client", true)[1].steps.includes("workspace"));
+  assert.deepEqual(tabsFor("builder", true, "building").map((t) => t.id), ["overview", "design", "thread", "site", "money", "files"]);
+  assert.ok(!tabsFor("owner", true, "ready").some((t) => t.id === "site"));
+  assert.ok(!tabsFor("viewer", true, "building").some((t) => t.id === "site"));
   const locked = tabsFor("owner", false);
   assert.deepEqual(locked.filter((t) => t.locked).map((t) => t.id), ["money", "files"]);
 });

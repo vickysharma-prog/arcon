@@ -10,6 +10,7 @@ import { STAGES, stageOf } from "@/lib/project/stage";
 import { ROLE_SHORT } from "@/lib/account/roles";
 import { NewClient } from "@/components/account/NewClient";
 import { Requests } from "@/components/pros/Requests";
+import { sitesToday } from "@/lib/site/store";
 import { memberProjects } from "@/lib/project/team";
 import { PageLoading } from "@/components/fx/PageLoading";
 import { Decode } from "@/components/fx/Decode";
@@ -56,6 +57,8 @@ async function HomePageBody() {
   const tag = (p: Card) => (p.role !== "owner" ? `You're the ${ROLE_NAME[p.role].toLowerCase()}` : pro ? "Your project" : (YOUR[p.space_type ?? ""] ?? "Yours"));
   const stage = (p: Card) => stageOf(p as Parameters<typeof stageOf>[0]);
   const byStage = STAGES.map((s, i) => ({ ...s, n: projects.filter((p) => stage(p) === i).length }));
+  // Builders: today on each site that is being built.
+  const sites = profile.role === "builder" ? await sitesToday(projects.filter((p) => p.status === "building").map((p) => p.id)) : [];
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8">
@@ -98,6 +101,31 @@ async function HomePageBody() {
                 <p className="text-xs text-ink-soft">{s.label}</p>
               </li>
             ))}
+          </ul>
+        </Reveal>
+      )}
+
+      {sites.length > 0 && (
+        <Reveal delay={0.08} className="mt-4 rounded-2xl border border-line bg-paper-raised p-4">
+          <p className="text-sm font-medium">Today on site</p>
+          <ul className="mt-2 grid gap-2 sm:grid-cols-2">
+            {sites.map((s) => {
+              const p = projects.find((x) => x.id === s.id)!;
+              return (
+                <li key={s.id}>
+                  <Link href={`/project/${s.id}?tab=site`} className="block rounded-xl bg-paper p-3 transition hover:-translate-y-0.5">
+                    <p className="flex justify-between gap-2 text-sm">
+                      <span className="font-medium">{nameOf(p)}</span>
+                      <span>{s.overall}%</span>
+                    </p>
+                    <p className="text-xs text-ink-soft">
+                      {s.now ?? "Handed over"} · {s.onSite} on site today
+                      {s.late > 0 && <span className="text-red-600"> · {s.late} behind</span>}
+                    </p>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </Reveal>
       )}

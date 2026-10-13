@@ -7,6 +7,7 @@ import { STEPS, type StepId } from "./steps";
 import { TeamPanel } from "./TeamPanel";
 import { ThreadView, type Room } from "./ThreadView";
 import { Fees } from "./Fees";
+import { SiteCard, SiteView } from "./SiteView";
 import type { Layout } from "@/lib/layout/schema";
 import { ROLE_NAME, can, type ProjectRole } from "@/lib/project/access";
 import { nextLine, STAGES, stageOf, tabsFor, unlockPrice, type Tab } from "@/lib/project/stage";
@@ -47,9 +48,9 @@ export function ProjectHome({
   role: ProjectRole;
   whose: string | null;
   step: StepId;
-  pane: "overview" | "thread" | null;
+  pane: "overview" | "thread" | "site" | null;
   setStep: (s: StepId) => void;
-  showPane: (pane: "overview" | "thread") => void;
+  showPane: (pane: "overview" | "thread" | "site") => void;
   discuss: Room | null;
   onStatus: (status: string) => void;
   body: (s: StepId) => ReactNode;
@@ -57,7 +58,7 @@ export function ProjectHome({
   onTour: () => void;
 }) {
   const unlocked = !!p.unlocked;
-  const tabs = tabsFor(role, unlocked);
+  const tabs = tabsFor(role, unlocked, p.status);
   const active: Tab = pane ? (tabs.find((t) => t.id === pane) ?? tabs[0]) : (tabs.find((t) => t.steps.includes(step)) ?? tabs[0]);
   const stage = stageOf(p);
   const label = (s: string) => (s === "brief" ? (whose ? `${whose}'s style` : "Style") : s === "walkthrough" ? "3D" : (STEPS.find((x) => x.id === s)?.label ?? s));
@@ -103,7 +104,7 @@ export function ProjectHome({
           {tabs.map((t) => (
             <button
               key={t.id}
-              onClick={() => (t.id === "overview" || t.id === "thread" ? (tick(), showPane(t.id)) : setStep(t.steps[0] as StepId))}
+              onClick={() => (t.id === "overview" || t.id === "thread" || t.id === "site" ? (tick(), showPane(t.id)) : setStep(t.steps[0] as StepId))}
               aria-current={active.id === t.id ? "page" : undefined}
               className={`-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-sm transition ${active.id === t.id ? "border-accent text-ink" : "border-transparent text-ink-soft hover:text-ink"}`}
             >
@@ -132,7 +133,9 @@ export function ProjectHome({
 
       {/* No exit animation: the 3D's room labels are separate React roots and break if kept alive while leaving. */}
       <motion.div key={pane ?? step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="flex-1 pt-4">
-          {active.id === "thread" ? (
+          {active.id === "site" ? (
+            <SiteView projectId={p.id} onStatus={onStatus} />
+          ) : active.id === "thread" ? (
             <ThreadView
               key={discuss?.id ?? "thread"}
               projectId={p.id}
@@ -142,7 +145,7 @@ export function ProjectHome({
               onStatus={onStatus}
             />
           ) : active.id === "overview" ? (
-            <Overview p={p} role={role} unlocked={unlocked} go={(s) => setStep(s)} onThread={() => showPane("thread")} onTeam={() => setTeam(true)} onUnlocked={onUnlocked} onTour={onTour} />
+            <Overview p={p} role={role} unlocked={unlocked} go={(s) => setStep(s)} onSite={() => showPane("site")} onThread={() => showPane("thread")} onTeam={() => setTeam(true)} onUnlocked={onUnlocked} onTour={onTour} />
           ) : active.locked || (step === "workspace" && !unlocked) ? (
             <div className="mx-auto max-w-6xl px-4 py-8">
               <Unlock p={p} role={role} onUnlocked={onUnlocked} />
@@ -156,7 +159,7 @@ export function ProjectHome({
   );
 }
 
-function Overview({ p, role, unlocked, go, onThread, onTeam, onUnlocked, onTour }: { p: Home; role: ProjectRole; unlocked: boolean; go: (s: StepId) => void; onThread: () => void; onTeam: () => void; onUnlocked: () => void; onTour: () => void }) {
+function Overview({ p, role, unlocked, go, onSite, onThread, onTeam, onUnlocked, onTour }: { p: Home; role: ProjectRole; unlocked: boolean; go: (s: StepId) => void; onSite: () => void; onThread: () => void; onTeam: () => void; onUnlocked: () => void; onTour: () => void }) {
   const plan = p.chosen_option !== null ? p.options?.[p.chosen_option]?.concept?.name : null;
   const cards: { title: string; text: string; to?: StepId; action?: () => void; locked?: boolean }[] = [
     { title: "Design", text: plan ? `${plan}: style, plans and 3D` : "Style, plans and 3D", to: "brief" },
@@ -176,6 +179,7 @@ function Overview({ p, role, unlocked, go, onThread, onTeam, onUnlocked, onTour 
           <Unlock p={p} role={role} onUnlocked={onUnlocked} />
         </div>
       )}
+      {(p.status === "building" || p.status === "done") && role !== "viewer" && <SiteCard projectId={p.id} onOpen={onSite} />}
       {role === "owner" && <WhoBuilds p={p} onTeam={onTeam} />}
       {role !== "viewer" && <Fees projectId={p.id} location={p.site.location} />}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">

@@ -55,7 +55,7 @@ export function ProjectView({ id }: { id: string }) {
   // How many changes were just made in "Make changes", shown on the steps that now reflect them.
   const [edited, setEdited] = useState(0);
   // On the project home: the Overview tab, or the tab holding `step`. Taking the guided tour again sets `touring`.
-  const [pane, setPane] = useState<"overview" | "thread" | null>("overview");
+  const [pane, setPane] = useState<"overview" | "thread" | "site" | null>("overview");
   // A room someone wants to talk about, picked in the 3D ("Discuss this room").
   const [discuss, setDiscuss] = useState<{ id: string; name: string; level: number } | null>(null);
   const [touring, setTouring] = useState(false);
@@ -78,7 +78,8 @@ export function ProjectView({ id }: { id: string }) {
       const saved = isStep(asked) ? asked : sessionStorage.getItem(key);
       if (isStep(saved)) setStepState(saved);
       if (isStep(asked)) setPane(null);
-      if (new URLSearchParams(location.search).get("tab") === "thread") setPane("thread");
+      const tab = new URLSearchParams(location.search).get("tab");
+      if (tab === "thread" || tab === "site") setPane(tab);
     } catch {}
   }, [key]);
 

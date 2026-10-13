@@ -54,16 +54,18 @@ export function nextLine(p: { status: Status; chosen_option: number | null }, ro
   }
 }
 
-export type TabId = "overview" | "design" | "thread" | "money" | "files";
+export type TabId = "overview" | "design" | "thread" | "site" | "money" | "files";
 export type Tab = { id: TabId; label: string; steps: readonly string[]; locked: boolean };
 
 /** The tabs on the project home for this person. Locked tabs still show, with an unlock card inside. */
-export function tabsFor(role: ProjectRole, unlocked: boolean): Tab[] {
+export function tabsFor(role: ProjectRole, unlocked: boolean, status?: string): Tab[] {
   const tabs: Tab[] = [
     { id: "overview", label: "Overview", steps: [], locked: false },
     { id: "design", label: "Design", steps: can(role, "edit") ? ["brief", "plans", "walkthrough", "workspace"] : ["brief", "plans", "walkthrough"], locked: false },
     { id: "thread", label: "Thread", steps: [], locked: false },
   ];
+  // The building site, once the design is approved.
+  if (role !== "viewer" && (status === "approved" || status === "building" || status === "done")) tabs.push({ id: "site", label: "Site", steps: [], locked: false });
   if (role !== "viewer") {
     tabs.push({ id: "money", label: "Budget & shopping", steps: ["budget", "shop"], locked: !unlocked });
     tabs.push({ id: "files", label: "Files", steps: ["drawings"], locked: !unlocked });

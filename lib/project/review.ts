@@ -11,7 +11,8 @@ export type ThreadEvent =
   | { type: "approved"; version: number; note?: string | null }
   | { type: "changes"; version: number; note?: string | null }
   | { type: "fee"; action: "added" | "bill" | "paid" | "received"; label: string; amount: string }
-  | { type: "handover"; to: string };
+  | { type: "handover"; to: string }
+  | { type: "site"; what: "started" | "phase" | "update" | "finished"; name?: string; pct?: number; note?: string };
 
 /** One line for the thread: "Priya approved version 3." */
 export function eventText(e: ThreadEvent, who: string): string {
@@ -36,6 +37,14 @@ export function eventText(e: ThreadEvent, who: string): string {
           : e.action === "paid"
             ? `${who} marked ${e.label} as paid (${e.amount}).`
             : `${who} confirmed receiving ${e.label} (${e.amount}).`;
+    case "site":
+      return e.what === "started"
+        ? `${who} started the building site. First up: ${e.name}.`
+        : e.what === "phase"
+          ? `${who} finished ${e.name}.`
+          : e.what === "finished"
+            ? `${who} finished the build. Time to move in.`
+            : `Site update from ${who}${e.name ? ` (${e.name}${e.pct !== undefined ? `, ${e.pct}%` : ""})` : ""}: ${e.note}`;
     case "handover":
       return `${who} handed the project over to ${e.to}, who now runs it. ${who} stays on as the client.`;
   }
