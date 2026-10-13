@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { ok, tick } from "@/components/fx/sfx";
+import { Decode } from "@/components/fx/Decode";
 import { passwordProblem, startSession } from "./session";
 
 type Provider = "google" | "apple";
@@ -96,7 +97,9 @@ export function SignIn({ next, signup }: { next: string; signup: boolean }) {
   return (
     <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className="mx-auto w-full max-w-sm">
       <p className="text-xs uppercase tracking-[0.25em] text-accent">{mode === "signup" ? "Create your account" : mode === "forgot" ? "Reset your password" : "Welcome back"}</p>
-      <h1 className="mt-2 font-serif text-4xl">{mode === "signup" ? "Start designing with Arcon" : mode === "forgot" ? "Forgot your password?" : "Sign in to Arcon"}</h1>
+      <h1 className="mt-2 font-serif text-4xl">
+        <Decode key={mode} text={mode === "signup" ? "Start designing with Arcon" : mode === "forgot" ? "Forgot your password?" : "Sign in to Arcon"} />
+      </h1>
       <p className="mt-2 text-ink-soft">
         {mode === "forgot" ? "We'll email you a link to set a new one." : "Save your projects, share them, and work with your architect, client or builder."}
       </p>

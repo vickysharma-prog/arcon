@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { currentUser } from "@/lib/auth/server";
+import { PageLoading } from "@/components/fx/PageLoading";
 import { emailOf, getProfile } from "@/lib/account/profile";
 
 export const metadata: Metadata = { title: "Your account · Arcon" };
@@ -38,7 +39,7 @@ export default function AccountPage() {
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader />
-      <Suspense fallback={<main className="flex-1" />}>
+      <Suspense fallback={<PageLoading label="Loading your account" />}>
         <AccountPageBody  />
       </Suspense>
     </div>

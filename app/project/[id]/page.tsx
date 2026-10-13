@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
+import { PageLoading } from "@/components/fx/PageLoading";
 import { ProjectView } from "@/components/project/ProjectView";
 
 export const metadata: Metadata = { title: "Your design · Arcon" };
@@ -15,7 +16,7 @@ export default function ProjectPage({ params }: PageProps<"/project/[id]">) {
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader />
-      <Suspense fallback={<main className="flex-1" />}>
+      <Suspense fallback={<PageLoading label="Opening the project" />}>
         <Project params={params} />
       </Suspense>
     </div>

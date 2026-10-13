@@ -11,6 +11,8 @@ import { ROLE_SHORT } from "@/lib/account/roles";
 import { NewClient } from "@/components/account/NewClient";
 import { Requests } from "@/components/pros/Requests";
 import { memberProjects } from "@/lib/project/team";
+import { PageLoading } from "@/components/fx/PageLoading";
+import { Decode } from "@/components/fx/Decode";
 import { ROLE_NAME, type ProjectRole } from "@/lib/project/access";
 
 export const metadata: Metadata = { title: "Your projects · Arcon" };
@@ -64,7 +66,9 @@ async function HomePageBody() {
           {profile.company && <> · {profile.company}</>}
         </p>
         <div className="mt-1 flex flex-wrap items-end justify-between gap-4">
-          <h1 className="font-serif text-5xl">My projects</h1>
+          <h1 className="font-serif text-5xl">
+            <Decode text="My projects" />
+          </h1>
           <div className="flex gap-2">
             <Link href="/start/plan" className="rounded-full border border-line px-5 py-2.5 text-sm transition hover:border-accent hover:text-accent">
               Upload a plan
@@ -161,7 +165,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader />
-      <Suspense fallback={<main className="flex-1" />}>
+      <Suspense fallback={<PageLoading label="Loading your projects" />}>
         <HomePageBody  />
       </Suspense>
     </div>

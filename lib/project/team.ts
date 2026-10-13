@@ -66,7 +66,7 @@ export async function ownerName(ownerId: string | null): Promise<string | null> 
   return row?.name ?? null;
 }
 
-export type InviteInfo = { project_id: string; role: MemberRole; title: string | null; space_type: string | null; location: string | null; from: string | null; owner: string | null; state: "open" | "used" | "expired" };
+export type InviteInfo = { project_id: string; role: MemberRole; title: string | null; space_type: string | null; location: string | null; from: string | null; logo: string | null; owner: string | null; state: "open" | "used" | "expired" };
 
 const TOKEN = /^[0-9a-f]{64}$/;
 
@@ -79,7 +79,7 @@ export async function inviteInfo(token: string): Promise<InviteInfo | null> {
   if (!inv || inv.revoked) return null;
   const [project, from] = await Promise.all([
     must<{ title: string | null; space_type: string | null; site: { location?: string }; owner_id: string | null; designed_for: string | null }>(db().from("projects").select("title, space_type, site, owner_id, designed_for").eq("id", inv.project_id).single()),
-    must<{ name: string; company: string | null } | null>(db().from("profiles").select("name, company").eq("user_id", inv.created_by).maybeSingle()),
+    must<{ name: string; company: string | null; logo_url: string | null } | null>(db().from("profiles").select("name, company, logo_url").eq("user_id", inv.created_by).maybeSingle()),
   ]);
   return {
     owner: project.designed_for ?? (await ownerName(project.owner_id)),
@@ -89,6 +89,7 @@ export async function inviteInfo(token: string): Promise<InviteInfo | null> {
     space_type: project.space_type,
     location: project.site?.location ?? null,
     from: from ? (from.company ? `${from.name} (${from.company})` : from.name) : null,
+    logo: from?.logo_url ?? null,
     state: inv.used_by ? "used" : new Date(inv.expires_at) < new Date() ? "expired" : "open",
   };
 }
@@ -127,4 +128,14 @@ export async function memberProjects(userId: string) {
   const cards = rows.filter((r) => r.projects);
   const names = await Promise.all(cards.map((r) => r.projects!.designed_for ?? ownerName(r.projects!.owner_id)));
   return cards.map((r, i) => ({ ...r.projects!, role: r.role, owner: names[i] }));
+}
+
+/** The studio behind a project, for branding: the architect on it, else the pro who owns it. */
+export async function studioOf(p: Pick<Project, "id" | "owner_id" | "mode">): Promise<{ id: string; name: string; logo_url: string | null } | null> {
+  const arch = await must<{ user_id: string } | null>(db().from("project_members").select("user_id").eq("project_id", p.id).eq("role", "architect").limit(1).maybeSingle());
+  const id = arch?.user_id ?? (p.mode === "pro" ? p.owner_id : null);
+  if (!id) return null;
+  const pr = await must<{ name: string; company: string | null; logo_url: string | null; role: string } | null>(db().from("profiles").select("name, company, logo_url, role").eq("user_id", id).maybeSingle());
+  if (!pr || (pr.role !== "architect" && pr.role !== "builder")) return null;
+  return { id, name: pr.company ?? pr.name, logo_url: pr.logo_url };
 }

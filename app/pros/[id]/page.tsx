@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { Reveal } from "@/components/fx/Motion";
+import { PageLoading } from "@/components/fx/PageLoading";
 import { proProfile } from "@/lib/pros/directory";
 
 export const metadata: Metadata = { title: "Pro · Arcon" };
@@ -60,7 +61,7 @@ export default function ProPage({ params }: PageProps<"/pros/[id]">) {
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader />
-      <Suspense fallback={<main className="flex-1" />}>
+      <Suspense fallback={<PageLoading />}>
         <Profile params={params} />
       </Suspense>
     </div>

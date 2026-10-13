@@ -2,6 +2,22 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-14: R3d, studio branding and handing over; the techy pass
+
+- The studio behind a design (the architect on it, or the pro who owns it) shows to its clients: "Designed with
+  Test Studio" and its logo in the project header, its logo on the invite page, and on the PDF pack's cover
+  ("Test Studio · design pack") and footer ("Designed by Test Studio · Made with Arcon").
+- "Hand over" in the Team panel (owner, next to their architect, asks once more): the architect becomes the owner
+  and runs the project from their studio, the owner stays on as the client, the design keeps their name, and the
+  thread says so.
+- The techy rule applied to the new screens: page loads show the scan line with the processing sound (one shared
+  PageLoading), the thread and team load the same way, and headings decode in (sign in, profile, My projects,
+  invite).
+
+Tested locally: Test Studio's branding on the owner's project, the hand over (owner becomes client, mode pro,
+editing refused, event in the thread, "You're the client" on My projects), the PDF cover and footer text.
+294 tests pass. R3 is done.
+
 ## 2026-10-14: R3c, fees by milestone
 
 - A Fees card on Overview for the pro and the person paying (hidden for viewers). The pro sets out one total fee

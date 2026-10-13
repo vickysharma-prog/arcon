@@ -22,6 +22,7 @@ type Home = {
   unread?: number;
   pros?: string[];
   mode?: "owner" | "pro";
+  studio?: { id: string; name: string; logo_url: string | null } | null;
   options?: Layout[] | null;
   site: { location?: string; units?: "imperial" | "metric" };
 };
@@ -73,7 +74,21 @@ export function ProjectHome({
             </p>
             <h1 className="font-serif text-4xl sm:text-5xl">{p.title ?? "Your project"}</h1>
           </div>
-          {!unlocked && <span className="rounded-full border border-line px-3 py-1 text-xs text-ink-soft">Preview</span>}
+          <div className="flex items-center gap-3">
+            {/* The studio behind the design, shown to its clients (the pros themselves don't need their own logo back). */}
+            {p.studio && (role === "client" || role === "viewer" || (role === "owner" && p.mode !== "pro")) && (
+              <span className="flex items-center gap-2 rounded-full border border-line bg-paper-raised py-1 pl-1 pr-3 text-xs">
+                {p.studio.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.studio.logo_url} alt="" className="h-6 w-6 rounded-full object-contain" />
+                ) : (
+                  <span className="grid h-6 w-6 place-items-center rounded-full bg-btn text-[10px] text-btn-ink">{p.studio.name[0]}</span>
+                )}
+                Designed with {p.studio.name}
+              </span>
+            )}
+            {!unlocked && <span className="rounded-full border border-line px-3 py-1 text-xs text-ink-soft">Preview</span>}
+          </div>
         </div>
         {/* Where the project is in its life */}
         <ol className="mt-5 grid grid-cols-6 gap-1.5" aria-label="Project progress">

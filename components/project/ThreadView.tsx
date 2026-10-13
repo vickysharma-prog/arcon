@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { PlanSvg } from "@/components/plan/PlanSvg";
 import type { Layout } from "@/lib/layout/schema";
+import { Scanning } from "@/components/fx/Motion";
 import { ok, tick } from "@/components/fx/sfx";
 
 type Attachment = { path: string; name: string; type: string; size: number; url?: string };
@@ -197,7 +198,11 @@ export function ThreadView({
         )}
 
         <div ref={list} className="flex-1 space-y-3 overflow-y-auto px-4 py-4" aria-live="polite">
-          {!t && <p className="text-sm text-ink-soft">Loading…</p>}
+          {!t && (
+            <div className="grid place-items-center py-10">
+              <Scanning label="Loading the thread" />
+            </div>
+          )}
           {t && shown.length === 0 && <p className="py-10 text-center text-sm text-ink-soft">{filter ? "Nothing about this room yet." : "No messages yet. Say hello, ask a question, or share a photo."}</p>}
           {shown.map((m) =>
             m.kind === "event" ? (

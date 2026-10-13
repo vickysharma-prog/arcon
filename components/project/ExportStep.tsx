@@ -43,6 +43,8 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
   const still = useReducedMotion();
   const layout = p.options?.[p.chosen_option ?? 0];
   const title = p.title ?? "Your design";
+  // The studio behind the design goes on the pack its clients take away.
+  const studio = (p as Project & { studio?: { name: string; logo_url: string | null } | null }).studio ?? null;
   // The design, not the box: each floor from above with the walls cut, the same from the other side, close-ups of
   // the two biggest rooms with their furniture, and the building from the street.
   const views = useMemo<View[]>(() => {
@@ -217,11 +219,12 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
         </div>
         <div className="print-footer">
           <Mark size={18} />
-          <span className="font-serif text-base">Made with Arcon</span>
+          <span className="font-serif text-base">{studio ? `Designed by ${studio.name} · Made with Arcon` : "Made with Arcon"}</span>
           <span>· {TAGLINE} · AI architect, powered by Qloo</span>
         </div>
         <section className="print-page">
-          <p className="text-xs uppercase tracking-[0.3em]">Arcon · design pack</p>
+          {studio?.logo_url && <img src={studio.logo_url} alt="" className="mb-3 h-14 w-14 object-contain" />}
+          <p className="text-xs uppercase tracking-[0.3em]">{studio ? `${studio.name} · design pack` : "Arcon · design pack"}</p>
           <h1 className="mt-2 font-serif text-5xl">{title}</h1>
           <p className="mt-2">
             {[p.site.location, brief?.name && `${brief.name} style`, area(cost.area, units), new Date().toLocaleDateString()].filter(Boolean).join(" · ")}

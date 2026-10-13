@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ROLE_LABEL, ROLES, type Role } from "@/lib/account/roles";
 import type { Profile } from "@/lib/account/profile";
+import { Decode } from "@/components/fx/Decode";
 import { ok, tick } from "@/components/fx/sfx";
 
 const ROLE_LINE: Record<Role, string> = {
@@ -74,7 +75,9 @@ export function ProfileForm({ initial, email, next, editing }: { initial: Profil
         {stage === "role" ? (
           <motion.div key="role" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}>
             <p className="text-xs uppercase tracking-[0.25em] text-accent">Step 1 of 2</p>
-            <h1 className="mt-2 font-serif text-4xl">Who are you designing as?</h1>
+            <h1 className="mt-2 font-serif text-4xl">
+              <Decode text="Who are you designing as?" />
+            </h1>
             {email && <p className="mt-2 text-ink-soft">Signed in as {email}</p>}
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
               {ROLES.map((r, i) => (
@@ -103,7 +106,9 @@ export function ProfileForm({ initial, email, next, editing }: { initial: Profil
         ) : (
           <motion.form key="details" onSubmit={save} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }}>
             {!editing && <p className="text-xs uppercase tracking-[0.25em] text-accent">Step 2 of 2</p>}
-            <h1 className="mt-2 font-serif text-4xl">{editing ? "Your account" : "A little about you"}</h1>
+            <h1 className="mt-2 font-serif text-4xl">
+              <Decode text={editing ? "Your account" : "A little about you"} />
+            </h1>
             <p className="mt-2 text-ink-soft">
               {d.role && ROLE_LABEL[d.role]} ·{" "}
               <button type="button" onClick={() => setStage("role")} className="text-accent hover:underline">

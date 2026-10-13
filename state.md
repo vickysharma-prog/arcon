@@ -31,7 +31,9 @@ arcon-ten.vercel.app, auto-deploying from GitHub (main). 273 unit tests pass; bu
 
 R1 is built (13 Oct): My projects for everyone, the project home with tabs, the guided steps only the first time,
 per-project unlocking with pros' trials. R2 is built too: the project thread with room tags, files, events,
-review and approval inside it, and the bell. Next: R3, Studio and the pros directory.
+review and approval inside it, and the bell. R3 is built (14 Oct): New client (together or by link), the
+pros directory by Qloo taste match with requests, fees by milestone, studio branding and handing over.
+Next: R4, Sites (full site tracking for builders).
 
 Vicky found the shared flow confusing, so the app now behaves differently for each person. Decided 13 Oct
 (full list in private/plan.md, "One app, different for each person" and "Decisions from the 13 Oct grilling"):

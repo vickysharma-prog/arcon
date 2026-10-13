@@ -10,7 +10,8 @@ export type ThreadEvent =
   | { type: "review"; version: number }
   | { type: "approved"; version: number; note?: string | null }
   | { type: "changes"; version: number; note?: string | null }
-  | { type: "fee"; action: "added" | "bill" | "paid" | "received"; label: string; amount: string };
+  | { type: "fee"; action: "added" | "bill" | "paid" | "received"; label: string; amount: string }
+  | { type: "handover"; to: string };
 
 /** One line for the thread: "Priya approved version 3." */
 export function eventText(e: ThreadEvent, who: string): string {
@@ -35,6 +36,8 @@ export function eventText(e: ThreadEvent, who: string): string {
           : e.action === "paid"
             ? `${who} marked ${e.label} as paid (${e.amount}).`
             : `${who} confirmed receiving ${e.label} (${e.amount}).`;
+    case "handover":
+      return `${who} handed the project over to ${e.to}, who now runs it. ${who} stays on as the client.`;
   }
 }
 

@@ -32,10 +32,10 @@ import { choicesOf, type Ticked } from "@/lib/green/improve";
 
 const greenTicked = (interview: Record<string, unknown> | null | undefined): Ticked => (Array.isArray(interview?.green) ? (interview.green as Ticked) : []);
 
-type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null; role?: ProjectRole; unlocked?: boolean; whose?: string | null; unread?: number };
+type View = Omit<Project, "owner_id" | "guest_id"> & { brief: Brief | null; options?: Layout[] | null; role?: ProjectRole; unlocked?: boolean; whose?: string | null; unread?: number; pros?: string[]; studio?: { id: string; name: string; logo_url: string | null } | null };
 
 // Routes that change the design answer with the project alone; who is looking (role, name, lock, unread) stays.
-const keep = (old: View | null, next: View): View => (old ? { ...next, role: old.role, whose: old.whose, unlocked: old.unlocked, unread: old.unread } : next);
+const keep = (old: View | null, next: View): View => (old ? { ...next, role: old.role, whose: old.whose, unlocked: old.unlocked, unread: old.unread, pros: old.pros, studio: old.studio } : next);
 
 const WORK = ["read", "taste", "brief", "program", "plans"]; // progress ticks while the design request runs
 

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SignIn } from "@/components/account/SignIn";
 import { currentUser } from "@/lib/auth/server";
+import { PageLoading } from "@/components/fx/PageLoading";
 import { safeNext } from "@/lib/account/profile";
 
 export const metadata: Metadata = { title: "Sign in · Arcon" };
@@ -24,7 +25,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader />
-      <Suspense fallback={<main className="flex-1" />}>
+      <Suspense fallback={<PageLoading />}>
         <LoginPageBody searchParams={searchParams} />
       </Suspense>
     </div>

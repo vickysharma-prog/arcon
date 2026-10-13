@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { currentUser } from "@/lib/auth/server";
+import { PageLoading } from "@/components/fx/PageLoading";
 import { emailOf, getProfile, safeNext } from "@/lib/account/profile";
 
 export const metadata: Metadata = { title: "Welcome · Arcon" };
@@ -28,7 +29,7 @@ export default function WelcomePage({ searchParams }: PageProps<"/welcome">) {
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader />
-      <Suspense fallback={<main className="flex-1" />}>
+      <Suspense fallback={<PageLoading />}>
         <WelcomePageBody searchParams={searchParams} />
       </Suspense>
     </div>

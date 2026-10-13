@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import QRCode from "qrcode";
 import { ROLE_CAN, ROLE_NAME, type MemberRole, type ProjectRole } from "@/lib/project/access";
 import { ok, tick } from "@/components/fx/sfx";
+import { Scanning } from "@/components/fx/Motion";
 import { ROLE_SHORT, type Role } from "@/lib/account/roles";
 
 type Member = { user_id: string; role: ProjectRole; name: string | null; email: string | null; company: string | null; kind: Role | null };
@@ -22,6 +23,8 @@ export function TeamPanel({ id, onClose }: { id: string; onClose: () => void }) 
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "Hand over" asks once more before giving the project away.
+  const [handing, setHanding] = useState<string | null>(null);
 
   const load = useCallback(
     () =>
@@ -55,6 +58,17 @@ export function TeamPanel({ id, onClose }: { id: string; onClose: () => void }) 
     setFresh({ token: body.token, qr });
     setCopied(false);
     void load();
+  }
+
+  async function handOver(userId: string) {
+    setBusy(true);
+    setError(null);
+    const res = await fetch(`/api/projects/${id}/handover`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ userId }) });
+    setBusy(false);
+    setHanding(null);
+    if (!res.ok) return setError((await res.json().catch(() => ({}))).error ?? "Couldn't hand it over.");
+    ok();
+    window.location.reload();
   }
 
   async function copy(token: string) {
@@ -91,7 +105,9 @@ export function TeamPanel({ id, onClose }: { id: string; onClose: () => void }) 
         <p className="mt-1 text-sm text-ink-soft">Everyone on this project sees the same design, live.</p>
 
         {!team ? (
-          <p className="mt-8 text-sm text-ink-soft">Loading…</p>
+          <div className="mt-10 grid place-items-center">
+            <Scanning label="Loading the team" />
+          </div>
         ) : (
           <>
             <ul className="mt-6 space-y-2">
@@ -106,6 +122,15 @@ export function TeamPanel({ id, onClose }: { id: string; onClose: () => void }) 
                     <p className="truncate text-xs text-ink-soft">{[m.kind && ROLE_SHORT[m.kind], m.company, m.email].filter(Boolean).join(" · ")}</p>
                   </div>
                   <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs text-accent">{ROLE_NAME[m.role]}</span>
+                  {team.role === "owner" && m.role === "architect" && team.me && (
+                    <button
+                      onClick={() => (handing === m.user_id ? handOver(m.user_id) : (tick(), setHanding(m.user_id)))}
+                      className={`text-xs ${handing === m.user_id ? "font-medium text-accent" : "text-ink-soft hover:text-accent"}`}
+                      title="They run the project from their studio; you stay on as the client"
+                    >
+                      {handing === m.user_id ? "Confirm hand over?" : "Hand over"}
+                    </button>
+                  )}
                   {team.role === "owner" && m.role !== "owner" && (
                     <button onClick={() => remove({ user: m.user_id })} aria-label={`Remove ${m.name ?? m.email}`} className="text-xs text-ink-soft hover:text-red-600">
                       Remove
