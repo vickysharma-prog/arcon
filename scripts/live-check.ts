@@ -76,6 +76,11 @@ check("quiz pictures", (opts.body.rounds ?? []).every((r: { options: unknown[] }
 const qcard = await get("/api/quiz?p=aman-tokyo.muji.spirited-away");
 check("quiz card", qcard.status === 200 && !!qcard.body.style && (qcard.body.words ?? []).length > 0, qcard.body.style);
 check("quiz refuses picks off the list", (await get("/api/quiz?p=aman-tokyo.supreme.amelie")).status === 400);
+// The interview flow (16 Oct): questions, then "Now let's find your style" with pictures, the style, then the design
+check("pictures carry Qloo ids for the interview", (opts.body.rounds ?? []).every((r: { options: { id?: string }[] }) => r.options.every((o) => !!o.id)));
+const start = await get("/start");
+const startJs = (await Promise.all([...String(start.body).matchAll(/src="(\/_next\/static\/[^"]+\.js)"/g)].map(async (m) => (await fetch(BASE + m[1])).text()))).join(" ");
+check("interview: find your style, then design my space", start.status === 200 && startJs.includes("Now design my space") && startJs.includes("find your style"));
 
 console.log(failed ? `${failed} failed` : "all live checks passed");
 process.exit(failed ? 1 : 0);

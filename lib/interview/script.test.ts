@@ -122,15 +122,14 @@ test("typed or spoken answers pick choices in any language", () => {
   assert.deepEqual(matchChoices("something else entirely", q("kitchen")), []);
 });
 
-test("the extra taste questions can be skipped or answered, and add to the taste", () => {
-  const skipped = walk("house");
-  assert.equal(picksOf(skipped).length, 3);
-  assert.deepEqual(problems(skipped), []);
-  const music = { slot: "media" as const, id: "id-music", name: "Norah Jones" };
-  const trip = { slot: "place" as const, id: "id-trip", name: "Kyoto ryokan" };
-  const rich = walk("house", { music, trip });
-  assert.deepEqual(problems(rich), []);
-  assert.deepEqual(picksOf(rich).map((p) => p.id), ["id-place", "id-brand", "id-media", "id-music", "id-trip"]);
-  // A required taste question can't be skipped.
-  assert.match(problems({ ...rich, brand: "" }).join(), /bad pick: brand/);
+test("the style is three picks after the interview's questions: a place, a brand, a film or music", () => {
+  const all = walk("house");
+  assert.deepEqual(picksOf(all).map((p) => p.id), ["id-place", "id-brand", "id-media"]);
+  assert.deepEqual(problems(all), []);
+  // A taste pick can't be skipped.
+  assert.match(problems({ ...all, brand: "" }).join(), /bad pick: brand/);
+  // Every other question, budget included, comes before the first pick.
+  const order = QUESTIONS.map((q) => q.id);
+  assert.ok(QUESTIONS.filter((q) => q.kind !== "taste").every((q) => order.indexOf(q.id) < order.indexOf("place")));
+  assert.match(QUESTIONS.find((q) => q.id === "place")!.lead!.en, /find your style/);
 });

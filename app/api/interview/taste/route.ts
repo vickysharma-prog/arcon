@@ -4,7 +4,9 @@ import { search } from "@/lib/qloo/api";
 import { layerOf } from "@/lib/qloo/taste";
 import { profileFor } from "@/lib/qloo/profile";
 import { confirmPick } from "@/lib/plan-import/taste";
-import { profileSummary } from "@/lib/interview/logic";
+import { cardWords, profileSummary } from "@/lib/interview/logic";
+import { styleOf } from "@/lib/three/materials";
+import { STYLE_NAME } from "@/lib/quiz/picks";
 
 // The live "Your taste so far" card: the picks made so far in the interview, read through Qloo into style words
 // and matching brands. Only for showing; the finish route confirms the picks again before anything is saved.
@@ -20,7 +22,7 @@ export async function POST(request: Request) {
     const found = await Promise.all(body.data.picks.map((p) => confirmPick(p, search)));
     const signals = found.map((e) => ({ entityId: e.entity_id, name: e.name, layer: layerOf(e), type: e.types?.[0] }));
     const profile = await profileFor(signals, new Map(found.map((e) => [e.entity_id, e])));
-    return Response.json({ ...profileSummary(profile, 8, 4), count: found.length });
+    return Response.json({ ...profileSummary(profile, 16, 4), count: found.length, words: cardWords(profile), family: STYLE_NAME[styleOf(profile, "").style] });
   } catch {
     return Response.json({ error: "Couldn't read your taste just now." }, { status: 502 });
   }

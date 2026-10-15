@@ -84,3 +84,16 @@ export function profileSummary(profile: Profile, words = 8, brands = 5) {
     brands: profile.brands.slice(0, brands).map((b) => ({ name: b.name, look: b.aesthetic.slice(0, 3).map((a) => a.replaceAll("_", " ")) })),
   };
 }
+
+/** The words a style card shows: decor, ambience and aesthetic tags, strongest first, each once, with the pick it
+ *  came from, and at most three from any one pick so every pick shows. */
+export function cardWords(profile: Profile, max = 6) {
+  const per = new Map<string | null, number>();
+  return profile.tags
+    .filter((t) => t.family === "decor" || t.family === "ambience" || t.family === "aesthetic")
+    .sort((a, b) => b.weight - a.weight)
+    .filter((t, i, all) => all.findIndex((x) => x.value === t.value) === i)
+    .map((t) => ({ word: t.value.replaceAll("_", " "), from: t.sources[0]?.name ?? null }))
+    .filter((w) => (per.set(w.from, (per.get(w.from) ?? 0) + 1).get(w.from) ?? 0) <= 3)
+    .slice(0, max);
+}

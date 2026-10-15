@@ -4,7 +4,7 @@
 type Part = { type: string; text?: string; toolName?: string; state?: string; input?: unknown; output?: unknown; toolMetadata?: { eve?: { label?: string } } };
 export type Msg = { id: string; role: "assistant" | "user"; parts: readonly Part[] };
 
-export type TasteView = { style: { word: string; from: string[] }[]; brands: { name: string; look: string[] }[]; count: number };
+export type TasteView = { style: { word: string; from: string[] }[]; brands: { name: string; look: string[] }[]; count: number; family?: string; words?: { word: string; from: string | null }[] };
 
 const done = (p: Part) => p.type === "dynamic-tool" && p.state === "output-available";
 

@@ -310,12 +310,27 @@ export const QUESTIONS: Question[] = [
     when: (a) => type(a) === "hotel",
   },
 
-  // The taste: three things they love, matched in Qloo as they type
+  // Budget
+  {
+    id: "budget",
+    stage: 2,
+    kind: "choice",
+    ask: w("What kind of budget are you thinking?", "बजट कैसा सोच रहे हैं?", "Budget kaisa soch rahe ho?"),
+    choices: [
+      c("essential", "Keep it tight", "कम में", "Kam mein"),
+      c("mid", "Mid-range", "बीच का", "Mid-range"),
+      c("premium", "Premium", "प्रीमियम", "Premium"),
+      c("luxury", "Luxury", "लग्ज़री", "Luxury"),
+    ],
+  },
+
+  // Then the style: three picks from pictures (or typed and matched in Qloo), after the interview's questions
   {
     id: "place",
     stage: 3,
     kind: "taste",
     slot: "place",
+    lead: w("Now let's find your style. Three quick picks.", "अब आपकी स्टाइल ढूँढते हैं। बस तीन चुनाव।", "Ab aapka style dhoondte hain. Bas teen picks."),
     ask: w("Now the fun part. A hotel, café or restaurant you never wanted to leave?", "अब मज़ेदार हिस्सा। कोई होटल, कैफ़े या रेस्टोरेंट जहाँ से जाने का मन न हुआ?", "Ab mazedaar part. Koi hotel, café ya restaurant jahan se jaane ka mann nahi hua?"),
     hint: w("e.g. Ace Hotel New York", "जैसे ताज महल पैलेस मुंबई", "Jaise Ace Hotel New York"),
   },
@@ -334,39 +349,6 @@ export const QUESTIONS: Question[] = [
     slot: "media",
     ask: w("A film, show or music you could enjoy again and again?", "कोई फ़िल्म, शो या संगीत जो बार-बार देख-सुन सकें?", "Koi film, show ya music jo baar baar dekh sun sako?"),
     hint: w("e.g. Interstellar", "जैसे Interstellar", "Jaise Interstellar"),
-  },
-  // Two more, for a richer taste; either can be skipped.
-  {
-    id: "music",
-    stage: 3,
-    kind: "taste",
-    slot: "media",
-    optional: true,
-    ask: w("What do you play while cooking or working?", "खाना बनाते या काम करते समय क्या सुनते हैं?", "Cooking ya kaam karte waqt kya sunte ho?"),
-    hint: w("e.g. Norah Jones", "जैसे A. R. Rahman", "Jaise A. R. Rahman"),
-  },
-  {
-    id: "trip",
-    stage: 3,
-    kind: "taste",
-    slot: "place",
-    optional: true,
-    ask: w("A place you travelled to that changed how you see spaces?", "कोई जगह जहाँ घूमकर जगहों को देखने का नज़रिया बदला?", "Koi jagah jahan ghoom ke spaces dekhne ka nazariya badla?"),
-    hint: w("e.g. a hotel or museum you visited", "जैसे कोई होटल या म्यूज़ियम", "Jaise koi hotel ya museum"),
-  },
-
-  // Budget
-  {
-    id: "budget",
-    stage: 4,
-    kind: "choice",
-    ask: w("Last one. What kind of budget are you thinking?", "आख़िरी सवाल। बजट कैसा सोच रहे हैं?", "Last sawaal. Budget kaisa soch rahe ho?"),
-    choices: [
-      c("essential", "Keep it tight", "कम में", "Kam mein"),
-      c("mid", "Mid-range", "बीच का", "Mid-range"),
-      c("premium", "Premium", "प्रीमियम", "Premium"),
-      c("luxury", "Luxury", "लग्ज़री", "Luxury"),
-    ],
   },
 ];
 

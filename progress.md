@@ -2,6 +2,27 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: E2, part 3: the interview's new flow (Vicky's call)
+
+Vicky: the interview's questions come first, then Arcon says "Now let's find your style" and the quiz comes right
+there, then the style, then the design.
+- Order: project, people, how it's used, budget (no longer "last one"), then the three style picks.
+- The picks are the quiz's pictures (a place, a brand, a film or music), one tap each, with "Something else? Type
+  it" to name your own (matched in Qloo as before). The two optional typed extras (music, a trip) are gone: three
+  taps is enough.
+- After the picks Arcon reveals the style: "Your space style: Scandinavian", the words it's made of with the pick
+  each came from (at most three per pick), read aloud. Then "Now design my space" starts the design.
+- The "Your taste so far" card is gone from the interview page (Vicky: the Your style page has it all in detail);
+  the questions sit in the centre.
+- The /quiz page stays for sharing; its picks still carry into the interview, which then goes straight to the reveal
+  after the questions.
+- Q9 stays on the neighbourhood card: with the style picks last, the café questions come before the café they love.
+
+Tested: unit tests for the new order and the card words (329 in all); in the browser the whole interview as a new
+home: the questions centred, budget, "Now let's find your style", the three picture rounds, the reveal with words
+from Ace Hotel and Muji, and "Now design my space" through to "See your design". Fixed on the way: a browser copy
+of the picture list without Qloo ids (the interview now asks for the current list).
+
 ## 2026-10-16: E2, part 2: the taste quiz
 
 - /quiz, "What's your space style?": three rounds of pictures, one tap each (a place, a brand, a film or music),

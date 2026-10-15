@@ -1,6 +1,7 @@
 import { search, type Entity } from "@/lib/qloo/api";
 import { layerOf } from "@/lib/qloo/taste";
 import { profileFor } from "@/lib/qloo/profile";
+import { cardWords } from "@/lib/interview/logic";
 import { styleOf } from "@/lib/three/materials";
 import { parsePicks, ROUNDS, sameName, STYLE_NAME, keyOf, type Slot } from "@/lib/quiz/picks";
 
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
         ask: r.ask,
         options: (await Promise.all(r.names.map(async (n) => ({ n, e: await find(n, r.types) }))))
           .filter((x) => x.e?.properties?.image?.url)
-          .map(({ n, e }) => ({ key: keyOf(n), name: e!.name, image: e!.properties!.image!.url! })),
+          .map(({ n, e }) => ({ key: keyOf(n), id: e!.entity_id, name: e!.name, image: e!.properties!.image!.url! })),
       })),
     );
     return Response.json({ rounds }, { headers: { "Cache-Control": "public, max-age=3600" } });
@@ -35,19 +36,10 @@ export async function GET(request: Request) {
   const signals = known.map((e) => ({ entityId: e.entity_id, name: e.name, layer: layerOf(e) }));
   const taste = await profileFor(signals, new Map(known.map((e) => [e.entity_id, e])));
   const style = styleOf(taste, "");
-  // The words the style is made of, strongest first, each with the pick it came from.
-  const words = [...taste.tags]
-    .filter((t) => t.family === "decor" || t.family === "ambience" || t.family === "aesthetic")
-    .sort((a, b) => b.weight - a.weight)
-    .filter((t, i, all) => all.findIndex((x) => x.value === t.value) === i)
-    .map((t) => ({ word: t.value.replaceAll("_", " "), from: t.sources[0]?.name ?? null }));
-  // At most three words from any one pick, so every pick shows in the card.
-  const per = new Map<string | null, number>();
-  const shown = words.filter((w) => (per.set(w.from, (per.get(w.from) ?? 0) + 1).get(w.from) ?? 0) <= 3).slice(0, 6);
   return Response.json({
     style: STYLE_NAME[style.style],
     because: style.because,
-    words: shown,
+    words: cardWords(taste),
     brands: taste.brands.slice(0, 4).map((b) => b.name),
     picks: found.map((f) => ({ slot: f.slot, id: f.e!.entity_id, name: f.e!.name, image: f.e!.properties?.image?.url ?? null })),
   });

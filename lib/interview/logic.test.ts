@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { missingForDesign, profileSummary, siteSizeProblem, toCandidate, toMetres } from "./logic.ts";
+import { cardWords, missingForDesign, profileSummary, siteSizeProblem, toCandidate, toMetres } from "./logic.ts";
 import type { Project } from "../project/store.ts";
 import type { Profile } from "../qloo/taste.ts";
 
@@ -109,4 +109,12 @@ test("the taste card shows each word once, even when Qloo gives it as both decor
     brands: [],
   };
   assert.deepEqual(profileSummary(profile).style.map((s) => s.word), ["elegant", "modern"]);
+});
+
+test("the style card's words: strongest first, each once, at most three from any one pick", () => {
+  const a: { entityId: string; name: string; layer: 1 | 2 }[] = [{ entityId: "a", name: "A hotel", layer: 1 }];
+  const b = [{ entityId: "b", name: "A brand", layer: 2 as const }];
+  const tag = (family: "decor" | "ambience" | "aesthetic" | "tone", value: string, weight: number, sources = a) => ({ family, value, weight, sources });
+  const profile = { tags: [tag("decor", "vintage", 9), tag("ambience", "vintage", 8), tag("decor", "eclectic", 7), tag("ambience", "moody", 6), tag("decor", "artsy", 5), tag("tone", "warm", 4), tag("aesthetic", "clean lines", 3, b)], brands: [] };
+  assert.deepEqual(cardWords(profile).map((w) => `${w.word}/${w.from}`), ["vintage/A hotel", "eclectic/A hotel", "moody/A hotel", "clean lines/A brand"]);
 });

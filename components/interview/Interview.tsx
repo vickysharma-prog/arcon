@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Mark } from "@/components/Logo";
 import { AnimatedMark } from "@/components/AnimatedMark";
-import { tick, transition } from "@/components/fx/sfx";
+import { chime, tick, transition } from "@/components/fx/sfx";
 import { Decode, TypeLog } from "@/components/fx/Decode";
 import { STAGES, type TasteView } from "@/lib/interview/view";
 import { LANGS, langOf, voiceFor, type LangId } from "@/lib/interview/lang";
@@ -26,8 +26,12 @@ const SAY = {
   keys: { en: "Press 1–9 to pick", hi: "चुनने के लिए 1–9 दबाएँ", hinglish: "Chunne ke liye 1–9 dabao" },
   building: { en: "Reading your taste", hi: "आपकी पसंद समझ रहे हैं", hinglish: "Aapki pasand samajh rahe hain" },
   ready: { en: "Your profile is ready", hi: "आपकी प्रोफ़ाइल तैयार है", hinglish: "Aapki profile ready hai" },
-  tasteTitle: { en: "Your taste so far", hi: "अब तक आपकी पसंद", hinglish: "Ab tak aapki pasand" },
-  tasteEmpty: { en: "Name a place, a brand and a film or music you love, and your style appears here.", hi: "कोई जगह, ब्रांड और फ़िल्म या संगीत बताइए, आपकी स्टाइल यहाँ दिखेगी।", hinglish: "Koi jagah, brand aur film ya music batao, aapka style yahan dikhega." },
+  typeOwn: { en: "Something else? Type it", hi: "कुछ और? लिखिए", hinglish: "Kuch aur? Type karo" },
+  pictures: { en: "Pick one, or type your own", hi: "एक चुनिए, या अपना लिखिए", hinglish: "Ek chuno, ya apna type karo" },
+  yourStyle: { en: "Your space style", hi: "आपकी स्पेस स्टाइल", hinglish: "Aapka space style" },
+  styleFrom: { en: "Read by Qloo from", hi: "Qloo ने पढ़ा", hinglish: "Qloo ne padha" },
+  designNow: { en: "Now design my space", hi: "अब मेरा स्पेस डिज़ाइन करें", hinglish: "Ab mera space design karo" },
+  designing: { en: "Now designing your space", hi: "अब आपका स्पेस डिज़ाइन हो रहा है", hinglish: "Ab aapka space design ho raha hai" },
   done: { en: "Done", hi: "हो गया", hinglish: "Ho gaya" },
   skip: { en: "Skip", hi: "छोड़ें", hinglish: "Skip" },
   back: { en: "Change last answer", hi: "पिछला जवाब बदलें", hinglish: "Pichla jawab badlo" },
@@ -64,6 +68,17 @@ export function Interview() {
   // Answering for a project a pro set up ("New client"): its id, and whose it is.
   const [into, setInto] = useState<{ id: string; whose: string | null } | null>(null);
   const q = next(answers);
+  // The pictures for the three style picks (the same ones as the quiz), fetched once.
+  const [pictures, setPictures] = useState<Record<string, Picture[]>>({});
+  const [own, setOwn] = useState(false);
+  useEffect(() => {
+    // "v=2": the list with Qloo ids (a copy cached before they were added has none, and those can't be picked).
+    fetch("/api/quiz?v=2")
+      .then((r) => (r.ok ? r.json() : { rounds: [] }))
+      .then((b: { rounds: { slot: string; options: Picture[] }[] }) => setPictures(Object.fromEntries(b.rounds.map((r) => [r.slot, r.options.filter((o) => o.id)]))))
+      .catch(() => {});
+  }, []);
+  useEffect(() => setOwn(false), [q?.id]);
   const say = (k: keyof typeof SAY) => SAY[k][lang];
 
   useEffect(() => {
@@ -171,10 +186,23 @@ export function Interview() {
       setFinishing("failed");
     }
   }, [answers, lang, into]);
+  // All answered: the style is revealed and read aloud; the design starts when they ask for it.
+  const revealing = !q && !projectId && finishing === "idle";
   useEffect(() => {
-    if (!q && !projectId && finishing === "idle") void finish();
+    if (!revealing || !taste?.family) return;
+    const line = `${say("yourStyle")}: ${taste.family}.`;
+    if (!spoken.current.has(line)) {
+      spoken.current.add(line);
+      chime();
+      voice.speak(line, voiceFor(line, lang));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q?.id]);
+  }, [revealing, taste?.family]);
+  const designNow = () => {
+    tick();
+    voice.speak(say("designing"), voiceFor(say("designing"), lang));
+    void finish();
+  };
 
   const back = () => {
     tick();
@@ -213,7 +241,7 @@ export function Interview() {
 
   const total = asked(answers).length;
   const number = Math.min(history.length + 1, total);
-  const typing = q && (q.kind === "text" || q.kind === "taste");
+  const typing = q && (q.kind === "text" || (q.kind === "taste" && own));
 
   return (
     <div className="relative flex-1 overflow-hidden">
@@ -337,7 +365,19 @@ export function Interview() {
                         )}
                       </form>
                     )}
-                    {q.kind === "taste" && (
+                    {q.kind === "taste" && !own && (
+                      <Pictures
+                        options={pictures[q.slot!] ?? []}
+                        hint={say("pictures")}
+                        typeOwn={say("typeOwn")}
+                        onPick={(o) => answer(q.id, { slot: q.slot!, id: o.id, name: o.name })}
+                        onOwn={() => {
+                          tick();
+                          setOwn(true);
+                        }}
+                      />
+                    )}
+                    {q.kind === "taste" && own && (
                       <div className="mx-auto mt-4 max-w-lg">
                         <TasteLookup q={q} text={draft} say={say} onAnswer={(v) => answer(q.id, v)} />
                       </div>
@@ -375,6 +415,44 @@ export function Interview() {
                     )}
                     {(q.kind === "choice" || q.kind === "multi") && <p className="hidden font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft sm:block">{say("keys")}</p>}
                   </div>
+                </motion.div>
+              ) : revealing ? (
+                <motion.div key="reveal" initial={still ? false : { opacity: 0, y: 24, filter: "blur(8px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }} exit={still ? undefined : { opacity: 0, y: -18 }} className="w-full max-w-xl">
+                  <div className="mx-auto w-fit drop-shadow-[0_0_30px_var(--accent)]">
+                    <AnimatedMark size={72} growing={!taste?.family} />
+                  </div>
+                  <p className="mt-5 font-mono text-[11px] uppercase tracking-[0.3em] text-accent">{say("yourStyle")}</p>
+                  {taste?.family ? (
+                    <>
+                      <h1 className="mt-2 font-serif text-5xl sm:text-6xl">
+                        <Decode text={taste.family} />
+                      </h1>
+                      <p className="mt-3 text-ink-soft">
+                        {say("styleFrom")} {picks.map((p) => p.name).join(", ")}
+                      </p>
+                      <ul className="mt-5 flex flex-wrap justify-center gap-2">
+                        {(taste.words ?? []).map((s, i) => (
+                          <motion.li
+                            key={s.word}
+                            initial={still ? false : { opacity: 0, scale: 0.6 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ type: "spring", stiffness: 380, damping: 22, delay: 0.3 + i * 0.07 }}
+                            className="rounded-full border border-line bg-paper-raised px-3 py-1 text-sm capitalize"
+                          >
+                            {s.word}
+                            {s.from && <span className="normal-case text-ink-soft"> · {s.from}</span>}
+                          </motion.li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <div className="mx-auto mt-6 w-fit text-left text-sm">
+                      <TypeLog lines={["Reading your picks with Qloo", "Finding the words your style is made of", "Matching brands to your taste"]} done={false} />
+                    </div>
+                  )}
+                  <button type="button" onClick={designNow} disabled={!taste?.family} className="glow-btn mt-8 px-8 py-3.5 text-lg disabled:opacity-50">
+                    {say("designNow")} →
+                  </button>
                 </motion.div>
               ) : (
                 <motion.div key="finish" initial={still ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-xl">
@@ -441,50 +519,46 @@ export function Interview() {
             </AnimatePresence>
           </section>
 
-          <aside className="mx-auto mt-10 max-w-md xl:fixed xl:bottom-6 xl:right-6 xl:z-30 xl:mt-0 xl:w-[290px]">
-            <div className="rounded-2xl border border-line bg-paper-raised/85 p-5 shadow-[0_20px_60px_-30px_var(--accent)] backdrop-blur">
-              <div className="flex items-center gap-2">
-                <Mark size={22} />
-                <h2 className="font-serif text-2xl">{say("tasteTitle")}</h2>
-              </div>
-              {taste ? (
-                <>
-                  <p className="mt-1 text-xs text-ink-soft">From {taste.count} things you love, read through Qloo&apos;s taste graph</p>
-                  <ul className="mt-4 flex flex-wrap gap-2">
-                    {taste.style.map((s, i) => (
-                      <motion.li
-                        key={s.word}
-                        initial={still ? false : { opacity: 0, scale: 0.6 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ type: "spring", stiffness: 380, damping: 22, delay: i * 0.06 }}
-                        title={`From ${s.from.join(", ")}`}
-                        className="rounded-full bg-paper px-3 py-1 text-sm capitalize"
-                      >
-                        {s.word}
-                      </motion.li>
-                    ))}
-                  </ul>
-                  {taste.brands.length > 0 && (
-                    <>
-                      <h3 className="mt-5 text-xs uppercase tracking-widest text-ink-soft">Brands that match</h3>
-                      <ul className="mt-2 space-y-2 text-sm">
-                        {taste.brands.map((b) => (
-                          <li key={b.name}>
-                            <span className="font-medium">{b.name}</span>
-                            {b.look.length > 0 && <span className="text-ink-soft">: {b.look.join(", ")}</span>}
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-                </>
-              ) : (
-                <p className="mt-3 text-sm text-ink-soft">{say("tasteEmpty")}</p>
-              )}
-            </div>
-          </aside>
         </div>
       </div>
+    </div>
+  );
+}
+
+type Picture = { key: string; id: string; name: string; image: string };
+
+// A style pick from pictures (the quiz's), one tap each, or "Something else? Type it" to name your own.
+function Pictures({ options, hint, typeOwn, onPick, onOwn }: { options: Picture[]; hint: string; typeOwn: string; onPick: (o: Picture) => void; onOwn: () => void }) {
+  const still = useReducedMotion();
+  return (
+    <div>
+      <p className="font-mono text-[11px] uppercase tracking-[0.25em] text-ink-soft">{hint}</p>
+      {!options.length ? (
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {Array.from({ length: 8 }, (_, i) => (
+            <div key={i} className="aspect-square animate-pulse rounded-2xl bg-paper-raised" />
+          ))}
+        </div>
+      ) : (
+        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {options.map((o, i) => (
+            <motion.li key={o.key} initial={still ? false : { opacity: 0, y: 14, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: i * 0.04 }}>
+              <button
+                type="button"
+                onClick={() => onPick(o)}
+                className="group block w-full overflow-hidden rounded-2xl border border-line bg-paper-raised text-left transition hover:-translate-y-0.5 hover:border-accent hover:shadow-[0_18px_44px_-22px_var(--accent)]"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element -- Qloo's own image host, sized by CSS */}
+                <img src={o.image} alt="" className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <span className="block truncate p-2 text-sm font-medium">{o.name}</span>
+              </button>
+            </motion.li>
+          ))}
+        </ul>
+      )}
+      <button type="button" onClick={onOwn} className="mt-4 rounded-full border border-line px-4 py-1.5 text-sm text-ink-soft transition hover:border-accent hover:text-accent">
+        {typeOwn} →
+      </button>
     </div>
   );
 }
