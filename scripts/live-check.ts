@@ -108,5 +108,9 @@ check("a stranger can't delete a project", (await fetch(`${BASE}/api/projects/${
 check("a client can't delete the owner's project", (await fetch(`${BASE}/api/projects/${BUILDING}`, { method: "DELETE", headers: { cookie: await cookieFor("client") } })).status === 404);
 check("deleting an account needs DELETE typed", (await fetch(`${BASE}/api/account`, { method: "DELETE", headers: { cookie: await cookieFor("owner"), "content-type": "application/json" }, body: "{}" })).status === 400);
 
+// The landing page's live Qloo strip (16 Oct)
+const strip = await get("/api/strip");
+check("live Qloo strip", strip.status === 200 && (strip.body.reads ?? []).length === 3 && strip.body.reads.every((r: { words: unknown[] }) => r.words.length > 0), (strip.body.reads ?? []).map((r: { style: string }) => r.style).join(", "));
+
 console.log(failed ? `${failed} failed` : "all live checks passed");
 process.exit(failed ? 1 : 0);

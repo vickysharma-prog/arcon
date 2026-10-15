@@ -21,6 +21,10 @@ export const FAQ: { q: string; a: string }[] = [
     a: "No. You can design as a guest and your project stays in that browser. Sign up when you want to keep it on every device or share it with your architect, client or builder.",
   },
   {
+    q: "Which languages does Arcon speak?",
+    a: "English, Hindi and Hinglish, typed or spoken. Arcon answers in the language you use.",
+  },
+  {
     q: "Can I use a floor plan I already have?",
     a: "Yes. Upload a photo or PDF of your plan and Arcon reads it into an editable layout, then designs it around your taste.",
   },

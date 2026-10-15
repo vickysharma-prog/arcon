@@ -126,7 +126,7 @@ export function Hero() {
             </Link>
           </div>
           <p className="mt-5 text-sm text-ink-soft">
-            English, हिंदी or Hinglish · type or talk · no account needed ·{" "}
+            Type or talk · no account needed ·{" "}
             <Link href="/quiz" onClick={() => tick()} className="text-accent underline-offset-2 hover:underline">
               Find your space style in three taps
             </Link>

@@ -2,6 +2,20 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: Live Qloo strip, the market, questions, US first (Vicky)
+
+- Decided with Vicky in four rounds of questions (recorded in private/plan.md): the judges are American, so every demo,
+  example and the video is US-centric; the signed-in homes get redesigned for all four roles; the video is a real
+  recording of a family house in Los Angeles.
+- Under the hero, a strip live from Qloo: The Grand Budapest Hotel + Aman Tokyo (a home), Frank Ocean + Blue Bottle
+  Coffee (a café), Succession + Soho House New York (an office), each read by Qloo now into a style, its words with
+  the love each came from, and the brands it points to. Cached on the server, never in the repo; a labelled example
+  shows if Qloo can't answer.
+- Why it matters: $518B, Americans' spending on improving their homes in 2026 (Harvard JCHS, LIRA, revised April
+  2026), and $24K, the median US kitchen renovation (Houzz & Home Study 2026), each linked to its source. A figure
+  only reported second hand (the share of homeowners renovating) was left out.
+- Questions on the landing page, one open at a time, shared with Resources; languages moved there from the hero.
+
 ## 2026-10-16: Resources, deleting projects and accounts, real emails at sign-up (Vicky)
 
 - Resources (in the header and the profile menu): Arcon in two minutes, a guide for each kind of person, how taste

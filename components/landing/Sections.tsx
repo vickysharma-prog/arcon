@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
 import { AnimatedMark } from "@/components/AnimatedMark";
 import { Logo } from "@/components/Logo";
 import { HomeLink } from "./Intro";
 import { CountUp, HudCard, Reveal, Ring } from "@/components/fx/Motion";
 import { tick, transition } from "@/components/fx/sfx";
+import { FAQ } from "@/lib/content/faq";
 
 function Eyebrow({ children }: { children: ReactNode }) {
   return <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent">{children}</p>;
@@ -24,7 +25,7 @@ function Heading({ eyebrow, title, sub }: { eyebrow: string; title: ReactNode; s
 }
 
 const STEPS = [
-  { n: "01", title: "Tell Arcon about it", body: "The space, who uses it, how it's used and your budget. Tap, type or speak, in English, हिंदी or Hinglish." },
+  { n: "01", title: "Tell Arcon about it", body: "The space, who uses it, how it's used and your budget. Tap, type or just talk." },
   { n: "02", title: "Find your style", body: "Three quick picks: a place, a brand, a film or music. Qloo reads your taste and names your style." },
   { n: "03", title: "Choose a plan", body: "Three floor plans for your plot, each clear about what it does best and what it gives up." },
   { n: "04", title: "Walk through it", body: "Step inside in 3D, by day or by night, with the outside designed from your taste too." },
@@ -335,6 +336,81 @@ export function Audience() {
           </HudCard>
         ))}
       </div>
+    </section>
+  );
+}
+
+// The size of what Arcon is for, each number with where it comes from.
+const MARKET = [
+  { value: 518, prefix: "$", suffix: "B", what: "Americans' spending on improving their homes in 2026", source: "Harvard Joint Center for Housing Studies, LIRA, April 2026", href: "https://www.jchs.harvard.edu/press-releases/remodeling-growth-set-downshift-late-2026" },
+  { value: 24, prefix: "$", suffix: "K", what: "the median kitchen renovation in the US", source: "Houzz & Home Study, 2026", href: "https://www.houzz.com/magazine/11-things-to-know-about-home-renovations-today-stsetivw-vs~185079173" },
+];
+
+export function Market() {
+  return (
+    <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-8">
+      <div className="grid gap-4 rounded-3xl border border-line bg-paper-raised/60 p-6 sm:p-8 md:grid-cols-[1.2fr_1fr_1fr] md:items-center">
+        <Reveal>
+          <Eyebrow>Why it matters</Eyebrow>
+          <p className="mt-3 font-serif text-3xl leading-tight">Every dollar goes into a space someone lives or works in. Arcon designs it around who they are.</p>
+        </Reveal>
+        {MARKET.map((m, i) => (
+          <Reveal key={m.what} delay={0.1 + i * 0.08} className="border-line md:border-l md:pl-6">
+            <p className="font-serif text-6xl leading-none text-accent">
+              {m.prefix}
+              <CountUp value={m.value} />
+              {m.suffix}
+            </p>
+            <p className="mt-2">{m.what}</p>
+            <a href={m.href} target="_blank" rel="noreferrer" className="mt-1 block font-mono text-[10px] uppercase tracking-wider text-ink-soft hover:text-accent">
+              Source: {m.source}
+            </a>
+          </Reveal>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// Common questions, one open at a time.
+export function Faq() {
+  const [open, setOpen] = useState<number | null>(0);
+  return (
+    <section id="faq" className="mx-auto max-w-3xl scroll-mt-24 px-4 py-24 sm:px-8">
+      <Heading eyebrow="Questions" title="Before you start" />
+      <ul className="mt-10 divide-y divide-line border-y border-line">
+        {FAQ.map((f, i) => (
+          <li key={f.q}>
+            <button
+              type="button"
+              aria-expanded={open === i}
+              onClick={() => {
+                tick();
+                setOpen(open === i ? null : i);
+              }}
+              className="flex w-full items-center justify-between gap-4 py-5 text-left text-lg transition hover:text-accent"
+            >
+              {f.q}
+              <motion.span aria-hidden animate={{ rotate: open === i ? 45 : 0 }} className="shrink-0 font-mono text-xl text-accent">
+                +
+              </motion.span>
+            </button>
+            <AnimatePresence initial={false}>
+              {open === i && (
+                <motion.p initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden text-ink-soft">
+                  <span className="block pb-5">{f.a}</span>
+                </motion.p>
+              )}
+            </AnimatePresence>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-6 text-center text-sm text-ink-soft">
+        More in{" "}
+        <Link href="/resources" className="text-accent hover:underline">
+          Resources
+        </Link>
+      </p>
     </section>
   );
 }
