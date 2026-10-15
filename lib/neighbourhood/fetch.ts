@@ -16,7 +16,8 @@ export async function geocode(location: string): Promise<{ lat: number; lon: num
   return hit ? { lat: Number(hit.lat), lon: Number(hit.lon) } : null;
 }
 
-async function siteGeo(p: Project) {
+/** Where the site is on the map: stored on the project, looked up once per address. */
+export async function siteGeo(p: Project) {
   const loc = p.site.location!;
   if (p.site.geo?.for === loc) return p.site.geo;
   const g = await geocode(loc).catch(() => null);

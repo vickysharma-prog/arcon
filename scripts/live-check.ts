@@ -82,5 +82,10 @@ const start = await get("/start");
 const startJs = (await Promise.all([...String(start.body).matchAll(/src="(\/_next\/static\/[^"]+\.js)"/g)].map(async (m) => (await fetch(BASE + m[1])).text()))).join(" ");
 check("interview: find your style, then design my space", start.status === 200 && startJs.includes("Now design my space") && startJs.includes("find your style"));
 
+// Room moods and art and sound (16 Oct)
+const art = await get(`/api/projects/${CAFE}/art`, "owner");
+check("art and sound", art.status === 200 && (art.body.art ?? []).length > 0 && (art.body.music ?? []).length > 0, `${(art.body.art ?? []).length} galleries, ${(art.body.music ?? []).length} artists`);
+check("room moods in the live bundle", bundle.includes("Mood, read by Qloo"));
+
 console.log(failed ? `${failed} failed` : "all live checks passed");
 process.exit(failed ? 1 : 0);

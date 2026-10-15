@@ -36,7 +36,7 @@ pros directory by Qloo taste match with requests, fees by milestone, studio bran
 R4 is built and browser tested (14 Oct): the building site in full. The Site tab now shows on every project
 with the three steps to get building, and an owner can manage the build themselves. The client sees the builder's budget, not the
 builder's costs (15 Oct).
-D3 is built (15 Oct): the neighbourhood read for business spaces, with Q8 and Q9. D2 is built (15 Oct): dimensioned plans, four elevations, door and window schedules, in the PDF and the DXF. E2 part 1 is built (16 Oct): the exterior from taste and day and night. The taste quiz is built (16 Oct): /quiz, and the interview ends with it (questions, then "Now let's find your style", the reveal, then the design). Next: Q7 and Q10.
+D3 is built (15 Oct): the neighbourhood read for business spaces, with Q8 and Q9. D2 is built (15 Oct): dimensioned plans, four elevations, door and window schedules, in the PDF and the DXF. E2 part 1 is built (16 Oct): the exterior from taste and day and night. The taste quiz is built (16 Oct): /quiz, and the interview ends with it (questions, then "Now let's find your style", the reveal, then the design). Q7 (room moods and light) and Q10 (art and sound) are built (16 Oct). Next: P7, the phone app (PWA), and the 3D leftovers.
 
 After every push: wait for the deploy, then `node --env-file=.env.local --env-file=.env scripts/live-check.ts`
 (test accounts on the live site, from the server). Add a check for each new feature.

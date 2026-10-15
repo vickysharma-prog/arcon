@@ -16,6 +16,7 @@ import { look as lookOf, luminance, mix, scheme, type Look, type Scheme } from "
 import { LookCtx, Model } from "./models";
 import { brick, planks, tiled, tiledOnce, tiles } from "./textures";
 import { exteriorOf, roofShape, type Exterior } from "@/lib/three/exterior";
+import { moodsFor, type Mood } from "@/lib/three/mood";
 import { roomBell, step as playStep } from "@/components/fx/sfx";
 import { SketchFx, SketchMaterial } from "./Sketch";
 
@@ -114,7 +115,7 @@ function Garden({ W, D, colors }: { W: number; D: number; colors: Scheme }) {
   );
 }
 
-function Building({ layout, colors, look, ex, night = false, cutaway = false, upTo = "all", extraPlants, onPick }: { layout: Layout; colors: Scheme; look: Look; ex: Exterior; night?: boolean; cutaway?: boolean; upTo?: number | "all"; extraPlants?: Record<string, number>; onPick?: (it: Item) => void }) {
+function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway = false, upTo = "all", extraPlants, onPick }: { layout: Layout; colors: Scheme; look: Look; ex: Exterior; moods?: Record<string, Mood>; night?: boolean; cutaway?: boolean; upTo?: number | "all"; extraPlants?: Record<string, number>; onPick?: (it: Item) => void }) {
   const shown = (level: number) => upTo === "all" || level <= upTo;
   // Show inside cuts the top floor's walls at 1.4 m, like an architect's section, so every room reads from above.
   const topShown = upTo === "all" ? (layout.floors.at(-1)?.level ?? 0) : upTo;
@@ -280,7 +281,8 @@ function Building({ layout, colors, look, ex, night = false, cutaway = false, up
         .slice(0, 12)
         .map((s) => (
           <group key={`l-${s.level}-${s.id}`} position={[s.x + s.w / 2, s.y + WALL_H, s.z + s.d / 2]}>
-            <pointLight position={[0, -0.45, 0]} intensity={night ? 6 : 2.6} distance={night ? 9 : 7} decay={1.4} color="#ffe6c4" />
+            {/* each room lit for its mood: warm and low, bright and even, or soft (Q7) */}
+            <pointLight position={[0, -0.45, 0]} intensity={(night ? 6 : 2.6) * (moods[s.id]?.light.strength ?? 1)} distance={night ? 9 : 7} decay={1.4} color={moods[s.id]?.light.color ?? "#ffe6c4"} />
             {!cutaway && (
               <mesh position={[0, -0.02, 0]}>
                 <cylinderGeometry args={[0.2, 0.2, 0.03, 24]} />
@@ -741,6 +743,7 @@ export default function HouseScene(props: Props) {
   const colors = useMemo(() => scheme(props.brief?.palette), [props.brief]);
   const look = useMemo(() => lookOf(props.brief, props.taste), [props.brief, props.taste]);
   const ex = useMemo(() => exteriorOf(props.layout, look, !!props.newBuild), [props.layout, look, props.newBuild]);
+  const moods = useMemo(() => moodsFor(props.layout, props.taste?.tags), [props.layout, props.taste]);
   // Sketches and saved pictures are always drawn by day.
   const night = !!props.night && !props.sketch && props.mode !== "shot";
   const { width: W, depth: D } = props.layout.shell;
@@ -755,6 +758,7 @@ export default function HouseScene(props: Props) {
       colors={colors}
       look={look}
       ex={ex}
+      moods={moods}
       night={night}
       cutaway={(orbit || showcase || still) && props.cutaway}
       upTo={orbit || showcase || still ? props.upTo : "all"}

@@ -8,6 +8,8 @@ import type { Mode, Pose } from "@/components/three/HouseScene";
 import { PlanSvg } from "@/components/plan/PlanSvg";
 import { look as lookOf } from "@/lib/three/materials";
 import { exteriorOf, sayExterior } from "@/lib/three/exterior";
+import { moodsFor, type Mood } from "@/lib/three/mood";
+import { useArtAndSound } from "./ArtAndSound";
 import type { Item } from "@/lib/three/furniture";
 import { PIECES } from "@/lib/shop/list";
 import type { Shopping } from "@/lib/shop/fetch";
@@ -79,6 +81,12 @@ export function WalkthroughStep({
   const style = useMemo(() => lookOf(brief, taste), [brief, taste]);
   const ex = useMemo(() => exteriorOf(layout, style, newBuild), [layout, style, newBuild]);
   const [night, setNight] = useState(false);
+  // The mood and light of the room you're in, from the ambience of the places you love (Q7).
+  const moods = useMemo(() => moodsFor(layout, taste?.tags), [layout, taste]);
+  const here = layout.floors.flatMap((f) => f.spaces).find((s) => s.name === room);
+  const mood = here ? moods[here.id] : undefined;
+  // A playlist for the walk, matched to what they love (Q10).
+  const sound = useArtAndSound(projectId);
 
   // Download the walk as a video: the walk starts again from the street and the browser records the 3D canvas
   // until it ends, then saves the file. No server involved.
@@ -162,6 +170,19 @@ export function WalkthroughStep({
             {style.because.length > 0 && <> because you love {style.because.join(", ")}</>}
             {style.matched.length > 0 && <>{style.because.length ? ", and" : ", from"} brands that match your taste like {style.matched.join(" and ")}</>}.
           </p>
+          {!!sound?.music.length && (
+            <p className="text-sm text-ink-soft">
+              ♪ A playlist for this walk:{" "}
+              {sound.music.slice(0, 4).map((m, i) => (
+                <span key={m.name}>
+                  {i > 0 && ", "}
+                  <a href={m.listen} target="_blank" rel="noreferrer" onClick={() => tick()} className="text-accent underline-offset-2 hover:underline">
+                    {m.name}
+                  </a>
+                </span>
+              ))}
+            </p>
+          )}
           {ex.because.length > 0 && (
             <p className="text-sm text-ink-soft">
               Outside: <span className="font-medium text-ink">{sayExterior(ex).toLowerCase()}</span>, from {ex.because.join(", ")}.
@@ -283,6 +304,7 @@ export function WalkthroughStep({
                 💬 Discuss this room
               </button>
             )}
+            <MoodPill room={room} mood={mood} className="bottom-16 left-4" />
             <div className="absolute right-4 top-4 flex items-center gap-2">
               <p className="pointer-events-none rounded-full bg-paper/85 px-4 py-1.5 text-sm text-ink-soft backdrop-blur">Hold and drag to look around</p>
               <FullButton full={full} onClick={toggleFull} />
@@ -308,6 +330,7 @@ export function WalkthroughStep({
         )}
         {mode === "explore" && (
           <>
+            <MoodPill room={room} mood={mood} className="bottom-4 left-4" />
             <div className="absolute left-4 right-4 top-4 z-30 flex flex-wrap items-center gap-2">
               <div className="pointer-events-none rounded-full bg-paper/85 px-4 py-1.5 font-mono text-sm backdrop-blur">
                 <span className="mr-2 inline-block h-2 w-2 rounded-full bg-leaf" />
@@ -493,5 +516,31 @@ function PieceCard({ it, room, shop, location, onClose }: { it: Item; room: stri
         <p className="mt-2 text-ink-soft">{it.name.includes("plant") ? "From a plant nursery near you." : "No brand in your taste makes this one."}</p>
       )}
     </motion.div>
+  );
+}
+
+// The room's mood and light, read from the places they love: "Relaxing · from Ace Hotel · warm and low, 2700K".
+function MoodPill({ room, mood, className }: { room: string; mood?: Mood; className: string }) {
+  return (
+    <AnimatePresence mode="wait">
+      {mood && (
+        <motion.div
+          key={room}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          className={`pointer-events-none absolute z-20 max-w-[min(92%,440px)] rounded-2xl bg-paper/90 px-4 py-2 text-sm backdrop-blur ${className}`}
+        >
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-accent">Mood, read by Qloo</p>
+          <p className="mt-0.5">
+            <span className="font-medium capitalize">{mood.word}</span>
+            <span className="text-ink-soft"> · from {mood.from}</span>
+          </p>
+          <p className="text-xs text-ink-soft">
+            Light: {mood.light.say}, {mood.light.kelvin}K
+          </p>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

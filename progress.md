@@ -2,6 +2,24 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: Q7 room moods and light, Q10 art and sound
+
+- Q7: each room takes its mood from the ambience of the places the client loves, picking the word that suits the
+  room (a bedroom wants relaxing or calm, a kitchen bright or clean, a living room lively or warm), and the light
+  follows (warm and low at 2700K, soft at 3000K, bright and even at 4000K). The walkthrough shows it for the room
+  you're in ("Mood, read by Qloo: Clean, from Ace Hotel. Light: bright and even, 4000K") and the 3D lights each
+  room in that colour and strength. Only places and brands they named set a mood, never a film's matches.
+- Q10: an "Art and sound" section on the Your style page: galleries and museums near the site ranked for their
+  taste (real ones only: a café that hangs pictures doesn't count; galleries first, since work there can be bought),
+  and "A playlist for this home": artists Qloo matches to the places, films and music they love, each linking to a
+  search to listen. Brands are left out of the playlist signal (a Japanese home brand gave only Japanese pop). The
+  walkthrough shows the playlist under the style line.
+- Found on the way: a typo'd city ("Delih") geocodes to a village in Slovenia. Task for F1: check the city in the
+  interview against the map, with suggestions.
+
+Tested: unit tests for moods, light, the gallery check and the playlist signal (334 in all); real data for a house
+and a café; in the browser the section on the style page, the playlist line and the mood in the walkthrough.
+
 ## 2026-10-16: E2, part 3: the interview's new flow (Vicky's call)
 
 Vicky: the interview's questions come first, then Arcon says "Now let's find your style" and the quiz comes right
