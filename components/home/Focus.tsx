@@ -68,8 +68,8 @@ export function OpeningDay({ projectId, date, set, canEdit }: { projectId: strin
       {editing ? (
         <input type="date" defaultValue={value ?? undefined} autoFocus onBlur={(e) => e.target.value && void save(e.target.value)} onChange={(e) => e.target.value && void save(e.target.value)} className="mt-1 rounded-lg border border-line bg-paper px-2 py-1 text-sm" />
       ) : (
-        <p className="mt-1 flex items-baseline gap-2">
-          <span className="font-serif text-3xl">{days === null ? "—" : days > 0 ? `${days} days` : "Open"}</span>
+        <p className="mt-1 flex flex-wrap items-baseline gap-x-2">
+          <span className="whitespace-nowrap font-serif text-3xl">{days === null ? "—" : days > 0 ? `${days} days` : "Open"}</span>
           {value && <span className="text-sm text-ink-soft">{new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}{set ? "" : ", estimated"}</span>}
           {canEdit && (
             <button type="button" onClick={() => (tick(), setEditing(true))} className="text-xs text-accent hover:underline">

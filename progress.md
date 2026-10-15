@@ -2,6 +2,14 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: Signed in on the site, Resources brought up to date
+
+- Signed in and on the site itself, the header offers My projects instead of Sign up free.
+- Resources: your home page (the status line, Waiting on you, and what My house, My space, Studio and Sites show),
+  search and shortcuts (Ctrl+K, Get the app), deleting a project or account; the guides name each role's home; the
+  API list adds the opening day, Ctrl+K, the Qloo strip, the quiz and the email check.
+- A business test account (a café in Brooklyn) so all four homes can be shown.
+
 ## 2026-10-16: A home for each role, and Ctrl+K (Vicky's brainstorm)
 
 - One page, laid out for who it is, each opening with a status line ("> 3 in design · 1 waiting on you") and

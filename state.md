@@ -74,6 +74,8 @@ Everything here is open to change: if something can be better we brainstorm it a
 - 3D room labels log a React warning in development when leaving the 3D (task for F1).
 - A typo'd city geocodes to the wrong place ("Delih" to Slovenia): check the city in the interview (task for F1).
 - Test projects and test accounts (arcon.test.*@example.com) live in Supabase; cleanup script pending (F1).
+- Test roles: owner (homeowner), business ("The Brooklyn café", a copy of the test café, 16 Oct), architect, builder,
+  client, priya. Each role's home can be opened side by side on localhost, 127.0.0.1, [::1] and builder.localhost.
 - Google's sign-in page names the Supabase address, not "Arcon"; changing it needs Supabase's paid custom domain.
 - The project page still has two old lint errors about state set in effects (not new).
 

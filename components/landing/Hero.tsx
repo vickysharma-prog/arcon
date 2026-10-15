@@ -23,6 +23,14 @@ const LINKS = [
 export function LandingHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
+  // someone signed in gets their projects here instead of "Sign up free"
+  const [signedIn, setSignedIn] = useState(false);
+  useEffect(() => {
+    fetch("/api/me")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((m) => setSignedIn(!!m?.user))
+      .catch(() => {});
+  }, []);
   useEffect(() => {
     const on = () => setScrolled(window.scrollY > 12);
     on();
@@ -48,8 +56,8 @@ export function LandingHeader() {
         </nav>
         <div className="flex items-center gap-2 justify-self-end sm:gap-2.5">
           <InstallApp />
-          <Link href="/login?mode=signup" onClick={() => transition()} className="glow-btn flex h-9 items-center whitespace-nowrap rounded-full px-4 text-sm sm:px-5">
-            Sign up free
+          <Link href={signedIn ? "/home" : "/login?mode=signup"} onClick={() => transition()} className="glow-btn flex h-9 items-center whitespace-nowrap rounded-full px-4 text-sm sm:px-5">
+            {signedIn ? "My projects" : "Sign up free"}
           </Link>
           <ProfileMenu />
         </div>

@@ -55,12 +55,73 @@ const SECTIONS: Section[] = [
     ),
   },
   {
+    id: "home",
+    group: "Get started",
+    title: "Your home page",
+    body: (
+      <>
+        <p>Once you sign in, Arcon opens on your own home page, laid out for how you use it. Every version starts with two things:</p>
+        <Steps
+          items={[
+            "A status line: how many projects are at each stage, and how many things are waiting on you.",
+            "Waiting on you: a design to review, changes asked, a fee to pay or confirm, work running late on site, a plan to choose, new messages. The most urgent comes first; tap one to go straight there.",
+          ]}
+        />
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {[
+            ["My house", "Homeowners. Your newest project in focus: its plan drawing itself, View in 3D, where it stands, what's next and an estimate."],
+            ["My space", "Business owners. The same, plus a countdown to opening day, worked out from your design's timeline and yours to change."],
+            ["Studio", "Architects and designers. Fees billed and received, and every client in columns by stage."],
+            ["Sites", "Builders. Today on every site: how far along, the phase, who's on site, what's behind."],
+          ].map(([t, d]) => (
+            <div key={t} className="rounded-2xl border border-line bg-paper p-4">
+              <p className="font-medium">{t}</p>
+              <p className="mt-1 text-sm text-ink-soft">{d}</p>
+            </div>
+          ))}
+        </div>
+      </>
+    ),
+  },
+  {
+    id: "shortcuts",
+    group: "Get started",
+    title: "Search, shortcuts and the app",
+    body: (
+      <>
+        <Steps
+          items={[
+            "Press Ctrl+K (⌘K on a Mac), or the search button at the top, to jump anywhere: a project, or one part of it such as its budget, thread, site or 3D. Type any words in any order, like \"austin budget\".",
+            "Get the app, at the top of every page: on a phone it installs Arcon to your home screen; on a computer it shows a code to scan for your phone, and in Chrome or Edge installs Arcon in its own window.",
+            "Arcon plays its opening each time you open it, and remembers your theme and sound settings (in the profile menu).",
+          ]}
+        />
+      </>
+    ),
+  },
+  {
+    id: "account",
+    group: "Get started",
+    title: "Deleting a project or your account",
+    body: (
+      <>
+        <p>Everything you make in Arcon is yours to remove, at any time.</p>
+        <Steps
+          items={[
+            "A project: the bin on its card in your home page, or Delete this project at the bottom of its overview. Only its owner can, and it goes for everyone on it, with its thread, files and site.",
+            "Your account: Delete my account at the bottom of your account page, after typing DELETE. Every project you own goes with it; projects others shared with you stay with them.",
+          ]}
+        />
+      </>
+    ),
+  },
+  {
     id: "homeowners",
     group: "Guides",
     title: "For homeowners",
     body: (
       <>
-        <p>Your home space shows one project at a time, with where it stands and what happens next.</p>
+        <p>My house puts your newest project in focus, with where it stands and what happens next.</p>
         <Steps
           items={[
             "Design as a guest for free; sign up to keep the project on every device.",
@@ -95,7 +156,7 @@ const SECTIONS: Section[] = [
     title: "For architects and designers",
     body: (
       <>
-        <p>Studio is your dashboard: every client by stage, the last message, and what each owes you.</p>
+        <p>Studio is your home page: fees billed and received, and every client in columns by stage, each with its plan and new messages.</p>
         <Steps
           items={[
             "New client: answer Let's get to know you together in a meeting, or send the client a link to answer at home.",
@@ -114,7 +175,7 @@ const SECTIONS: Section[] = [
     title: "For builders",
     body: (
       <>
-        <p>Sites shows every active site with how far along it is, and what&apos;s happening today.</p>
+        <p>Sites is your home page: every active site with how far along it is, the phase, who&apos;s on site today and what&apos;s behind.</p>
         <Steps
           items={[
             "The phases come from the design's timeline, and the materials are taken off the approved plan.",
@@ -133,7 +194,10 @@ const SECTIONS: Section[] = [
     title: "From taste to a design",
     body: (
       <>
-        <p>Every design decision in Arcon can be traced back to something you said you love.</p>
+        <p>
+          Every design decision in Arcon can be traced back to something you said you love. The strip under the top of the{" "}
+          <Link href="/?site" className="text-accent hover:underline">home page</Link> shows it live: two loves, and what Qloo reads from them right now.
+        </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {[
             ["The interview", "An agent asks about the space and about you, in English, Hindi or Hinglish, typed or spoken."],
@@ -205,8 +269,13 @@ npm test                      # unit tests`}</Code>
                 ["GET /api/projects/:id/neighbourhood", "the business neighbourhood read"],
                 ["GET|POST /api/projects/:id/thread", "the project thread"],
                 ["GET|POST /api/projects/:id/site", "phases, crew, materials, updates"],
+                ["POST /api/projects/:id/opening", "set a business's opening day (owner only)"],
                 ["DELETE /api/projects/:id", "delete a project (owner only)"],
                 ["DELETE /api/account", "delete your account"],
+                ["GET /api/palette", "your projects, for Ctrl+K"],
+                ["GET /api/strip", "the landing page's live Qloo reads"],
+                ["GET /api/quiz", "the style quiz: three picks → your style"],
+                ["POST /api/email-check", "can this address receive mail?"],
               ].map(([r, d]) => (
                 <tr key={r}>
                   <td className="whitespace-nowrap py-2 pr-4 font-mono text-[13px] text-accent">{r}</td>

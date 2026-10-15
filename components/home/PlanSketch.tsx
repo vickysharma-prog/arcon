@@ -18,7 +18,7 @@ export function PlanSketch({ sketch, className = "", labels = false }: { sketch:
       {sketch.rooms.map((r, i) => (
         <g key={i} style={{ ["--i" as string]: i + 1 }}>
           <rect x={r.x} y={r.y} width={r.w} height={r.h} pathLength={1} fill={r.name ? "color-mix(in srgb, var(--accent) 5%, transparent)" : "transparent"} stroke="var(--accent)" strokeOpacity={0.6} strokeWidth={big / 160} />
-          {labels && r.name && r.w > big / 7 && r.h > big / 12 && (
+          {labels && r.name && r.w > (big / 32) * 0.55 * r.name.length + big / 40 && r.h > big / 12 && (
             <text x={r.x + r.w / 2} y={r.y + r.h / 2} textAnchor="middle" dominantBaseline="middle" fontSize={big / 32} className="sketch-label fill-ink-soft">
               {r.name}
             </text>
