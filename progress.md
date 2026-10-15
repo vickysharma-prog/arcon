@@ -2,6 +2,24 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: P7, Arcon as a phone (and desktop) app
+
+- Installable from the browser, hosted on Vercel as before: no store needed. A manifest (name, colours, icons made
+  from the logo, shortcuts to "Design a space" and "My projects"), iPhone home-screen support, and theme colours.
+- "Install app" on phones and "Desktop app" on computers, in the header and on the landing page, animated (a pulse,
+  a light sweep, the icon moving). On an iPhone, where no browser can ask, it shows how: Share, then Add to Home
+  Screen. Hidden once installed. Chrome's install offer can come before the page is ready, so a tiny script in the
+  page head keeps it for the button.
+- A small service worker (production only) shows a branded "You're offline" page instead of the browser's error,
+  and is never cached, so updates reach installed apps at once.
+- The tab icon is now just Arcon's mark (dark dots on a light browser, white on a dark one); the app icons keep the
+  navy square, which phones need.
+- The 3D leftovers from 12 Oct were checked: upstairs on the great-room plan is fixed, rooms are 6 to 15 percent
+  over what was asked because the plan fills the plot, and the split plan isn't offered for a two-storey house.
+
+Tested: production build served locally: the manifest, icons, offline page and worker headers; the worker
+registers; Chrome's install offer reaches the button ("Desktop app" shows).
+
 ## 2026-10-16: Q7 room moods and light, Q10 art and sound
 
 - Q7: each room takes its mood from the ambience of the places the client loves, picking the word that suits the

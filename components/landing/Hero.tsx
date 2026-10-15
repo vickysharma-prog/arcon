@@ -1,5 +1,6 @@
 "use client";
 
+import { InstallApp } from "@/components/InstallApp";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
@@ -45,6 +46,7 @@ export function LandingHeader() {
           ))}
         </nav>
         <div className="flex items-center gap-3 justify-self-end">
+          <InstallApp />
           <Link href="/login?mode=signup" onClick={() => transition()} className="glow-btn rounded-full px-5 py-2 text-sm">
             Sign up free
           </Link>

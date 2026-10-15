@@ -2,6 +2,7 @@ import { HomeLink } from "./landing/Intro";
 import { Logo } from "./Logo";
 import { ProfileMenu } from "./ProfileMenu";
 import { NotificationBell } from "./NotificationBell";
+import { InstallApp } from "./InstallApp";
 
 export function SiteHeader() {
   return (
@@ -10,6 +11,7 @@ export function SiteHeader() {
         <Logo size={26} />
       </HomeLink>
       <div className="flex items-center gap-2">
+        <InstallApp />
         <NotificationBell />
         <ProfileMenu />
       </div>
