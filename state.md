@@ -36,7 +36,7 @@ pros directory by Qloo taste match with requests, fees by milestone, studio bran
 R4 is built and browser tested (14 Oct): the building site in full. The Site tab now shows on every project
 with the three steps to get building, and an owner can manage the build themselves. The client sees the builder's budget, not the
 builder's costs (15 Oct).
-Next: R5, pricing with PayPal sandbox; the judges' demo is brainstormed first.
+D3 is built (15 Oct): the neighbourhood read for business spaces, with Q8 and Q9. Next: D2, the drawings pack.
 
 Vicky found the shared flow confusing, so the app now behaves differently for each person. Decided 13 Oct
 (full list in private/plan.md, "One app, different for each person" and "Decisions from the 13 Oct grilling"):
@@ -50,9 +50,16 @@ Vicky found the shared flow confusing, so the app now behaves differently for ea
 - "Do you have an architect or builder?": invite by link or QR, or Arcon suggests pros by Qloo taste match.
 - Fees tracked by milestone (billed, "I've paid", received). Builders can design and build.
 
-Build order: R1 role spaces and project home, R2 thread, R3 Studio and pros directory, R4 Sites (full tracking),
-R5 pricing with PayPal sandbox (judges' demo brainstormed separately), R6 phone app. Then D3, E2, Q7, Q10, F1,
-C2b photoreal (28 to 29 Oct), F2 and submission.
+Build order (decided 15 Oct, Vicky: finish building every feature first; pricing and the judges' demo come
+after, as the way we present it):
+- 15 to 16 Oct: D3 neighbourhood read for business spaces, with Q8 (who comes in) and Q9 (how it runs).
+- 17 to 18 Oct: D2 drawings pack (plan, elevations, schedules as PDF and DXF).
+- 19 to 20 Oct: E2 taste quiz page, exterior from taste, day and night, the full wizard.
+- 21 Oct: Q7 room moods and light, Q10 art wall and playlist.
+- 22 Oct: P7 phone app (PWA) and the leftovers from the 3D review.
+- 23 to 25 Oct: R5, the judges' demo brainstorm, then pricing with PayPal sandbox.
+- 24 to 27 Oct: F1 quality (model comparison, evals, adversarial tests, test data cleanup, speed).
+- 28 to 29 Oct: C2b photoreal renders. 29 to 30 Oct: F2 polish, demo video, README, submission.
 
 Everything here is open to change: if something can be better we brainstorm it and update the plan.
 

@@ -23,6 +23,8 @@ import { importedOf } from "@/lib/plan-import/edits";
 import { creditOf, sayCredit, styleWords, tasteTrail } from "@/lib/design/trail";
 import { TasteTrail } from "./TasteTrail";
 import { Moodboard } from "./Moodboard";
+import { Neighbourhood } from "./Neighbourhood";
+import { NEAR } from "@/lib/neighbourhood/read";
 import { BudgetStep } from "./BudgetStep";
 import { ShoppingStep } from "./ShoppingStep";
 import type { Tier } from "@/lib/budget/costs";
@@ -480,6 +482,12 @@ function BriefStep({ p, brief: b, whose }: { p: View; brief: Brief; whose: strin
       <Reveal>
         <Moodboard id={p.id} />
       </Reveal>
+
+      {p.space_type && NEAR[p.space_type] && p.site.location && (
+        <Reveal>
+          <Neighbourhood id={p.id} />
+        </Reveal>
+      )}
 
       <div className="mt-10 grid gap-6 md:grid-cols-3">
         <HudCard className="p-5">

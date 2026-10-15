@@ -2,7 +2,14 @@ import { supabaseAdmin } from "../supabase/admin.ts";
 import type { Layout, Program, SpaceType } from "../layout/schema.ts";
 import type { Profile } from "../qloo/taste.ts";
 
-export type Site = { width?: number; depth?: number; floors?: number; location?: string; units?: "imperial" | "metric" };
+export type Site = {
+  width?: number;
+  depth?: number;
+  floors?: number;
+  location?: string;
+  units?: "imperial" | "metric";
+  geo?: { lat: number; lon: number; for: string }; // where `location` is on the map, found once
+};
 export type TasteSignal = { entityId: string; name: string; layer: 1 | 2 | 3; type?: string };
 
 export type Project = {

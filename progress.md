@@ -2,6 +2,33 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-15: D3, the neighbourhood read for business spaces (with Q8 and Q9)
+
+A "Your neighbourhood" section on a café, office, shop or hotel's style page, read by Qloo:
+- The site goes on the map once (OpenStreetMap, only the address is sent) and is stored on the project. Qloo's own
+  place search put neighbourhoods in the wrong part of the city, so the places are found around that point, the
+  circle widening until a few turn up.
+- The same kind of place around the site, ranked for the owner's taste, with photo, % match and its look. A café
+  reads cafés; an office reads cafés and coworking spaces nearby; a hotel reads hotels; a shop takes its kind
+  from the shop the owner loves.
+- Only places that really are that kind count: Qloo tags cinemas, bars and observation decks "cafe" when they have
+  one inside, and those are left out (Vicky's catch). One place per chain, so a list isn't five branches of one
+  coffee shop.
+- Who it's for: Everyone, under 25, 36 to 55, over 55. Qloo re-ranks the same places for that crowd (checked: the
+  age alone changes nothing; with the owner's taste it does).
+- What local favourites look like: their most common decor and ambience words, the owner's own marked, and how
+  many share the owner's look.
+- The area and your taste: the city's taste heatmap ranks the site's area ("top 12%", or honestly "your taste is
+  rarer here: room to stand out"), only when the city has enough cells and one is near the site. Otherwise the
+  average match of the favourites around it. The heatmap is fetched once per project, not per crowd.
+- How it could run (Q9): the café the owner loves, read from its Qloo tags (takeout, quick bite, table service,
+  outdoor seating), as a suggestion next to what they said in the interview, marked when the two agree. Their
+  answer always decides the plan.
+
+Tested: 311 unit tests (categories, the café rule, one per chain, look, area rank and its wording, the hint);
+checked on real data for cafés in three cities, an office and hotels; in the browser on a café project, including
+the crowd switch (2 to 4 seconds once cached).
+
 ## 2026-10-15: The builder's costs stay with the builder
 
 Vicky's call: like real life, the client gets the builder's budget, not the costs behind it.
