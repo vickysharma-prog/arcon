@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { accessTo, userOf } from "@/lib/auth/request";
-import { runsSite } from "@/lib/site/progress";
+import { runsSite, withoutCosts } from "@/lib/site/progress";
 import { siteOf, startSite } from "@/lib/site/store";
 import { decides, nameOf, peopleOn, postEvent } from "@/lib/project/thread";
 import { can } from "@/lib/project/access";
@@ -35,7 +35,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
     owner: a.role === "owner",
     selfBuild: !!p.self_build,
   };
-  return Response.json({ site, runs, status: p.status, roster, steps });
+  return Response.json({ site: site && !runs ? withoutCosts(site) : site, runs, status: p.status, roster, steps });
 }
 
 const Photo = z.object({ path: z.string().max(300), name: z.string().max(200), type: z.string().max(100), size: z.number().int().min(0).max(10_485_760) });

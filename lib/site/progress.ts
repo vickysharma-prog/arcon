@@ -61,3 +61,22 @@ export function labourCost(rows: { present: boolean; hours: number; day_rate: nu
 /** Who runs the site: the builder on it, or the pro who owns the project (a builder's own design-and-build job). */
 /** Who runs the site: the builder, the pro who owns the project, or an owner managing the build themselves. */
 export const runsSite = (role: string, mode: "owner" | "pro", selfBuild = false) => role === "builder" || (role === "owner" && (mode === "pro" || selfBuild));
+
+type Costed = {
+  crew: { day_rate?: number }[];
+  materials: { unit_cost?: number }[];
+  orders: { cost?: number }[];
+  money: { labour?: number; materials?: number; spent?: number; budget: unknown; currency: string };
+};
+
+/** The site as the client (or anyone not running it) sees it: the budget and the progress, not the builder's own
+ *  costs (day rates, unit prices, what each order cost, labour and spend). Like real life: the builder quotes. */
+export function withoutCosts<S extends Costed>(site: S): S {
+  return {
+    ...site,
+    crew: site.crew.map(({ day_rate: _, ...c }) => c),
+    materials: site.materials.map(({ unit_cost: _, ...m }) => m),
+    orders: site.orders.map(({ cost: _, ...o }) => o),
+    money: { budget: site.money.budget, currency: site.money.currency },
+  };
+}

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { dayIn, seedMaterials, seedPhases } from "./plan.ts";
-import { alertsFor, currentPhase, runsSite, expectedPct, labourCost, overallPct, stockOf, type PhaseRow } from "./progress.ts";
+import { alertsFor, currentPhase, runsSite, withoutCosts, expectedPct, labourCost, overallPct, stockOf, type PhaseRow } from "./progress.ts";
 import { timeline } from "../budget/timeline.ts";
 import { estimate, marketOf } from "../budget/costs.ts";
 import { placeConcept } from "../layout/concepts.ts";
@@ -79,4 +79,21 @@ test("the builder runs the site; an owner only in pro mode or when managing the 
   assert.ok(runsSite("owner", "pro"));
   assert.ok(!runsSite("client", "owner", true));
   assert.ok(!runsSite("architect", "pro", true));
+});
+
+test("the client sees the budget and progress, not the builder's own costs", () => {
+  const site = {
+    overall: 40,
+    crew: [{ id: 1, name: "Sunil", trade: "Tiler", day_rate: 120 }],
+    materials: [{ id: 1, name: "Flooring", needed: 218, unit_cost: 68 }],
+    orders: [{ id: 1, qty: 218, supplier: "City Floors", cost: 14824 }],
+    money: { labour: 120, materials: 14824, spent: 14944, budget: { low: 96241, high: 150376 }, currency: "USD" },
+  };
+  const seen = withoutCosts(site);
+  assert.equal(seen.overall, 40);
+  assert.deepEqual(seen.crew, [{ id: 1, name: "Sunil", trade: "Tiler" }]);
+  assert.deepEqual(seen.materials, [{ id: 1, name: "Flooring", needed: 218 }]);
+  assert.deepEqual(seen.orders, [{ id: 1, qty: 218, supplier: "City Floors" }]);
+  assert.deepEqual(seen.money, { budget: { low: 96241, high: 150376 }, currency: "USD" });
+  assert.ok(!JSON.stringify(seen).includes("14944") && !JSON.stringify(seen).includes("120,"));
 });

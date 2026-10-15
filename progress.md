@@ -2,6 +2,17 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-15: The builder's costs stay with the builder
+
+Vicky's call: like real life, the client gets the builder's budget, not the costs behind it.
+- Whoever doesn't run the site no longer receives day rates, unit prices, order costs, labour or spend; the
+  server leaves them out. They see a Budget card instead of Spent, plus progress, phases, tasks, crew names,
+  materials and photo updates.
+- The builder (or an owner managing the build) still sees everything.
+
+Tested: 303 unit tests (a test that the client's copy has no cost in it); read the test site through the API as the
+client (budget only) and as the builder (labour $120, materials $14,824, spent $14,944, day rate, unit price).
+
 ## 2026-10-14: Site tracking easy to find, and owners can run their own build
 
 Vicky couldn't find site tracking on the live site: the Site tab only appeared after the design was approved, and

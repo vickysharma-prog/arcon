@@ -10,9 +10,9 @@ import { expectedPct, stockOf } from "@/lib/site/progress";
 
 type Phase = { id: number; key: string; name: string; note: string | null; start_date: string; end_date: string; status: "planned" | "active" | "done"; pct: number };
 type Task = { id: number; title: string; due: string | null; status: "todo" | "doing" | "done"; phase_id: number | null; crew_id: number | null };
-type Crew = { id: number; name: string; trade: string | null; phone: string | null; day_rate: number };
-type Material = { id: number; name: string; unit: string; phase: string | null; needed: number; ordered: number; delivered: number; used: number; unit_cost: number };
-type Order = { id: number; material_id: number; qty: number; supplier: string | null; cost: number; eta: string | null; status: string; created_at: string };
+type Crew = { id: number; name: string; trade: string | null; phone: string | null; day_rate?: number };
+type Material = { id: number; name: string; unit: string; phase: string | null; needed: number; ordered: number; delivered: number; used: number; unit_cost?: number };
+type Order = { id: number; material_id: number; qty: number; supplier: string | null; cost?: number; eta: string | null; status: string; created_at: string };
 type Update = { id: number; phase_id: number | null; author_name: string; note: string; pct: number | null; photos: { path: string; name: string; type: string; url?: string }[]; created_at: string };
 type Site = {
   today: string;
@@ -25,7 +25,7 @@ type Site = {
   materials: Material[];
   orders: Order[];
   updates: Update[];
-  money: { labour: number; materials: number; spent: number; budget: { low: number; high: number } | null; currency: string };
+  money: { labour?: number; materials?: number; spent?: number; budget: { low: number; high: number } | null; currency: string };
   alerts: { kind: string; text: string }[];
 };
 type Data = { site: Site | null; runs: boolean; status: string; roster: Crew[]; steps: Steps };
@@ -276,12 +276,22 @@ function Header({ site }: { site: Site }) {
         )}
       </div>
       <div className="rounded-2xl border border-line bg-paper-raised p-4">
-        <p className="text-xs uppercase tracking-widest text-ink-soft">Spent</p>
-        <p className="mt-1 font-serif text-2xl">{money(m.spent, m.currency)}</p>
-        <p className="text-sm text-ink-soft">
-          Labour {money(m.labour, m.currency)} · materials {money(m.materials, m.currency)}
-          {m.budget && <> · budget {money(m.budget.low, m.currency)} to {money(m.budget.high, m.currency)}</>}
-        </p>
+        {m.spent !== undefined ? (
+          <>
+            <p className="text-xs uppercase tracking-widest text-ink-soft">Spent</p>
+            <p className="mt-1 font-serif text-2xl">{money(m.spent, m.currency)}</p>
+            <p className="text-sm text-ink-soft">
+              Labour {money(m.labour ?? 0, m.currency)} · materials {money(m.materials ?? 0, m.currency)}
+              {m.budget && <> · budget {money(m.budget.low, m.currency)} to {money(m.budget.high, m.currency)}</>}
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="text-xs uppercase tracking-widest text-ink-soft">Budget</p>
+            <p className="mt-1 font-serif text-2xl">{m.budget ? `${money(m.budget.low, m.currency)} to ${money(m.budget.high, m.currency)}` : "Set by the builder"}</p>
+            <p className="text-sm text-ink-soft">The builder&apos;s own costs stay with the builder.</p>
+          </>
+        )}
       </div>
     </section>
   );
@@ -474,7 +484,7 @@ function CrewPanel({ site, runs, roster, act, today, busy }: { site: Site; runs:
                   <span className="text-ink-soft">
                     {c.trade && ` · ${c.trade}`}
                     {c.phone && ` · ${c.phone}`}
-                    {c.day_rate > 0 && ` · ${money(c.day_rate, site.money.currency)} a day`}
+                    {!!c.day_rate && ` · ${money(c.day_rate, site.money.currency)} a day`}
                   </span>
                 </span>
                 <span className="flex items-center gap-2">
@@ -495,7 +505,7 @@ function CrewPanel({ site, runs, roster, act, today, busy }: { site: Site; runs:
             ))}
           </ul>
         )}
-        <p className="mt-3 text-xs text-ink-soft">Labour so far: {money(site.money.labour, site.money.currency)}, from the days marked and each person&apos;s day rate.</p>
+        {runs && <p className="mt-3 text-xs text-ink-soft">Labour so far: {money(site.money.labour ?? 0, site.money.currency)}, from the days marked and each person&apos;s day rate.</p>}
       </section>
       {runs && (
         <section className="space-y-3">
@@ -559,7 +569,7 @@ function Materials({ site, runs, act, busy }: { site: Site; runs: boolean; act: 
             <li key={m.id} className="rounded-2xl border border-line bg-paper-raised p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="font-medium">
-                  {m.name} <span className="text-sm font-normal text-ink-soft">· {m.needed} {m.unit} needed{m.unit_cost > 0 && ` · ${money(m.unit_cost, cur)} each`}</span>
+                  {m.name} <span className="text-sm font-normal text-ink-soft">· {m.needed} {m.unit} needed{!!m.unit_cost && ` · ${money(m.unit_cost, cur)} each`}</span>
                 </p>
                 <p className="text-sm text-ink-soft">
                   {st.onSite} on site · {st.coming} coming · {m.used} used{st.toOrder > 0 && <span className="text-accent"> · {st.toOrder} to order</span>}
@@ -627,7 +637,7 @@ function Materials({ site, runs, act, busy }: { site: Site; runs: boolean; act: 
                     {o.qty} {m?.unit} {m?.name}
                     <span className="text-ink-soft">
                       {o.supplier && ` · ${o.supplier}`}
-                      {o.cost > 0 && ` · ${money(o.cost, cur)}`}
+                      {!!o.cost && ` · ${money(o.cost, cur)}`}
                       {o.eta && o.status === "ordered" && ` · arrives ${short(o.eta)}`}
                     </span>
                   </span>
