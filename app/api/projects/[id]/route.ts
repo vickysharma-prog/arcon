@@ -4,6 +4,7 @@ import { isPro } from "@/lib/project/access";
 import { ownerName, studioOf } from "@/lib/project/team";
 import { unlockedFor } from "@/lib/project/unlock";
 import { whoseName } from "@/lib/project/stage";
+import { deleteProject } from "@/lib/account/erase";
 
 export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id]">) {
   const a = await accessTo((await ctx.params).id, request.headers.get("cookie"));
@@ -21,4 +22,12 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
   // Everyone else on the project sees whose design it is ("Vicky's design"); the owner sees "your".
   const whose = a.role === "owner" ? null : whoseName(a.project.designed_for, owner);
   return Response.json({ ...publicProject(a.project), role: a.role, unlocked, whose, unread, pros, studio });
+}
+
+// Deletes the project for everyone on it. Only its owner may.
+export async function DELETE(request: Request, ctx: RouteContext<"/api/projects/[id]">) {
+  const a = await accessTo((await ctx.params).id, request.headers.get("cookie"), "edit");
+  if (!a || a.role !== "owner") return Response.json({ error: "not found" }, { status: 404 });
+  await deleteProject(a.project.id);
+  return Response.json({ ok: true });
 }

@@ -2,6 +2,19 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: Resources, deleting projects and accounts, real emails at sign-up (Vicky)
+
+- Resources (in the header and the profile menu): Arcon in two minutes, a guide for each kind of person, how taste
+  becomes a design, the common questions, and a developer guide (layout, running it, the API), with a contents list
+  that follows the reading.
+- Delete a project: a bin on each of your project cards and "Delete this project" on its overview, owner only, after a
+  dialog that says what goes with it. Its thread files go from storage too.
+- Delete my account, in red at the bottom of the account page, after typing DELETE: every project you own, your logo,
+  profile and memberships, then the sign-in itself. Projects others shared with you stay with them.
+- Sign-up checks the address first: the domain must take mail (asked of public DNS) and throwaway inboxes are refused.
+  Proving the inbox itself exists needs the confirmation email, which waits on an email sender for Supabase (Vicky).
+- Signed in, "/?site" still opens the site itself (the account page's "See plans" uses it).
+
 ## 2026-10-16: A smooth film, the opening everywhere, one app button, a face on the profile (Vicky)
 
 - The film at the top of the landing page stuttered: each switch from sketch to colour rebuilt the picture's finishing

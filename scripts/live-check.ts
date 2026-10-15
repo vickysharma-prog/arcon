@@ -100,5 +100,13 @@ check("signed in opens their projects", opened.status >= 300 && opened.status < 
 // The opening plays whichever page Arcon opens on (16 Oct)
 check("opening on every page", String((await get("/quiz")).body).includes('class="intro '));
 
+// Resources, deleting, and sign-up stopping addresses that can't get mail (16 Oct)
+check("resources page", (await get("/resources")).status === 200);
+const mail = async (email: string) => (await (await fetch(BASE + "/api/email-check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email }) })).json()).problem;
+check("sign-up refuses a made-up domain", !!(await mail("someone@qwzxkjhqpl.com")) && (await mail("someone@gmail.com")) === null);
+check("a stranger can't delete a project", (await fetch(`${BASE}/api/projects/${CAFE}`, { method: "DELETE" })).status === 404);
+check("a client can't delete the owner's project", (await fetch(`${BASE}/api/projects/${BUILDING}`, { method: "DELETE", headers: { cookie: await cookieFor("client") } })).status === 404);
+check("deleting an account needs DELETE typed", (await fetch(`${BASE}/api/account`, { method: "DELETE", headers: { cookie: await cookieFor("owner"), "content-type": "application/json" }, body: "{}" })).status === 400);
+
 console.log(failed ? `${failed} failed` : "all live checks passed");
 process.exit(failed ? 1 : 0);

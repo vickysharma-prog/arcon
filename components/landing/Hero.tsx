@@ -17,6 +17,7 @@ const LINKS = [
   ["Taste", "#taste"],
   ["Features", "#features"],
   ["Pricing", "#pricing"],
+  ["Resources", "/resources"],
 ];
 
 export function LandingHeader() {

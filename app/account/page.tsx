@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { ProfileForm } from "@/components/account/ProfileForm";
+import { DeleteAccount } from "@/components/account/DeleteAccount";
 import { currentUser } from "@/lib/auth/server";
 import { PageLoading } from "@/components/fx/PageLoading";
 import { emailOf, getProfile } from "@/lib/account/profile";
@@ -25,11 +26,12 @@ async function AccountPageBody() {
         <p className="mt-1 font-serif text-2xl">{PLAN_NAME[profile.plan]}</p>
         <p className="mt-1 text-sm text-ink-soft">
           Signed in as {email}.{" "}
-          <Link href="/#pricing" className="text-accent hover:underline">
+          <Link href="/?site#pricing" className="text-accent hover:underline">
             See plans
           </Link>
         </p>
       </section>
+      <DeleteAccount />
     </main>
   );
 }

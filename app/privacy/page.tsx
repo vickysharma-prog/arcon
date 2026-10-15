@@ -33,7 +33,7 @@ export default function PrivacyPage() {
         </p>
 
         <h2 className="mt-10 font-serif text-3xl">Deleting your data</h2>
-        <p className="mt-3">Ask us to delete a project and everything in it, and we will. Clearing your browser&apos;s cookies also ends access to it from that browser.</p>
+        <p className="mt-3">Delete a project and everything in it from the project's overview, or your whole account from your account page, at any time. Clearing your browser&apos;s cookies also ends access to it from that browser.</p>
       </main>
     </div>
   );

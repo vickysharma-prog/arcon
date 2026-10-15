@@ -59,6 +59,11 @@ export function SignIn({ next, signup }: { next: string; signup: boolean }) {
     if (mode === "signup") {
       const weak = passwordProblem(password);
       if (weak) return setError(weak);
+      // an address that can't receive mail is stopped here, before the account is made
+      const check = await fetch("/api/email-check", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ email: address }) })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+      if (check?.problem) return setError(check.problem);
     }
     setBusy("email");
     if (mode === "forgot") {

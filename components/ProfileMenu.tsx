@@ -148,6 +148,11 @@ export function ProfileMenu() {
                     </a>
                   </li>
                   <li>
+                    <a role="menuitem" href="/resources" className="block rounded-xl px-3 py-2 hover:bg-paper">
+                      Resources and help
+                    </a>
+                  </li>
+                  <li>
                     <a role="menuitem" href="/account" className="block rounded-xl px-3 py-2 hover:bg-paper">
                       Account
                     </a>

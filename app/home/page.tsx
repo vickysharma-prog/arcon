@@ -9,6 +9,7 @@ import { getProfile, projectsOf, type Profile, type ProjectCard } from "@/lib/ac
 import { STAGES, stageOf } from "@/lib/project/stage";
 import { ROLE_SHORT } from "@/lib/account/roles";
 import { NewClient } from "@/components/account/NewClient";
+import { DeleteProject } from "@/components/project/DeleteProject";
 import { Requests } from "@/components/pros/Requests";
 import { sitesToday } from "@/lib/site/store";
 import { dayIn } from "@/lib/site/plan";
@@ -158,12 +159,12 @@ async function HomePageBody() {
           {projects.map((p, i) => {
             const at = stage(p);
             return (
-              <li key={p.id}>
+              <li key={p.id} className="relative">
                 <Reveal delay={0.04 * Math.min(i, 8)}>
                   <Link href={`/project/${p.id}`} className={`group block rounded-2xl border border-line bg-paper-raised transition hover:-translate-y-0.5 hover:border-accent ${pro ? "p-5" : "p-6"}`}>
                     <div className="flex items-center justify-between gap-2 text-xs uppercase tracking-widest text-ink-soft">
                       <span>{SPACE[p.space_type ?? ""] ?? "Project"}</span>
-                      <span className="rounded-full border border-line px-2.5 py-0.5 normal-case tracking-normal">{tag(p)}</span>
+                      <span className={`rounded-full border border-line px-2.5 py-0.5 normal-case tracking-normal ${p.role === "owner" ? "mr-9" : ""}`}>{tag(p)}</span>
                     </div>
                     <p className={`mt-3 font-serif leading-tight group-hover:text-accent ${pro ? "text-2xl" : "text-3xl"}`}>{nameOf(p)}</p>
                     {p.owner && p.role !== "owner" && <p className="mt-1 text-sm text-ink-soft">{p.owner.split(" ")[0]}&apos;s design</p>}
@@ -180,6 +181,12 @@ async function HomePageBody() {
                       </span>
                     </p>
                   </Link>
+                  {/* only the owner may delete; it sits on the card, outside the link */}
+                  {p.role === "owner" && (
+                    <div className={`absolute right-3 ${pro ? "top-3.5" : "top-4"}`}>
+                      <DeleteProject id={p.id} name={nameOf(p)} variant="card" />
+                    </div>
+                  )}
                 </Reveal>
               </li>
             );

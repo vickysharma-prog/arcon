@@ -1,5 +1,6 @@
 "use client";
 
+import { DeleteProject } from "./DeleteProject";
 import { useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
@@ -197,11 +198,14 @@ function Overview({ p, role, unlocked, go, onSite, onThread, onTeam, onUnlocked,
           </button>
         ))}
       </div>
-      {can(role, "edit") && (
-        <button onClick={onTour} className="mt-8 text-sm text-ink-soft hover:text-accent">
-          ↻ Take the guided tour again
-        </button>
-      )}
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+        {can(role, "edit") && (
+          <button onClick={onTour} className="text-sm text-ink-soft hover:text-accent">
+            ↻ Take the guided tour again
+          </button>
+        )}
+        {role === "owner" && <DeleteProject id={p.id} name={p.title ?? "this project"} variant="link" />}
+      </div>
     </main>
   );
 }
