@@ -45,9 +45,9 @@ export function LandingHeader() {
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-3 justify-self-end">
+        <div className="flex items-center gap-2 justify-self-end sm:gap-2.5">
           <InstallApp />
-          <Link href="/login?mode=signup" onClick={() => transition()} className="glow-btn rounded-full px-5 py-2 text-sm">
+          <Link href="/login?mode=signup" onClick={() => transition()} className="glow-btn flex h-9 items-center whitespace-nowrap rounded-full px-4 text-sm sm:px-5">
             Sign up free
           </Link>
           <ProfileMenu />

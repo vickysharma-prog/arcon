@@ -97,5 +97,8 @@ check("service worker never cached", sw.ok && (sw.headers.get("cache-control") ?
 const opened = await fetch(BASE + "/", { headers: { cookie: await cookieFor("owner") }, redirect: "manual" });
 check("signed in opens their projects", opened.status >= 300 && opened.status < 400 && (opened.headers.get("location") ?? "").endsWith("/home"), `${opened.status} ${opened.headers.get("location")}`);
 
+// The opening plays whichever page Arcon opens on (16 Oct)
+check("opening on every page", String((await get("/quiz")).body).includes('class="intro '));
+
 console.log(failed ? `${failed} failed` : "all live checks passed");
 process.exit(failed ? 1 : 0);

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { CookieNotice } from "@/components/CookieNotice";
+import { Intro } from "@/components/landing/Intro";
 import { INSTALL_SCRIPT, THEME_SCRIPT } from "@/components/theme-script";
 
 const geistSans = Geist({
@@ -47,6 +48,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <script dangerouslySetInnerHTML={{ __html: INSTALL_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col font-sans">
+        {/* the opening, each time Arcon is opened (once a session), whichever page it opens on */}
+        <Intro />
         {children}
         <CookieNotice />
       </body>

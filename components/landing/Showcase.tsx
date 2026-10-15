@@ -68,19 +68,35 @@ export function Showcase() {
   const [phase, setPhase] = useState(0);
   const p = PHASES[phase];
   const level = p.level;
-  const [swap, setSwap] = useState(false);
-  // A short fade whenever the drawing or the floor changes (day to night is lit, not faded).
-  const view = `${p.sketch}-${level}`;
-  const was = useRef(view);
-  useEffect(() => {
-    if (was.current === view || still) return;
-    was.current = view;
-    setSwap(true);
-    const t = setTimeout(() => setSwap(false), 450);
-    return () => clearTimeout(t);
-  }, [view, still]);
+  // Between phases the last frame is copied onto a flat canvas laid over the 3D, the 3D changes underneath (its new
+  // look takes a moment to prepare), and the copy then dissolves away: a film dissolve, with no stutter showing.
+  const snap = useRef<HTMLCanvasElement>(null);
+  const next = () => {
+    const gl = box.current?.querySelector<HTMLCanvasElement>("canvas[data-engine]") ?? box.current?.querySelector<HTMLCanvasElement>("canvas:not([data-snap])");
+    const s = snap.current;
+    if (gl && s && gl.width) {
+      s.width = gl.width;
+      s.height = gl.height;
+      s.getContext("2d")?.drawImage(gl, 0, 0);
+      s.style.transition = "none";
+      s.style.opacity = "1";
+    }
+    setPhase((i) => (i + 1) % PHASES.length);
+    // two frames after the change the new look is drawn; then the copy fades
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        setTimeout(() => {
+          if (!s) return;
+          s.style.transition = "opacity 1.1s cubic-bezier(0.4, 0, 0.2, 1)";
+          s.style.opacity = "0";
+        }, 60),
+      ),
+    );
+  };
   const [note, setNote] = useState(0);
   const [ready, setReady] = useState(false);
+  // the 3D only draws while it is on screen, so the rest of the page scrolls smoothly
+  const [inView, setInView] = useState(true);
   const box = useRef<HTMLDivElement>(null);
 
   // Start the 3D once the intro has gone and the card is on screen.
@@ -95,6 +111,7 @@ export function Showcase() {
       go();
     };
     const io = new IntersectionObserver(([e]) => {
+      setInView(e.isIntersecting);
       if (e.isIntersecting) {
         seen = true;
         go();
@@ -111,11 +128,12 @@ export function Showcase() {
   useEffect(() => {
     if (still) return;
     const t = setInterval(() => setNote((i) => (i + 1) % NOTES.length), 3200);
-    const f = setInterval(() => setPhase((i) => (i + 1) % PHASES.length), 6000);
+    const f = setInterval(next, 6000);
     return () => {
       clearInterval(t);
       clearInterval(f);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [still]);
 
   const n = NOTES[note];
@@ -123,14 +141,15 @@ export function Showcase() {
   return (
     <div className="relative">
       <div ref={box} className="relative h-[380px] sm:h-[500px] lg:-mr-16 lg:h-[600px]">
-        {/* one 3D view for every phase (rebuilding it would stutter); a short fade covers the change from sketch to colour */}
-        <motion.div className="absolute inset-0" animate={{ opacity: swap ? 0.15 : 1, filter: swap ? "blur(6px)" : "blur(0px)" }} transition={{ duration: 0.45 }}>
+        {/* one 3D view for every phase; the copy over it dissolves each change */}
+        <div className="absolute inset-0">
           {ready ? (
-            <HouseScene layout={layout} brief={BRIEF} taste={TASTE} newBuild mode="showcase" sketch={p.sketch} night={p.night} cutaway upTo={level} playing={false} />
+            <HouseScene layout={layout} brief={BRIEF} taste={TASTE} newBuild mode="showcase" sketch={p.sketch} night={p.night} cutaway upTo={level} playing={false} paused={!inView} />
           ) : (
             <Loading />
           )}
-        </motion.div>
+        </div>
+        <canvas ref={snap} data-snap aria-hidden className="pointer-events-none absolute inset-0 h-full w-full opacity-0" />
       </div>
 
       <div className="relative -mt-4 flex items-end gap-5">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bounds, Environment, Html, Lightformer, OrbitControls, useBounds } from "@react-three/drei";
+import { Bounds, Environment, Html, Lightformer, OrbitControls, PerformanceMonitor, useBounds } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
 import { ToneMappingMode } from "postprocessing";
@@ -42,6 +42,8 @@ type Props = {
   go?: { x: number; z: number; key: number };
   onPose?: (p: Pose) => void;
   playing: boolean;
+  /** Stop drawing altogether, for a view scrolled out of sight. */
+  paused?: boolean;
   onRoom?: (name: string) => void;
   onProgress?: (p: number) => void;
   onEnd?: () => void;
@@ -623,8 +625,12 @@ function Tour({ layout, upTo = "all", cutaway = false }: { layout: Layout; upTo?
   const { camera, size } = useThree();
   const { width: W, depth: D } = layout.shell;
   // The height that shows: cut floors stop at 1.4 m; the whole house has its roof.
-  const h = cutaway && upTo !== "all" ? upTo * STOREY + 1.4 : layout.floors.length * STOREY + 1.5;
-  useFrame(({ clock }) => {
+  const target = cutaway && upTo !== "all" ? upTo * STOREY + 1.4 : layout.floors.length * STOREY + 1.5;
+  // eases to a new floor's height over about a second, so the camera rises with it instead of jumping
+  const eased = useRef(target);
+  useFrame(({ clock }, dt) => {
+    eased.current += (target - eased.current) * Math.min(1, dt * 2.5);
+    const h = eased.current;
     const t = clock.elapsedTime;
     const turn = 0.7 + t * 0.11;
     const out = 0.5 + 0.5 * Math.cos(t * 0.32); // a gentle breath in and out, about 20 seconds a cycle
@@ -762,6 +768,8 @@ export default function HouseScene(props: Props) {
   const showcase = props.mode === "showcase";
   const still = props.mode === "shot";
   const top = props.layout.floors.at(-1)?.level ?? 0;
+  // The landing page's film starts sharp and steps its resolution down on a slower computer, so it never stutters.
+  const [filmDpr, setFilmDpr] = useState(1.75);
   const building = (
     <Building
       layout={props.layout}
@@ -779,15 +787,17 @@ export default function HouseScene(props: Props) {
   return (
     <Canvas
       shadows
+      frameloop={props.paused ? "never" : "always"}
       camera={{ fov: orbit ? 45 : showcase ? 38 : still ? 32 : props.mode === "explore" ? 72 : 82, near: 0.05, far: 300, position: [W * 1.6, h * 2.2 + 6, D * 1.9] }}
       // A picture to save is drawn at twice the screen's resolution, so it stays sharp in the PDF.
-      dpr={still || showcase ? 2 : [1, 2]}
+      dpr={still ? 2 : showcase ? filmDpr : [1, 2]}
       gl={{ preserveDrawingBuffer: true }}
     >
+      {showcase && <PerformanceMonitor bounds={() => [50, 58]} flipflops={3} onChange={({ factor }) => setFilmDpr(Math.round((1 + factor) * 4) / 4)} onFallback={() => setFilmDpr(1)} />}
       {!props.sketch && !showcase && <color attach="background" args={[night ? "#0d1424" : "#dfe8f3"]} />}
       {/* night on the landing page stays readable against the light page: a brighter, bluer moon */}
       <hemisphereLight args={night ? ["#3a4a78", "#141018", showcase ? 0.7 : 0.3] : ["#ffffff", "#d9cfc2", 0.7]} />
-      <directionalLight position={[W + 14, 26, -8]} intensity={night ? (showcase ? 1.2 : 0.6) : 2.2} color={night ? "#9fb4ff" : "#ffffff"} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004} shadow-normalBias={0.02} shadow-camera-left={-30} shadow-camera-right={30} shadow-camera-top={30} shadow-camera-bottom={-30} />
+      <directionalLight position={[W + 14, 26, -8]} intensity={night ? (showcase ? 1.2 : 0.6) : 2.2} color={night ? "#9fb4ff" : "#ffffff"} castShadow shadow-mapSize={showcase ? [1024, 1024] : [2048, 2048]} shadow-bias={-0.0004} shadow-normalBias={0.02} shadow-camera-left={-30} shadow-camera-right={30} shadow-camera-top={30} shadow-camera-bottom={-30} />
       <ambientLight intensity={night ? 0.06 : 0.25} />
       <Studio night={night} />
       {/* the site sits outside Bounds, so framing fits the building, not the lawn */}
@@ -830,12 +840,12 @@ export default function HouseScene(props: Props) {
       </LookCtx.Provider>
       {props.sketch && <SketchMaterial />}
       {props.sketch ? (
-        <EffectComposer multisampling={4}>
+        <EffectComposer multisampling={showcase ? 0 : 4}>
           <SketchFx print={props.sketch === "print"} />
         </EffectComposer>
       ) : (
-        <EffectComposer multisampling={4}>
-          <N8AO halfRes aoRadius={0.5} distanceFalloff={0.5} intensity={2.2} quality="medium" />
+        <EffectComposer multisampling={showcase ? 0 : 4}>
+          {showcase ? <></> : <N8AO halfRes aoRadius={0.5} distanceFalloff={0.5} intensity={2.2} quality="medium" />}
           <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         </EffectComposer>
       )}

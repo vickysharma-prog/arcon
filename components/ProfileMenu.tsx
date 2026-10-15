@@ -8,7 +8,7 @@ import { TeamPanel } from "./project/TeamPanel";
 import { ROLE_SHORT, type Role } from "@/lib/account/roles";
 
 type Mode = "light" | "dark" | "system";
-type Me = { user: { id: string; email: string | null } | null; profile?: { name: string; company: string | null; role: Role } | null };
+type Me = { user: { id: string; email: string | null } | null; profile?: { name: string; company: string | null; role: Role; logo_url?: string | null } | null };
 const KEY = "arcon-theme";
 
 function apply(mode: Mode) {
@@ -75,6 +75,7 @@ export function ProfileMenu() {
     setMode(m);
   };
 
+  const initial = me?.user ? (me.profile?.name || me.user.email || "").trim().charAt(0).toUpperCase() : "";
   return (
     <div ref={box} className="relative">
       <button
@@ -85,12 +86,19 @@ export function ProfileMenu() {
         }}
         aria-label="Your profile"
         aria-expanded={open}
-        className="grid h-9 w-9 place-items-center rounded-full bg-btn text-btn-ink transition hover:opacity-90"
+        className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-btn text-btn-ink ring-accent/40 transition hover:opacity-90 hover:ring-2"
       >
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4 21a8 8 0 0 1 16 0" />
-        </svg>
+        {me?.profile?.logo_url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={me.profile.logo_url} alt="" className="h-full w-full bg-paper-raised object-contain" />
+        ) : initial ? (
+          <span className="font-serif text-lg leading-none">{initial}</span>
+        ) : (
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21a8 8 0 0 1 16 0" />
+          </svg>
+        )}
       </button>
       {open && (
         <div role="menu" aria-label="Profile" className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-line bg-paper-raised shadow-lg">

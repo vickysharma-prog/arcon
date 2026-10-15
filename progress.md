@@ -2,6 +2,20 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: A smooth film, the opening everywhere, one app button, a face on the profile (Vicky)
+
+- The film at the top of the landing page stuttered: each switch from sketch to colour rebuilt the picture's finishing
+  passes, the camera jumped between floors, and a blur was laid over the whole 3D. Now the last frame is copied over the
+  3D just before a switch and dissolves away once the new look is drawn, the camera rises and falls with the floors, and
+  the film draws lighter (no shading pass or extra edge smoothing, smaller shadows, sharpness stepping down on a slower
+  computer). It stops drawing while scrolled out of sight, so the rest of the page scrolls smoothly.
+- The opening (the mark, "Arcon", the boot sound) plays whenever Arcon is opened, on whatever page it opens: the site,
+  the installed app, a shared link. Once per visit.
+- One "Get the app" button in the header: on a computer it opens a small panel with a code to scan for the phone and,
+  in Chrome or Edge, Install for this computer; on a phone it installs, or shows the steps for that phone. The
+  header's buttons keep to one line.
+- The profile button shows the company logo when there is one, else the first letter of the name.
+
 ## 2026-10-16: The logo back in the tab, and signed in opens the app (Vicky)
 
 - The browser tab showed a plain globe: the apple icon set in the page settings replaced the logo file, so no icon
