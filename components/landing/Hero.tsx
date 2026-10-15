@@ -88,10 +88,10 @@ export function Hero() {
             initial={still ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="inline-flex items-center gap-2 rounded-full border border-line bg-paper-raised/70 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.25em] text-ink-soft backdrop-blur"
+            className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.2em] text-accent sm:text-xs sm:tracking-[0.3em]"
           >
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-            AI architect · Powered by Qloo
+            <motion.span aria-hidden className="h-px w-10 origin-left bg-accent" initial={still ? false : { scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.4, duration: 0.8 }} />
+            AI architect, powered by Qloo
           </motion.p>
           <h1 className="mt-6 font-serif text-5xl leading-[1.05] sm:text-6xl lg:text-7xl">
             Spaces designed around
@@ -110,7 +110,7 @@ export function Hero() {
               </AnimatePresence>
             </span>
           </h1>
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-soft">
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-soft sm:text-xl">
             Talk to Arcon about the films, places and things you love. It turns your taste into a floor plan, a 3D walkthrough, a budget in your currency and a shopping list, for a home, café, office, hotel, shop or studio.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
@@ -119,7 +119,7 @@ export function Hero() {
               onClick={() => transition()}
               className="glow-btn group px-7 py-3.5 text-lg"
             >
-              Start designing free <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
+              Start designing free
             </Link>
             <Link href="/start/plan" onClick={() => tick()} className="rounded-full border border-line bg-paper-raised/70 px-6 py-3.5 text-lg backdrop-blur transition hover:-translate-y-0.5 hover:border-accent hover:text-accent hover:shadow-[0_12px_36px_-14px_var(--accent)]">
               I have a floor plan

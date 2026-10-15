@@ -619,17 +619,23 @@ function ShotCam({ layout, shot, onShot }: { layout: Layout; shot: Shot; onShot?
 
 // Showcase: the camera moves on its own, circling the building slowly while drifting in close and back out again,
 // like a film of an architect's model. Nobody steers it.
-function Tour({ layout }: { layout: Layout }) {
-  const { camera } = useThree();
+function Tour({ layout, upTo = "all", cutaway = false }: { layout: Layout; upTo?: number | "all"; cutaway?: boolean }) {
+  const { camera, size } = useThree();
   const { width: W, depth: D } = layout.shell;
-  const span = Math.max(W, D);
+  // The height that shows: cut floors stop at 1.4 m; the whole house has its roof.
+  const h = cutaway && upTo !== "all" ? upTo * STOREY + 1.4 : layout.floors.length * STOREY + 1.5;
   useFrame(({ clock }) => {
     const t = clock.elapsedTime;
     const turn = 0.7 + t * 0.11;
-    const out = 0.5 + 0.5 * Math.cos(t * 0.32); // starts wide, closes in, pulls back: about 20 seconds a cycle
-    const r = span * (0.95 + 0.7 * out);
-    camera.position.set(W / 2 + Math.cos(turn) * r, span * (0.6 + 0.5 * out), D / 2 + Math.sin(turn) * r);
-    camera.lookAt(W / 2, 0.6, D / 2);
+    const out = 0.5 + 0.5 * Math.cos(t * 0.32); // a gentle breath in and out, about 20 seconds a cycle
+    // Far enough that the whole house (its bounding sphere, with garden room) always fits the narrower view.
+    const fov = "fov" in camera ? ((camera as { fov: number }).fov * Math.PI) / 180 : 0.66;
+    const narrow = Math.min(fov, 2 * Math.atan(Math.tan(fov / 2) * (size.width / size.height)));
+    // The distance at which the house's bounding sphere just fits, with a margin so nothing ever touches the edge.
+    const need = (0.5 * Math.hypot(W, D, h)) / Math.sin(narrow / 2);
+    const r = need * (1.02 + 0.08 * out);
+    camera.position.set(W / 2 + Math.cos(turn) * r * 0.82, r * 0.55, D / 2 + Math.sin(turn) * r * 0.82);
+    camera.lookAt(W / 2, h * 0.45, D / 2);
   });
   return null;
 }
@@ -742,7 +748,11 @@ function Studio({ night = false }: { night?: boolean }) {
 export default function HouseScene(props: Props) {
   const colors = useMemo(() => scheme(props.brief?.palette), [props.brief]);
   const look = useMemo(() => lookOf(props.brief, props.taste), [props.brief, props.taste]);
-  const ex = useMemo(() => exteriorOf(props.layout, look, !!props.newBuild), [props.layout, look, props.newBuild]);
+  // On the landing page the house is an architect's white model: smooth walls, no garden.
+  const ex = useMemo(() => {
+    const e = exteriorOf(props.layout, look, !!props.newBuild);
+    return props.mode === "showcase" ? { ...e, cladding: "render" as const, garden: false } : e;
+  }, [props.layout, look, props.newBuild, props.mode]);
   const moods = useMemo(() => moodsFor(props.layout, props.taste?.tags), [props.layout, props.taste]);
   // Sketches and saved pictures are always drawn by day.
   const night = !!props.night && !props.sketch && props.mode !== "shot";
@@ -771,16 +781,17 @@ export default function HouseScene(props: Props) {
       shadows
       camera={{ fov: orbit ? 45 : showcase ? 38 : still ? 32 : props.mode === "explore" ? 72 : 82, near: 0.05, far: 300, position: [W * 1.6, h * 2.2 + 6, D * 1.9] }}
       // A picture to save is drawn at twice the screen's resolution, so it stays sharp in the PDF.
-      dpr={still ? 2 : [1, 2]}
+      dpr={still || showcase ? 2 : [1, 2]}
       gl={{ preserveDrawingBuffer: true }}
     >
-      {!props.sketch && <color attach="background" args={[night ? "#0d1424" : "#dfe8f3"]} />}
-      <hemisphereLight args={night ? ["#3a4a78", "#141018", 0.3] : ["#ffffff", "#d9cfc2", 0.7]} />
-      <directionalLight position={[W + 14, 26, -8]} intensity={night ? 0.6 : 2.2} color={night ? "#9fb4ff" : "#ffffff"} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004} shadow-normalBias={0.02} shadow-camera-left={-30} shadow-camera-right={30} shadow-camera-top={30} shadow-camera-bottom={-30} />
+      {!props.sketch && !showcase && <color attach="background" args={[night ? "#0d1424" : "#dfe8f3"]} />}
+      {/* night on the landing page stays readable against the light page: a brighter, bluer moon */}
+      <hemisphereLight args={night ? ["#3a4a78", "#141018", showcase ? 0.7 : 0.3] : ["#ffffff", "#d9cfc2", 0.7]} />
+      <directionalLight position={[W + 14, 26, -8]} intensity={night ? (showcase ? 1.2 : 0.6) : 2.2} color={night ? "#9fb4ff" : "#ffffff"} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004} shadow-normalBias={0.02} shadow-camera-left={-30} shadow-camera-right={30} shadow-camera-top={30} shadow-camera-bottom={-30} />
       <ambientLight intensity={night ? 0.06 : 0.25} />
       <Studio night={night} />
       {/* the site sits outside Bounds, so framing fits the building, not the lawn */}
-      {!props.sketch && (
+      {!props.sketch && !showcase && (
         <mesh rotation-x={-Math.PI / 2} position={[W / 2, -0.02, D / 2]} receiveShadow>
           <planeGeometry args={[W + 40, D + 40]} />
           <meshStandardMaterial color={night ? mix(colors.ground, "#0d1424", 0.6) : colors.ground} roughness={1} />
@@ -797,7 +808,7 @@ export default function HouseScene(props: Props) {
         ) : showcase ? (
           <>
             {building}
-            <Tour layout={props.layout} />
+            <Tour layout={props.layout} upTo={props.upTo} cutaway={props.cutaway} />
           </>
         ) : still ? (
           <>

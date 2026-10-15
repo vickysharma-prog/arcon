@@ -2,6 +2,28 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: The landing page, professional pass (Vicky's notes)
+
+- Larger on computers: at a normal 100% zoom everything read small, so text and spacing step up on laptops and big
+  screens (the whole site, since it is all sized in rem).
+- The hero: a plain line "AI architect, powered by Qloo" with a short rule instead of the rounded pill, and no arrow
+  on the buttons.
+- The 3D at the top plays like a film, with no buttons and no frame (the page is the canvas): each floor drawn as a
+  sketch, then the same floor in colour, then upstairs at night with every room lit. It is the inside, as the sketch
+  is, in the site's own colours (pale walls, light oak, blue accents), not a cartoon. The camera keeps the whole of
+  what shows in view at every moment and moves gently; the drawing renders at double resolution. The small inset
+  plan and the counting numbers are gone.
+- How it works: the new flow in five steps (tell Arcon, find your style, choose a plan, walk through, build), joined
+  by a line that fills as each step lights up in turn, with a light travelling along it; tap a step to stop on it.
+  Across on a computer, down on a phone.
+- Features: what Arcon does today (style read by Qloo, three plans or your own, 3D inside and out by day and night,
+  budget in your currency, the drawings pack, your team in one place, following the build, the app).
+- Pricing as decided: free to try, $149 a home project or $299 a business, Studio $99/month, Build $299/month, pro
+  plans with 14 days free. Who it's for updated to match.
+
+Checked: in the browser on a computer (every phase of the 3D, the sections) and at phone width (no part wider than
+the screen on the landing, quiz, interview and sign-in pages).
+
 ## 2026-10-16: P7, Arcon as a phone (and desktop) app
 
 - Installable from the browser, hosted on Vercel as before: no store needed. A manifest (name, colours, icons made

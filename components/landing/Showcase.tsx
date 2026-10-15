@@ -2,9 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { PlanSvg } from "@/components/plan/PlanSvg";
-import { CountUp } from "@/components/fx/Motion";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TEMPLATES, DEFAULT_SHELLS } from "@/lib/layout/templates";
 import { place } from "@/lib/layout/place";
 import { buildingShell } from "@/lib/layout/footprint";
@@ -16,20 +14,30 @@ const HouseScene = dynamic(() => import("@/components/three/HouseScene"), {
   loading: () => <Loading />,
 });
 
-// A sample home built by the real layout engine, finished in an invented warm-modern brief.
+// A sample home built by the real layout engine, seen from above with the roof off, in the site's own colours: pale
+// walls, light oak floors, blue accents. An invented Scandinavian taste gives each room its mood and light.
 const PROGRAM = TEMPLATES.house;
+const TASTE = {
+  tags: [
+    { family: "decor", value: "scandinavian", weight: 3, sources: [{ name: "a trip to the hills", layer: 1 }] },
+    { family: "ambience", value: "cozy", weight: 2, sources: [{ name: "a slow film you rewatch", layer: 1 }] },
+    { family: "ambience", value: "bright", weight: 1.5, sources: [{ name: "the café you never leave", layer: 1 }] },
+    { family: "ambience", value: "relaxing", weight: 1, sources: [{ name: "linen sheets, always", layer: 1 }] },
+  ],
+  brands: [],
+};
 const BRIEF = {
-  name: "Warm modern",
-  summary: "Oak, linen and soft light, with plants by every window",
+  name: "Pale Scandinavian",
+  summary: "Pale timber, linen and soft light",
   palette: [
-    { role: "base", hex: "#efe6da" },
-    { role: "wood", hex: "#b48a5c" },
-    { role: "accent", hex: "#2f5d45" },
-    { role: "dark", hex: "#2c2a27" },
+    { role: "base", hex: "#f4f7fb" },
+    { role: "wood", hex: "#cdb497" },
+    { role: "accent", hex: "#2f6fed" },
+    { role: "dark", hex: "#55657d" },
   ],
   materials: [
-    { name: "Oak floors", where: "living and bedrooms" },
-    { name: "Limewash plaster", where: "walls" },
+    { name: "Pale timber floors", where: "living and bedrooms" },
+    { name: "White paint", where: "walls" },
   ],
 };
 
@@ -42,10 +50,35 @@ const NOTES: { room: string; note: string; from: string }[] = [
   { room: "Family room", note: "Low seating, plants by the window", from: "a trip to the hills" },
 ];
 
+// The showcase plays like a film: the sketch of each floor, then the same house in full colour by day, then by night,
+// and round again. No buttons and no frame: the page is the canvas and the house sits on it.
+// Inside, floor by floor: each floor drawn as a sketch, then the same floor in colour, and upstairs at night with
+// every room lit.
+const PHASES = [
+  { id: "ground-sketch", sketch: true, level: 0, night: false },
+  { id: "ground", sketch: false, level: 0, night: false },
+  { id: "upper-sketch", sketch: true, level: 1, night: false },
+  { id: "upper", sketch: false, level: 1, night: false },
+  { id: "night", sketch: false, level: 1, night: true },
+] as const;
+
 export function Showcase() {
   const still = useReducedMotion();
   const layout = useMemo(() => place(PROGRAM, buildingShell(PROGRAM, DEFAULT_SHELLS.house)), []);
-  const [level, setLevel] = useState(0);
+  const [phase, setPhase] = useState(0);
+  const p = PHASES[phase];
+  const level = p.level;
+  const [swap, setSwap] = useState(false);
+  // A short fade whenever the drawing or the floor changes (day to night is lit, not faded).
+  const view = `${p.sketch}-${level}`;
+  const was = useRef(view);
+  useEffect(() => {
+    if (was.current === view || still) return;
+    was.current = view;
+    setSwap(true);
+    const t = setTimeout(() => setSwap(false), 450);
+    return () => clearTimeout(t);
+  }, [view, still]);
   const [note, setNote] = useState(0);
   const [ready, setReady] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -78,8 +111,7 @@ export function Showcase() {
   useEffect(() => {
     if (still) return;
     const t = setInterval(() => setNote((i) => (i + 1) % NOTES.length), 3200);
-    // the camera closes in and pulls back about every 20 seconds; switch floors while it is far out
-    const f = setInterval(() => setLevel((l) => 1 - l), 19600);
+    const f = setInterval(() => setPhase((i) => (i + 1) % PHASES.length), 6000);
     return () => {
       clearInterval(t);
       clearInterval(f);
@@ -87,31 +119,21 @@ export function Showcase() {
   }, [still]);
 
   const n = NOTES[note];
-  // No frame: the sketch is drawn straight onto the page, with the same floor as a plan beside it.
+  // No frame: the house is drawn straight onto the page.
   return (
     <div className="relative">
-      {/* the drawing fades out toward its edges, so it never ends in a hard line */}
-      <div
-        ref={box}
-        className="relative h-[360px] sm:h-[460px] lg:-mr-10 lg:h-[540px]"
-        style={{ maskImage: "radial-gradient(ellipse 50% 50% at 50% 50%, black 62%, transparent 100%)", WebkitMaskImage: "radial-gradient(ellipse 50% 50% at 50% 50%, black 62%, transparent 100%)" }}
-      >
-        {ready ? <HouseScene layout={layout} brief={BRIEF} mode="showcase" sketch cutaway upTo={level} playing={false} /> : <Loading />}
+      <div ref={box} className="relative h-[380px] sm:h-[500px] lg:-mr-16 lg:h-[600px]">
+        {/* one 3D view for every phase (rebuilding it would stutter); a short fade covers the change from sketch to colour */}
+        <motion.div className="absolute inset-0" animate={{ opacity: swap ? 0.15 : 1, filter: swap ? "blur(6px)" : "blur(0px)" }} transition={{ duration: 0.45 }}>
+          {ready ? (
+            <HouseScene layout={layout} brief={BRIEF} taste={TASTE} newBuild mode="showcase" sketch={p.sketch} night={p.night} cutaway upTo={level} playing={false} />
+          ) : (
+            <Loading />
+          )}
+        </motion.div>
       </div>
 
-      <div className="pointer-events-none absolute bottom-16 right-0 w-28 sm:w-36 lg:-right-8">
-        <p className="mb-1.5 flex items-center justify-end gap-2 font-mono text-[9px] uppercase tracking-[0.25em] text-ink-soft">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-leaf" />
-          {level ? "Upper" : "Ground"} floor
-        </p>
-        <AnimatePresence mode="wait">
-          <motion.div key={level} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 0.9, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
-            <PlanSvg layout={layout} level={level} units="metric" className="h-auto w-full" />
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      <div className="relative -mt-6 flex items-end gap-5">
+      <div className="relative -mt-4 flex items-end gap-5">
         <AnimatePresence mode="wait">
           <motion.div key={n.room} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3 }} className="min-w-0 flex-1">
             <p className="truncate text-sm">
@@ -121,12 +143,6 @@ export function Showcase() {
             <p className="truncate font-mono text-[10px] uppercase tracking-wider text-accent">from “{n.from}”</p>
           </motion.div>
         </AnimatePresence>
-        <Readout label="Green" tone="text-leaf">
-          <CountUp value={96} duration={2.2} />
-        </Readout>
-        <Readout label="Match">
-          <CountUp value={92} duration={2.2} />%
-        </Readout>
       </div>
     </div>
   );
@@ -141,15 +157,6 @@ function Loading() {
         </div>
         <p className="mt-3 font-mono text-xs text-ink-soft">&gt; building the 3D model…</p>
       </div>
-    </div>
-  );
-}
-
-function Readout({ label, children, tone = "text-ink" }: { label: string; children: ReactNode; tone?: string }) {
-  return (
-    <div className="shrink-0 text-center">
-      <p className={`font-serif text-2xl leading-none ${tone}`}>{children}</p>
-      <p className="mt-1 font-mono text-[9px] uppercase tracking-[0.2em] text-ink-soft">{label}</p>
     </div>
   );
 }

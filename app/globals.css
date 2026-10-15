@@ -54,6 +54,14 @@
   --font-serif: var(--font-instrument-serif);
 }
 
+/* At 100% zoom on a laptop or a big screen, text and spacing step up a little (everything is in rem). */
+@media (min-width: 1024px) {
+  html { font-size: 106.25%; }
+}
+@media (min-width: 1536px) {
+  html { font-size: 112.5%; }
+}
+
 body {
   background: var(--paper);
   color: var(--ink);

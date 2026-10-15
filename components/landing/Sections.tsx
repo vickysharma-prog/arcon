@@ -24,40 +24,79 @@ function Heading({ eyebrow, title, sub }: { eyebrow: string; title: ReactNode; s
 }
 
 const STEPS = [
-  { n: "01", title: "Talk", body: "One question at a time. Tap an answer, type, or just speak." },
-  { n: "02", title: "Taste", body: "Qloo reads what you love and finds the words for your style." },
-  { n: "03", title: "Plans", body: "Three floor plans, each clear about what it does best and what it gives up." },
-  { n: "04", title: "Walk", body: "Step inside in 3D. Click any piece to see the brand behind it." },
-  { n: "05", title: "Build", body: "A budget by room, a timeline, a green score and a shopping list near you." },
+  { n: "01", title: "Tell Arcon about it", body: "The space, who uses it, how it's used and your budget. Tap, type or speak, in English, हिंदी or Hinglish." },
+  { n: "02", title: "Find your style", body: "Three quick picks: a place, a brand, a film or music. Qloo reads your taste and names your style." },
+  { n: "03", title: "Choose a plan", body: "Three floor plans for your plot, each clear about what it does best and what it gives up." },
+  { n: "04", title: "Walk through it", body: "Step inside in 3D, by day or by night, with the outside designed from your taste too." },
+  { n: "05", title: "Build it", body: "Budget, drawings, a shopping list, your team and the building site, all in one place." },
 ];
 
 export function HowItWorks() {
   const still = useReducedMotion();
+  const [active, setActive] = useState(0);
+  const [held, setHeld] = useState(false);
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    if (still || held || !seen) return;
+    const t = setInterval(() => setActive((a) => (a + 1) % STEPS.length), 2400);
+    return () => clearInterval(t);
+  }, [still, held, seen]);
+  const pct = (active / (STEPS.length - 1)) * 100;
   return (
     <section id="how" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-24 sm:px-8">
       <Heading eyebrow="How it works" title="From a conversation to a space you can walk through." />
-      <div className="relative mt-16">
-        {/* the line the steps hang from, drawing across as it scrolls in */}
-        <motion.div
-          aria-hidden
-          className="absolute left-0 right-0 top-6 hidden h-px origin-left bg-gradient-to-r from-btn via-accent to-leaf md:block"
-          initial={still ? false : { scaleX: 0 }}
-          whileInView={{ scaleX: 1 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
-        />
-        <ol className="grid gap-8 md:grid-cols-5">
-          {STEPS.map((s, i) => (
-            <Reveal key={s.n} delay={0.15 * i}>
-              <li className="relative">
-                <span className="relative grid h-12 w-12 place-items-center rounded-full border border-accent/50 bg-paper font-mono text-sm text-accent">{s.n}</span>
-                <h3 className="mt-4 font-serif text-2xl">{s.title}</h3>
-                <p className="mt-2 text-ink-soft">{s.body}</p>
-              </li>
-            </Reveal>
-          ))}
+      <motion.div className="relative mt-16" onViewportEnter={() => setSeen(true)} viewport={{ once: true, margin: "-120px" }}>
+        {/* the line joining the steps: a quiet track, the part done so far, and a light moving along it */}
+        <div aria-hidden className="absolute bottom-6 left-6 top-6 w-px bg-line md:bottom-auto md:left-6 md:right-[calc(20%-1.5rem)] md:top-6 md:h-px md:w-auto">
+          <motion.div
+            className="absolute left-0 top-0 w-px bg-gradient-to-b from-btn via-accent to-leaf md:hidden"
+            animate={{ height: `${pct}%` }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          />
+          <motion.div
+            className="absolute left-0 top-0 hidden h-px bg-gradient-to-r from-btn via-accent to-leaf md:block"
+            animate={{ width: `${pct}%` }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          />
+          {!still && (
+            <motion.span
+              className="absolute hidden h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent shadow-[0_0_14px_4px_var(--accent)] md:block"
+              animate={{ left: ["0%", "100%"], opacity: [0, 1, 1, 0] }}
+              transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+            />
+          )}
+        </div>
+        <ol className="relative grid gap-8 md:grid-cols-5 md:gap-6">
+          {STEPS.map((s, i) => {
+            const on = i === active;
+            const done = i < active;
+            return (
+              <Reveal key={s.n} delay={0.12 * i}>
+                <li className="flex gap-5 md:block">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      tick();
+                      setHeld(true);
+                      setActive(i);
+                    }}
+                    aria-pressed={on}
+                    aria-label={`Step ${s.n}: ${s.title}`}
+                    className={`relative grid h-12 w-12 shrink-0 place-items-center rounded-full border font-mono text-sm transition-colors duration-500 ${on ? "border-accent bg-accent text-white" : done ? "border-accent bg-paper text-accent" : "border-line bg-paper text-ink-soft"}`}
+                  >
+                    {on && !still && <span aria-hidden className="absolute inset-0 animate-ping rounded-full border border-accent/60" />}
+                    {s.n}
+                  </button>
+                  <div>
+                    <h3 className={`font-serif text-2xl transition-colors duration-500 md:mt-5 ${on ? "text-ink" : "text-ink-soft"}`}>{s.title}</h3>
+                    <p className={`mt-2 transition-colors duration-500 ${on ? "text-ink" : "text-ink-soft"}`}>{s.body}</p>
+                  </div>
+                </li>
+              </Reveal>
+            );
+          })}
         </ol>
-      </div>
+      </motion.div>
     </section>
   );
 }
@@ -194,42 +233,39 @@ export function Features() {
         <Feature delay={0} title="Talk in your language" body="Speak or type in English, हिंदी or Hinglish. Tap answers when you'd rather not type.">
           <Bars />
         </Feature>
-        <Feature delay={0.08} title="Bring your own plan" body="Upload a photo, scan or PDF. Arcon reads every room and builds from it.">
-          <MiniPlan />
+        <Feature delay={0.08} title="Your style, read by Qloo" body="Three picks become your style, and every material, colour and piece says which of your loves it came from.">
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-ink-soft">
+            <span className="rounded border border-line px-1.5 py-0.5">film</span>→<span className="rounded border border-accent px-1.5 py-0.5 text-accent">low light</span>→
+            <span className="rounded border border-leaf px-1.5 py-0.5 text-leaf">lamps</span>
+          </div>
         </Feature>
-        <Feature delay={0.16} title="Three plans, honest trade-offs" body="Each option says what it does best and what it gives up next to the other two.">
+        <Feature delay={0.16} title="Three plans, honest trade-offs" body="Each option says what it does best and what it gives up. Or upload the plan you already have.">
           <div className="flex gap-2">
             {[0, 1, 2].map((i) => (
               <span key={i} className={`h-12 flex-1 rounded-md border ${i === 1 ? "border-accent bg-accent/10" : "border-line"}`} />
             ))}
           </div>
         </Feature>
-        <Feature delay={0.24} title="Walk through it in 3D" body="Step from room to room. Click a chair or a lamp to see its brand and price.">
+        <Feature delay={0.24} title="3D, inside and out" body="Walk room to room by day or night. The roof and walls outside follow your taste; click any piece for its brand.">
           <Cube />
         </Feature>
-        <Feature delay={0} title="A budget in your currency" body="Researched rates for 8 markets and four finish levels, room by room.">
+        <Feature delay={0} title="A budget in your currency" body="Researched rates for 8 markets, room by room, with a timeline, a green score and a shopping list near you.">
           <p className="font-serif text-4xl text-ink">
             $<CountUp value={48200} format={(v) => Math.round(v).toLocaleString("en-US")} />
           </p>
         </Feature>
-        <Feature delay={0.08} title="Green by default" body="Plants in every room and a score out of 100, with easy ways to raise it.">
-          <Ring value={96} size={64} stroke={6} />
+        <Feature delay={0.08} title="A drawings pack" body="Dimensioned plans, all four elevations and door and window schedules, as a PDF and a DXF for CAD.">
+          <MiniPlan />
         </Feature>
-        <Feature delay={0.16} title="A shopping list near you" body="Brands at your price level, a cheaper and a dearer pick, and stores close by.">
-          <div className="space-y-1.5">
-            {[80, 64, 72].map((w, i) => (
-              <span key={i} className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-leaf" />
-                <span className="h-2 rounded-full bg-line" style={{ width: `${w}%` }} />
-              </span>
+        <Feature delay={0.16} title="Your team in one place" body="Invite your architect and builder by link or QR. Talk room by room, approve versions, track fees.">
+          <div className="flex -space-x-2">
+            {["bg-btn", "bg-accent", "bg-leaf"].map((c, i) => (
+              <span key={c} className={`h-9 w-9 rounded-full border-2 border-paper ${c}`} style={{ zIndex: 3 - i }} />
             ))}
           </div>
         </Feature>
-        <Feature delay={0.24} title="Every choice explained" body="A taste trail shows which of your loves led to each material, colour and piece.">
-          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-ink-soft">
-            <span className="rounded border border-line px-1.5 py-0.5">film</span>→<span className="rounded border border-accent px-1.5 py-0.5 text-accent">low light</span>→
-            <span className="rounded border border-leaf px-1.5 py-0.5 text-leaf">lamps</span>
-          </div>
+        <Feature delay={0.24} title="Follow the build" body="Phases, crew, materials and photo updates from the site, on your phone. Install Arcon like an app.">
+          <Ring value={64} size={64} stroke={6} />
         </Feature>
       </div>
     </section>
@@ -281,10 +317,10 @@ function Cube() {
 }
 
 const AUDIENCE = [
-  { title: "Homeowners", body: "Planning a new build or a big renovation, and want to see it before anyone builds it." },
-  { title: "Cafés, hotels, shops and offices", body: "Arcon asks how you run the place and who your guests are, then plans for both." },
-  { title: "Architects and designers", body: "Send clients the questions, start from their taste, and present three options on day one." },
-  { title: "Builders", body: "A clear plan, budget and timeline to quote from, all in one shared project." },
+  { title: "Homeowners", body: "Planning a new build or a big renovation: see it, change it and price it before anyone builds it, then follow the build." },
+  { title: "Cafés, hotels, shops and offices", body: "Arcon asks how you run the place, reads your neighbourhood through Qloo and plans for the crowd you want." },
+  { title: "Architects and designers", body: "Studio tools: new clients in person or by link, three options on day one, your branding on every drawing, fees by milestone." },
+  { title: "Builders", body: "Run the site in Arcon: phases, crew, materials and photo updates your client can follow, while your costs stay yours." },
 ];
 
 export function Audience() {
@@ -304,17 +340,17 @@ export function Audience() {
 }
 
 const PLANS = [
-  { name: "Free", price: "$0", per: "", for: "Anyone", cta: "Start free", features: ["Your questions and taste profile", "Your design brief", "One 2D plan", "A 3D preview"] },
-  { name: "Owner", price: "$29", per: "/month", alt: "or $149 per project", for: "Homeowners and small businesses", cta: "Start with Owner", featured: true, features: ["Unlimited edits", "Full 3D and walkthrough", "Budget and timeline", "Shopping list", "Share with your builder"] },
-  { name: "Pro", price: "$99", per: "/month per seat", for: "Architects and interior designers", cta: "Start with Pro", features: ["Everything in Owner", "Interview links for clients", "Drawings pack", "Branded reviews", "10 active projects"] },
-  { name: "Build", price: "$299", per: "/month per company", for: "Builders and contractors", cta: "Start with Build", features: ["Everything in Pro", "Site tracking", "Crews and materials", "Progress updates for clients"] },
+  { name: "Free", price: "$0", per: "", for: "Anyone, to try it", cta: "Start free", href: "/start", features: ["Your style, read by Qloo", "Three floor plans", "The 3D from outside", "The style quiz"] },
+  { name: "Project", price: "$149", per: "one time", alt: "$299 for a café, shop, office or hotel", for: "Homeowners and business owners", cta: "Design my space", href: "/start", featured: true, features: ["Walk inside, by day and night", "Budget, timeline and shopping list", "Make changes by chat", "Drawings pack, PDF and DXF", "Your architect and builder on the project", "Follow the building site"] },
+  { name: "Studio", price: "$99", per: "/month", alt: "or $990 a year, two months free", for: "Architects and interior designers", cta: "Start 14-day trial", href: "/login?mode=signup", features: ["Every client project unlocked", "New clients in person or by link", "Your branding on exports", "Fees by milestone", "Clients find you by taste match"] },
+  { name: "Build", price: "$299", per: "/month", alt: "or $2,990 a year", for: "Builders and contractors", cta: "Start 14-day trial", href: "/login?mode=signup", features: ["Site tracking: phases, crew, materials", "Photo updates for clients", "Your costs stay yours", "Design-and-build projects"] },
 ];
 
 export function Pricing() {
   return (
     <section id="pricing" className="relative scroll-mt-24 border-t border-line bg-paper-raised/50 py-24">
       <div className="mx-auto max-w-6xl px-4 sm:px-8">
-        <Heading eyebrow="Pricing" title="Start free. Pay when you're ready to build." sub="Every plan starts with a free design. No card needed." />
+        <Heading eyebrow="Pricing" title="Start free. Pay when you're ready to build." sub="Try it free, pay once per project, or work on every project as a pro. Pro plans start with 14 days free." />
         <div className="mt-14 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((p, i) => (
             <Reveal key={p.name} delay={i * 0.08}>
@@ -326,7 +362,7 @@ export function Pricing() {
                 {p.featured && <span aria-hidden className="pointer-events-none absolute left-0 top-0 h-px w-1/3 bg-gradient-to-r from-transparent via-accent to-transparent animate-[edge_2.4s_linear_infinite] motion-reduce:animate-none" />}
                 <div className="flex items-center justify-between">
                   <h3 className="font-serif text-2xl">{p.name}</h3>
-                  {p.featured && <span className="rounded-full bg-accent/10 px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-accent">Best for most homes</span>}
+                  {p.featured && <span className="rounded-full bg-accent/10 px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-accent">Most chosen</span>}
                 </div>
                 <p className="mt-1 text-sm text-ink-soft">{p.for}</p>
                 <p className="mt-5 font-serif text-5xl leading-none">
@@ -343,7 +379,7 @@ export function Pricing() {
                   ))}
                 </ul>
                 <Link
-                  href="/start"
+                  href={p.href}
                   onClick={() => transition()}
                   className={`mt-6 rounded-full px-5 py-2.5 text-center transition ${p.featured ? "glow-btn" : "border border-line hover:border-accent hover:text-accent hover:shadow-[0_10px_30px_-14px_var(--accent)]"}`}
                 >
@@ -376,7 +412,7 @@ export function FinalCall() {
             onClick={() => transition()}
             className="glow-btn group mt-10 px-8 py-4 text-lg"
           >
-            Start designing free <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
+            Start designing free
           </Link>
         </Reveal>
       </div>
