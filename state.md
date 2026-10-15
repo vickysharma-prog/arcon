@@ -68,7 +68,11 @@ Everything here is open to change: if something can be better we brainstorm it a
 
 ## Known issues
 
-- Some 3D details Vicky flagged are still to revisit (task: leftovers from the 3D review).
+- Leftovers from Vicky's 3D review (12 Oct), to fix on 22 Oct: a TV unit standing free in very open living
+  rooms; rooms coming out bigger than asked; upstairs of the great-room and split plans falling back to a plain
+  hall. Vicky said a few more things were off; collect them from her when we start.
+- 3D room labels log a React warning in development when leaving the 3D (task for F1).
+- A typo'd city geocodes to the wrong place ("Delih" to Slovenia): check the city in the interview (task for F1).
 - Test projects and test accounts (arcon.test.*@example.com) live in Supabase; cleanup script pending (F1).
 - Google's sign-in page names the Supabase address, not "Arcon"; changing it needs Supabase's paid custom domain.
 - The project page still has two old lint errors about state set in effects (not new).
