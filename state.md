@@ -36,7 +36,7 @@ pros directory by Qloo taste match with requests, fees by milestone, studio bran
 R4 is built and browser tested (14 Oct): the building site in full. The Site tab now shows on every project
 with the three steps to get building, and an owner can manage the build themselves. The client sees the builder's budget, not the
 builder's costs (15 Oct).
-D3 is built (15 Oct): the neighbourhood read for business spaces, with Q8 and Q9. Next: D2, the drawings pack.
+D3 is built (15 Oct): the neighbourhood read for business spaces, with Q8 and Q9. D2 is built (15 Oct): dimensioned plans, four elevations, door and window schedules, in the PDF and the DXF. Next: E2.
 
 Vicky found the shared flow confusing, so the app now behaves differently for each person. Decided 13 Oct
 (full list in private/plan.md, "One app, different for each person" and "Decisions from the 13 Oct grilling"):

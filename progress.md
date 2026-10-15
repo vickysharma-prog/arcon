@@ -2,6 +2,25 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-15: D2, the drawings pack
+
+What an architect or builder works from, in Share & export, in the PDF pack and in the DXF:
+- Dimensioned plans: overall width and depth on every floor plan, and each door and window tagged (D01, W01...).
+  Tags for outside openings sit outside the wall, inside doors beside the opening, clear of room names.
+- The four elevations (street side, back, left, right) as seen from outside: walls, roof, floor lines, every
+  outside door and window in place with its tag, levels (+0.00, +2.80...) and the width. Heights are the ones the 3D
+  uses (3.1 m a storey, 2.8 m walls, 2.1 m doors, 0.9 m sills), so drawings and walkthrough agree.
+- Door and window schedule: tag, floor, the two rooms it joins, width by height, sill. Wide openings drawn without a
+  door leaf are passages, not doors, and are left out.
+- The DXF now carries the tags, overall dimensions and the four elevations in a row under the plans, each on its own
+  layer (TAGS, DIMENSIONS, ELEVATIONS), still plain R12 that old readers open.
+- The PDF gets two elevation pages and a schedule page after the plans.
+
+Tested: 316 unit tests (tags in reading order, sizes and sills, which side each opening is on and where along it as
+seen from outside, every tag once on a generated house, the DXF content); the café test project's DXF read back with
+a DXF library (all layers and the four elevations there); in the browser on Share & export (plans, elevations,
+schedule), fixing two tag clashes and a clipped dimension label on the way.
+
 ## 2026-10-15: D3, the neighbourhood read for business spaces (with Q8 and Q9)
 
 A "Your neighbourhood" section on a café, office, shop or hotel's style page, read by Qloo:

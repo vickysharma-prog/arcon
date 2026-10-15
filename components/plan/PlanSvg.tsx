@@ -5,7 +5,7 @@ import { doorIsOpen, wallPieces } from "@/lib/layout/walls";
 // An architect-style 2D plan of one floor: walls, door swings, windows, room names and areas.
 // Geometry is in metres; the drawing scales to its container.
 
-const PAD = 1.2; // metres of margin around the shell
+const PAD = 1.5; // metres of margin around the shell, room for the dimension lines
 const WALL = 0.18;
 
 const sqft = (m2: number) => Math.round(m2 * 10.7639);

@@ -9,6 +9,8 @@ import { ok as okSound, tick } from "@/components/fx/sfx";
 import type { Layout } from "@/lib/layout/schema";
 import { estimate, marketOf, money, CATEGORY_NAMES, TIER_NAMES, type Tier } from "@/lib/budget/costs";
 import { toDxf } from "@/lib/export/dxf";
+import { elevation, schedule, sayLength, SIDES, type Tagged } from "@/lib/export/drawings";
+import { ElevationSvg, PlanMarks } from "@/components/plan/Drawings";
 import { SHOTS, type Shot } from "@/components/three/HouseScene";
 import { stampPng, TAGLINE } from "@/components/fx/watermark";
 import { Mark } from "@/components/Logo";
@@ -80,6 +82,8 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
   const cost = estimate(layout, active, market, newBuild, p.site.location);
   const rooms = layout.floors.flatMap((f) => f.spaces.filter((s) => s.zone !== "circulation").map((s) => ({ ...s, level: f.level })));
   const words = [...new Set((p.taste?.tags ?? []).map((t) => t.value.replaceAll("_", " ")))].slice(0, 6);
+  const tags = schedule(layout);
+  const elevations = SIDES.map((s) => ({ ...s, e: elevation(layout, s.side, tags) }));
 
   const dxf = () => {
     tick();
@@ -98,7 +102,7 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
     <main className="mx-auto w-full max-w-6xl px-4 pb-16 pt-2">
       <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent">Share &amp; export</p>
       <h1 className="mt-1 font-serif text-4xl">Take your design with you</h1>
-      <p className="mt-2 max-w-2xl text-ink-soft">Hand-drawn sketches to share, the plans and a full PDF pack for your architect or builder, a DXF for CAD, and the walkthrough as a video.</p>
+      <p className="mt-2 max-w-2xl text-ink-soft">Hand-drawn sketches to share, a drawings pack for your architect or builder (dimensioned plans, the four elevations, door and window schedules) as a PDF and a DXF for CAD, and the walkthrough as a video.</p>
 
       {/* what the design is, as the PDF opens with it */}
       <section className="mt-6 rounded-2xl border border-line bg-paper-raised p-5">
@@ -178,10 +182,46 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
         <div className={`mt-4 grid gap-4 ${layout.floors.length > 1 ? "sm:grid-cols-2" : ""}`}>
           {layout.floors.map((f) => (
             <figure key={f.level} className="rounded-2xl border border-line bg-paper-raised p-4">
-              <PlanSvg layout={layout} level={f.level} units={units} className="h-auto w-full" />
+              <PlanSvg layout={layout} level={f.level} units={units} className="h-auto w-full">
+                <PlanMarks layout={layout} level={f.level} units={units} />
+              </PlanSvg>
               <figcaption className="mt-2 text-sm text-ink-soft">{f.level === 0 ? "Ground floor" : "Upstairs"}</figcaption>
             </figure>
           ))}
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-serif text-2xl">Elevations</h2>
+        <p className="mt-1 text-sm text-ink-soft">Each side of the building from outside, with its doors and windows tagged as in the schedule below.</p>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          {elevations.map(({ side, name, e }, i) => (
+            <motion.figure
+              key={side}
+              initial={still ? false : { opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.06 }}
+              className="rounded-2xl border border-line bg-paper-raised p-4"
+            >
+              <ElevationSvg e={e} units={units} className="h-auto w-full" />
+              <figcaption className="mt-2 text-sm text-ink-soft">{name}</figcaption>
+            </motion.figure>
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <h2 className="font-serif text-2xl">Door and window schedule</h2>
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-2xl border border-line bg-paper-raised p-5">
+            <h3 className="text-xs uppercase tracking-widest text-ink-soft">Doors</h3>
+            <ScheduleTable rows={tags.doors} units={units} />
+          </div>
+          <div className="rounded-2xl border border-line bg-paper-raised p-5">
+            <h3 className="text-xs uppercase tracking-widest text-ink-soft">Windows</h3>
+            <ScheduleTable rows={tags.windows} units={units} />
+          </div>
         </div>
       </section>
 
@@ -246,9 +286,28 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
         {layout.floors.map((f) => (
           <section key={f.level} className="print-page">
             <h2 className="font-serif text-3xl">{f.level === 0 ? "Ground floor plan" : "Upstairs plan"}</h2>
-            <PlanSvg layout={layout} level={f.level} units={units} className="mt-4 h-auto w-full" />
+            <PlanSvg layout={layout} level={f.level} units={units} className="mt-4 h-auto w-full">
+              <PlanMarks layout={layout} level={f.level} units={units} />
+            </PlanSvg>
           </section>
         ))}
+        {[elevations.slice(0, 2), elevations.slice(2)].map((pair, i) => (
+          <section key={`el-${i}`} className="print-page">
+            <h2 className="font-serif text-3xl">Elevations</h2>
+            {pair.map(({ side, name, e }) => (
+              <figure key={side} className="mt-4">
+                <ElevationSvg e={e} units={units} className="h-auto w-full" />
+                <figcaption className="text-xs">{name}</figcaption>
+              </figure>
+            ))}
+          </section>
+        ))}
+        <section className="print-page">
+          <h2 className="font-serif text-3xl">Door schedule</h2>
+          <ScheduleTable rows={tags.doors} units={units} />
+          <h2 className="mt-10 font-serif text-3xl">Window schedule</h2>
+          <ScheduleTable rows={tags.windows} units={units} />
+        </section>
         <section className="print-page">
           <h2 className="font-serif text-3xl">Rooms</h2>
           <RoomTable rooms={rooms} units={units} />
@@ -266,6 +325,37 @@ const area = (m2: number, units: "imperial" | "metric") => (units === "imperial"
 const length = (m: number, units: "imperial" | "metric") => (units === "imperial" ? `${(m * FT).toFixed(1)} ft` : `${m.toFixed(1)} m`);
 
 type Room = { id: string; name: string; level: number; rect: { w: number; h: number } };
+
+// Each door or window with its tag, floor, the rooms it joins, size and sill; the same on screen and in the PDF.
+function ScheduleTable({ rows, units }: { rows: Tagged[]; units: "imperial" | "metric" }) {
+  if (!rows.length) return <p className="mt-3 text-sm text-ink-soft">None.</p>;
+  return (
+    <table className="mt-3 w-full text-sm">
+      <thead>
+        <tr className="border-b border-line text-left text-ink-soft">
+          <th className="py-1.5 font-normal">Tag</th>
+          <th className="font-normal">Floor</th>
+          <th className="font-normal">Between</th>
+          <th className="font-normal">Width × height</th>
+          <th className="text-right font-normal">Sill</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.tag} className="border-b border-line">
+            <td className="py-1.5 font-mono">{r.tag}</td>
+            <td>{r.level ? "Upstairs" : "Ground"}</td>
+            <td>{r.between.join(" / ")}</td>
+            <td>
+              {sayLength(r.width, units)} × {sayLength(r.height, units)}
+            </td>
+            <td className="text-right">{r.sill ? sayLength(r.sill, units) : "–"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 // Every room with its floor, size and area, and the total; the same table on screen and in the PDF.
 function RoomTable({ rooms, units }: { rooms: Room[]; units: "imperial" | "metric" }) {

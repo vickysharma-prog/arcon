@@ -28,3 +28,11 @@ test("names can't break the file", () => {
   const odd = { ...house, floors: [{ ...house.floors[0], spaces: house.floors[0].spaces.map((s) => (s.id === first ? { ...s, name: "Kids\nroom" } : s)) }] };
   assert.ok(toDxf(odd, "x").includes("1\nKids room\n"));
 });
+
+test("the DXF carries the drawings pack: tags, overall dimensions and four elevations", () => {
+  const dxf = toDxf(house, "The Pune house");
+  for (const side of ["Street side", "Back", "Left side", "Right side"]) assert.ok(dxf.includes(`The Pune house - ${side} elevation`), side);
+  assert.ok(dxf.includes("1\nD01\n") && dxf.includes("1\nW01\n"));
+  assert.ok(dxf.includes(`1\n${house.shell.width.toFixed(2)} m\n`));
+  assert.ok((dxf.match(/\n8\nELEVATIONS\n/g) ?? []).length > 20);
+});
