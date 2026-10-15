@@ -69,8 +69,7 @@ const SECTIONS: Section[] = [
         />
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {[
-            ["My house", "Homeowners. Your newest project in focus: its plan drawing itself, View in 3D, where it stands, what's next and an estimate."],
-            ["My space", "Business owners. The same, plus a countdown to opening day, worked out from your design's timeline and yours to change."],
+            ["My spaces", "Owners, of a home or a business. Your newest project in focus: its plan drawing itself, View in 3D, where it stands, what's next and an estimate; for a café, office, shop or hotel, a countdown to opening day too."],
             ["Studio", "Architects and designers. Fees billed and received, and every client in columns by stage."],
             ["Sites", "Builders. Today on every site: how far along, the phase, who's on site, what's behind."],
           ].map(([t, d]) => (
@@ -121,7 +120,7 @@ const SECTIONS: Section[] = [
     title: "For homeowners",
     body: (
       <>
-        <p>My house puts your newest project in focus, with where it stands and what happens next.</p>
+        <p>My spaces puts your newest project in focus, with where it stands and what happens next.</p>
         <Steps
           items={[
             "Design as a guest for free; sign up to keep the project on every device.",

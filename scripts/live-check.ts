@@ -113,7 +113,7 @@ const strip = await get("/api/strip");
 check("live Qloo strip", strip.status === 200 && (strip.body.reads ?? []).length === 3 && strip.body.reads.every((r: { words: unknown[] }) => r.words.length > 0), (strip.body.reads ?? []).map((r: { style: string }) => r.style).join(", "));
 
 // The role homes and the command box (16 Oct)
-for (const [who, title] of [["owner", "My house"], ["architect", "Studio"], ["builder", "Sites"]]) {
+for (const [who, title] of [["owner", "My spaces"], ["architect", "Studio"], ["builder", "Sites"]]) {
   const h = String((await get("/home", who)).body);
   check(`home for the ${who}: ${title}`, h.includes(title) && (h.includes("Waiting on you") || h.includes("Nothing waiting")) && h.includes("sketch-draw"));
 }

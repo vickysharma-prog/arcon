@@ -8,12 +8,11 @@ import { Decode } from "@/components/fx/Decode";
 import { ok, tick } from "@/components/fx/sfx";
 
 const ROLE_LINE: Record<Role, string> = {
-  owner: "Design my home, then share it with my architect or builder.",
-  business: "Design my café, office, shop or hotel around the people who come in.",
+  owner: "Design my home, café, office, shop or hotel, then share it with my architect or builder.",
   architect: "Run projects for my clients: they review, comment and approve.",
   builder: "Build from approved designs and track the site, crew and materials.",
 };
-const ROLE_ICON: Record<Role, string> = { owner: "⌂", business: "☕", architect: "✎", builder: "⚒" };
+const ROLE_ICON: Record<Role, string> = { owner: "⌂", architect: "✎", builder: "⚒" };
 const TRADES = ["Civil", "Masonry", "Carpentry", "Electrical", "Plumbing", "Tiling", "Painting", "Interiors", "Landscaping"];
 
 type Draft = { role: Role | null; name: string; company: string; city: string; units: "metric" | "imperial"; crew_size: string; trades: string[]; about: string; fee_note: string; listed: boolean };
@@ -38,7 +37,7 @@ export function ProfileForm({ initial, email, next, editing }: { initial: Profil
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const set = (patch: Partial<Draft>) => setD((v) => ({ ...v, ...patch }));
-  const pro = d.role === "architect" || d.role === "builder" || d.role === "business";
+  const pro = d.role === "architect" || d.role === "builder";
 
   async function upload(file: File) {
     setError(null);
@@ -79,7 +78,7 @@ export function ProfileForm({ initial, email, next, editing }: { initial: Profil
               <Decode text="Who are you designing as?" />
             </h1>
             {email && <p className="mt-2 text-ink-soft">Signed in as {email}</p>}
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
               {ROLES.map((r, i) => (
                 <motion.button
                   key={r}
@@ -121,10 +120,10 @@ export function ProfileForm({ initial, email, next, editing }: { initial: Profil
                 Your name
                 <input required maxLength={80} value={d.name} onChange={(e) => set({ name: e.target.value })} className={input} autoComplete="name" />
               </label>
-              {pro && (
+              {d.role && (
                 <label className="grid gap-1.5 text-sm">
-                  {d.role === "architect" ? "Studio name" : d.role === "builder" ? "Company name" : "Business name"}
-                  <input required={d.role !== "business"} maxLength={100} value={d.company} onChange={(e) => set({ company: e.target.value })} className={input} autoComplete="organization" />
+                  {d.role === "architect" ? "Studio name" : d.role === "builder" ? "Company name" : "Business name, if it's for a business"}
+                  <input required={pro} maxLength={100} value={d.company} onChange={(e) => set({ company: e.target.value })} className={input} autoComplete="organization" />
                 </label>
               )}
               <label className="grid gap-1.5 text-sm">

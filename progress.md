@@ -2,6 +2,14 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: One owner role (Vicky)
+
+- Homeowners and business owners were the same person in Arcon: someone designing their own space. Vicky named the
+  merged role Owner; their home is "My spaces". What kind of space it is (a home, a café) lives on the project, which
+  already decides the business parts: the opening day, the neighbourhood read and the $299 price.
+- Sign-up offers three roles: Owner, Architect or interior designer, Builder or contractor. An owner can add a business
+  name. Migration 014 moved the existing business accounts to owner.
+
 ## 2026-10-16: Signed in on the site, Resources brought up to date
 
 - Signed in and on the site itself, the header offers My projects instead of Sign up free.

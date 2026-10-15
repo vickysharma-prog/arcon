@@ -25,13 +25,13 @@ import { OpeningDay, PlanOr3D } from "@/components/home/Focus";
 
 export const metadata: Metadata = { title: "Your projects · Arcon" };
 
-// The signed-in home. One page, laid out for who it is: "My house" or "My space" puts one project in focus with its
+// The signed-in home. One page, laid out for who it is: "My spaces" puts an owner's newest project in focus with its
 // plan, what's next and where it stands; "Studio" lays an architect's clients out by stage; "Sites" puts a builder's
 // day first. All of them open with a status line and what's waiting on this person.
 
 const YOUR: Record<string, string> = { house: "Your house", apartment: "Your home", studio: "Your studio", cafe: "Your café", office: "Your office", shop: "Your shop", hotel: "Your hotel" };
 const BUSINESS = ["cafe", "office", "shop", "hotel"];
-const TITLE = { owner: "My house", business: "My space", architect: "Studio", builder: "Sites" } as const;
+const TITLE = { owner: "My spaces", architect: "Studio", builder: "Sites" } as const;
 
 type Card = ProjectCard & { role: ProjectRole; owner?: string | null };
 
@@ -117,7 +117,7 @@ async function HomePageBody() {
       ) : role === "builder" ? (
         <SitesBoard projects={projects} board={board} />
       ) : (
-        <OwnerBoard projects={projects} board={board} business={role === "business"} />
+        <OwnerBoard projects={projects} board={board} />
       )}
 
       {pro && <Requests />}
@@ -170,11 +170,11 @@ function Rail({ at }: { at: number }) {
   );
 }
 
-// My house / My space: the newest project in focus, the rest below.
-function OwnerBoard({ projects, board, business }: { projects: Card[]; board: Board; business: boolean }) {
+// My spaces: the newest project in focus, the rest below. A business (by its kind of space) also gets its opening day.
+function OwnerBoard({ projects, board }: { projects: Card[]; board: Board }) {
   const [focus, ...rest] = projects;
   const at = stage(focus);
-  const isBusiness = business || BUSINESS.includes(focus.space_type ?? "");
+  const isBusiness = BUSINESS.includes(focus.space_type ?? "");
   return (
     <>
       <Reveal delay={0.08} className="mt-6 overflow-hidden rounded-3xl border border-line bg-paper-raised">
