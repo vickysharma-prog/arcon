@@ -1,92 +1,119 @@
 # State
 
-Where Arcon stands right now (updated 12 Oct, end of day). Dated detail is in progress.md; the plan and
-decisions are in private/plan.md.
+Where Arcon stands right now. Updated 16 Oct 2026, evening (IST), at the end of a long session, for the next one to
+pick up with nothing lost. Dated detail is in progress.md (newest first); every decision is in private/plan.md.
+
+## Start here (next session)
+
+1. Read, in order: the local working agreement (loads by itself), this file, the top entries of `progress.md` (all of 16 Oct),
+   and in `private/plan.md` the sections "Decisions, 16 Oct 2026" and "Decisions (settled 9 Oct 2026)", then the
+   rest of the plan as needed. The memory index (MEMORY.md) loads by itself.
+2. Open the role homes for Vicky, side by side, on the local production build (same code as live):
+   - `npx next build`, then `npx next start -p 3000` in the background (free port 3000 first).
+   - `node --env-file=.env.local --env-file=.env scripts/role-sessions.ts <scratchpad>/sessions.json`
+   - In four tabs of our own tab group (never Vicky's own tab): `localhost:3000` (owner, a house),
+     `127.0.0.1:3000` (owner, "The Brooklyn café"), `[::1]:3000` (architect, Studio), `builder.localhost:3000`
+     (builder, Sites). On each host set `document.cookie = "arcon_user=<value>; path=/; samesite=lax"`, then /home.
+   - The live site is the same code, but the test accounts are never signed into the live site in Vicky's browser
+     (her rule: live checks with test accounts run from the server only). Vicky can sign in on live herself.
+3. Tell Vicky what is left (the list below), then ask: "Anything to change on the home pages (My spaces, Studio,
+   Sites)?" Her changes come first, then the next steps in order.
 
 ## Live
 
-arcon-ten.vercel.app, auto-deploying from GitHub (main). 273 unit tests pass; build is clean.
+arcon-ten.vercel.app, auto-deploying from GitHub main (vickysharma-prog/arcon, private until submission). The
+last commit 110212a is live, 348 unit tests pass, tsc and the build are clean, and every live check passes
+(`scripts/live-check.ts`, 50+ checks).
 
-## Built
+## What Arcon is now (16 Oct)
 
-- **Landing:** logo intro with sound, hand-drawn 3D hero with its plan, how it works, Qloo taste flow, features,
-  audience, pricing, sign-up.
-- **"Let's get to know you":** fixed questions with the terminal animation and sound, taste picks confirmed with
-  Qloo, live taste card, voice mode. AI only after the questions. Or upload your own plan (A4).
-- **Design:** brief and style from Qloo signals (taste trail, style words, moodboard), three plans ranked for how
-  you live with trade-offs, 3D walkthrough, budget by room and market (eight markets, local currency), greenery
-  and timeline, shopping list with Qloo brands and local stores.
-- **Make changes:** instant edits (tap a room or type), versions with undo; plan, 3D, budget and shopping list
-  follow. Save leads back to the walkthrough.
-- **Share & export:** hand-drawn sketches, floor plans, details, PDF pack, DXF, walkthrough video; Arcon
-  watermark on every download.
-- **Accounts (part 1):** email and password, Google (live), Apple (button ready, needs a paid Apple developer
-  account). Role at sign-up (homeowner, business owner, architect, builder) and a short profile; logos for studios
-  and builders. Guest projects move into the account. /home and /account. Email confirmation is off (Vicky, 12 Oct).
-- **Teams (part 2):** roles owner, architect, client, builder, viewer, checked on every project route. "Team on
-  this project" in the profile menu: invite links with QR codes, one use, 7 days. Join page. Others see the
-  owner's name ("Vicky's design", "Vicky's style").
+- **Landing:** the opening (mark, "Arcon", boot sound) plays whenever Arcon opens, on any page, once a visit. Hero
+  with a 3D film (each floor as a sketch, then in colour, then night; dissolves between them; draws lighter on slow
+  computers and stops off screen). A live Qloo strip (Grand Budapest Hotel + Aman Tokyo, Frank Ocean + Blue Bottle,
+  Succession + Soho House New York). How it works (animated), the taste flow, features, who it's for, why it matters
+  ($518B, Harvard JCHS LIRA April 2026; $24K median kitchen, Houzz & Home 2026; both linked), pricing, questions
+  (FAQ), final call. Header: How it works, Taste, Features, Pricing, Resources; Get the app; Sign up free, or My
+  projects when signed in.
+- **Signed in, "/" opens /home**; "/?site" shows the site itself.
+- **Roles at sign-up (16 Oct, merged): Owner** (home or business; home page "My spaces"), **Architect or interior
+  designer** ("Studio"), **Builder or contractor** ("Sites"). The kind of space on the project decides the business
+  parts (opening day, neighbourhood read, $299).
+- **Home pages:** status line, "Waiting on you" (reviews, changes asked, fees, late work, plans to choose, messages),
+  plans that draw themselves on every card. My spaces: newest project in focus, View in 3D on a tap, stage rail,
+  next step, mid-range estimate, opening day for a business. Studio: fees billed and received, clients in six
+  read-only stage columns. Sites: billed and received, today on every site, other projects.
+- **Ctrl+K** (⌘K, or the search button): every project and its parts, and the app's pages.
+- **Resources** (/resources): Arcon in two minutes, your home page, search and the app, deleting, guides per role,
+  taste to design, questions, developer guide (layout, running it, the API), data and privacy.
+- **Accounts:** email and password, Google; Apple button waits on a paid Apple developer account. Sign-up refuses
+  addresses whose domain can't take mail (public DNS) and throwaway inboxes; no confirmation email yet (Vicky: later).
+  Profile button shows the logo or the first letter. Delete my account (red, type DELETE) on /account; delete a
+  project from its card or its overview (owner only).
+- **The app:** installable (PWA): "Get the app" opens a panel with a code for the phone and, in Chrome or Edge,
+  Install for the computer; on phones it installs or shows the steps. Offline page. Logo in the browser tab.
+- **Everything built before** (see progress.md): the interview with the taste quiz, Qloo style, moodboard, taste
+  trail, three plans with trade-offs, 3D walkthrough with moods, art and sound, day and night, exterior from taste,
+  budget in eight markets, greenery and timeline, shopping list, changes by chat with versions, drawings pack (PDF,
+  DXF), teams and invites, the project thread with review and approval, Studio tools and fees, the building site in
+  full, the neighbourhood read for businesses.
 
-## Next: one app, different for each person (planned 13 Oct, private/plan.md)
+## What's left, in order (deadline 30 Oct 11:45pm ET = 31 Oct about 9:15am IST)
 
-R1 is built (13 Oct): My projects for everyone, the project home with tabs, the guided steps only the first time,
-per-project unlocking with pros' trials. R2 is built too: the project thread with room tags, files, events,
-review and approval inside it, and the bell. R3 is built (14 Oct): New client (together or by link), the
-pros directory by Qloo taste match with requests, fees by milestone, studio branding and handing over.
-R4 is built and browser tested (14 Oct): the building site in full. The Site tab now shows on every project
-with the three steps to get building, and an owner can manage the build themselves. The client sees the builder's budget, not the
-builder's costs (15 Oct).
-D3 is built (15 Oct): the neighbourhood read for business spaces, with Q8 and Q9. D2 is built (15 Oct): dimensioned plans, four elevations, door and window schedules, in the PDF and the DXF. E2 part 1 is built (16 Oct): the exterior from taste and day and night. The taste quiz is built (16 Oct): /quiz, and the interview ends with it (questions, then "Now let's find your style", the reveal, then the design). Q7 (room moods and light) and Q10 (art and sound) are built (16 Oct). P7 is built (16 Oct): installable on phones and desktops, with an offline page. The landing page had a professional pass (16 Oct). Next: the phone check of every screen inside the app, then R5.
+1. **Vicky's changes to the home pages** (she will give them at the start of the next session).
+2. **US demo world** (part of R5; judges are American, Jason Calacanis leads): a family house in Los Angeles in
+   review, a café in New York with the neighbourhood read, an architect's studio in Austin with three clients, a
+   builder's live site; fees in dollars. Then the judge demo: /demo with role cards and a role switcher bar.
+3. **The 30-second video** (L2): a real recording of the LA family house, interview to 3D, captions, Arcon's sounds
+   when unmuted; Puppeteer, Chromium and ffmpeg are on this machine. It goes on the landing page and in the
+   submission.
+4. **PayPal sandbox** (R5): a project order ($149, $299 business), Studio and Build subscriptions with the 14-day
+   trial, a webhook. Needs Vicky's sandbox keys.
+5. **F1 quality:** model comparison and evals, adversarial tests of the agents, a cleanup script for test data (test
+   projects, the business test café, the "Pune house" guest project), speed, task #62 (3D room labels without
+   separate React roots), task #63 (check the city in the interview against the map: "Delih" went to Slovenia),
+   lint, and the dev-mode reload loop on /home (production is fine).
+6. **C2b photoreal renders,** 28 to 29 Oct, on about $10 of Gemini credit from Vicky.
+7. **F2:** polish, README, the submission text with the business story (sourced market numbers, pricing, roadmap)
+   for Jason, scrub `private/` and Qloo data from the whole history (filter-branch, keep the day-by-day commits), make
+   the repo public with the MIT licence visible, submit on Devpost.
 
-After every push: wait for the deploy, then `node --env-file=.env.local --env-file=.env scripts/live-check.ts`
-(test accounts on the live site, from the server). Add a check for each new feature.
+Open questions for Vicky: hide the Apple sign-in button until there's a paid developer account? A mail sender for
+confirmation emails (Gmail SMTP was the suggestion), later.
 
-Vicky found the shared flow confusing, so the app now behaves differently for each person. Decided 13 Oct
-(full list in private/plan.md, "One app, different for each person" and "Decisions from the 13 Oct grilling"):
-- Sign-up asks the main role. Every project a person is on shows under My projects with their role on it; pros
-  get a tool strip on top (architects: stages, requests, payments; builders: today on site).
-- Pricing: home project $149, business $299 (one time); Studio $99/mo or $990/yr; Build $299/mo or $2,990/yr;
-  14-day trial for pros from sign-up. Free before unlocking: style, 3 plans, 3D from outside.
-- Project page: guided steps the first time, then a project home with tabs for each role.
-- Project thread instead of comments: everyone on the project, room tags, events, photos and files, review and
-  approval inside it, a Team-only channel for pros; the bell for notifications.
-- "Do you have an architect or builder?": invite by link or QR, or Arcon suggests pros by Qloo taste match.
-- Fees tracked by milestone (billed, "I've paid", received). Builders can design and build.
+## How we work (rules that hold every session)
 
-Build order (decided 15 Oct, Vicky: finish building every feature first; pricing and the judges' demo come
-after, as the way we present it):
-- 15 to 16 Oct: D3 neighbourhood read for business spaces, with Q8 (who comes in) and Q9 (how it runs).
-- 17 to 18 Oct: D2 drawings pack (plan, elevations, schedules as PDF and DXF).
-- 19 to 20 Oct: E2 taste quiz page, exterior from taste, day and night, the full wizard.
-- 21 Oct: Q7 room moods and light, Q10 art wall and playlist.
-- 22 Oct: P7 phone app (PWA) and the leftovers from the 3D review.
-- 23 to 25 Oct: R5, the judges' demo brainstorm, then pricing with PayPal sandbox.
-- 24 to 27 Oct: F1 quality (model comparison, evals, adversarial tests, test data cleanup, speed).
-- 28 to 29 Oct: C2b photoreal renders. 29 to 30 Oct: F2 polish, demo video, README, submission.
+- Commits as `vicky sharma <raghunathsharma296@gmail.com>`, in Vicky's voice; no AI attribution anywhere; the
+  attribution check before every push (in the local working agreement). Never commit the local agreement files.
+- `npm test` and `npx tsc --noEmit` before every commit; `npx next build` before a push (free port 3000 first).
+- After a push: wait for the deploy (`gh api repos/vickysharma-prog/arcon/commits/<sha>/status --jq .state`), run
+  `node --env-file=.env.local --env-file=.env scripts/live-check.ts`, and add a live check for each new feature.
+- Open every user-facing build in our own browser tab for Vicky (tab group, never her tab).
+- Every screen gets the techy feel: the shared sounds (tick, ok, chime, whoosh, transition), motion, Decode headings.
+- Keep progress.md (newest first), this file and private/plan.md current; date and explain every decision change.
+- Naming is Vicky's call: offer options, never pick. US-centric demos and examples (dollars, US cities, US culture).
+- Keys only in .env, .env.local and Vercel. Qloo data never in the repo. Never name another person's project.
+- Patch files with Python scripts written to the scratchpad when the change is long; Bash heredocs with complex
+  content break.
 
-Everything here is open to change: if something can be better we brainstorm it and update the plan.
+## Local testing
+
+- Sign in as a test role: sign out (`DELETE /api/session` from a localhost page), then
+  `node --env-file=.env.local scripts/test-users.ts <role> "http://localhost:3000/auth/callback?next=%2Fhome"` and
+  open the link. Roles: owner, business (an owner with the Brooklyn café), architect, builder, client, priya. Never
+  repeat the test password.
+- Afterwards: sign out; restore Vicky's local guest cookie with `/api/claim?t=<her guest token>&next=/` (the token is
+  in the local memory note "arcon-local-testing", not in the repo); run
+  `node --env-file=.env.local scripts/release-test-projects.ts`.
+- Test projects: 2ec977ae (Austin house, building; owner, client and builder Raj), 6aa147ed (New York café),
+  d494ab31 (Austin office), 50c3d046 (Delhi house exterior test, "Delih"), 2418b263 (self-build), and the Brooklyn
+  café copy owned by the business test account. Their fees are in rupees; the US demo world replaces them for the demo.
 
 ## Known issues
 
-- Leftovers from Vicky's 3D review (12 Oct), to fix on 22 Oct: a TV unit standing free in very open living
-  rooms; rooms coming out bigger than asked; upstairs of the great-room and split plans falling back to a plain
-  hall. Vicky said a few more things were off; collect them from her when we start.
-- 3D room labels log a React warning in development when leaving the 3D (task for F1).
-- A typo'd city geocodes to the wrong place ("Delih" to Slovenia): check the city in the interview (task for F1).
-- Test projects and test accounts (arcon.test.*@example.com) live in Supabase; cleanup script pending (F1).
-- Test roles: owner (homeowner), business ("The Brooklyn café", a copy of the test café, 16 Oct), architect, builder,
-  client, priya. Each role's home can be opened side by side on localhost, 127.0.0.1, [::1] and builder.localhost.
-- Google's sign-in page names the Supabase address, not "Arcon"; changing it needs Supabase's paid custom domain.
-- The project page still has two old lint errors about state set in effects (not new).
-
-## Waiting on
-
-- Vicky: PayPal sandbox keys (for part 6). Apple developer account only if Apple sign-in is wanted.
-- Final model choice around 20 to 25 Oct. Gemini free quota limits the design step.
-
-## Testing notes
-
-- Test accounts: `node --env-file=.env.local scripts/test-users.ts <role> [redirect]` prints a sign-in link;
-  the test password is in `.env.local` only.
-- `scripts/copy-project.ts` copies a finished project to a test account; `scripts/release-test-projects.ts` and
-  `scripts/guest-link.ts` hand claimed guest projects back.
+- /home in dev mode (`next dev`) reloads in a loop with "The server could not finish this Suspense boundary";
+  production builds and the live site are fine. Investigate in F1.
+- 3D room labels log a React warning in development when leaving the 3D (task #62).
+- A typo'd city geocodes to the wrong place (task #63).
+- On a busy laptop (Vicky's CPU was at 91% with Chrome, Spotify, VS Code) the landing film can still stutter.
+- Google's sign-in page names the Supabase address, not "Arcon" (needs Supabase's paid custom domain).
+- The project page has two old lint errors about state set in effects.
