@@ -2,6 +2,22 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: A home for each role, and Ctrl+K (Vicky's brainstorm)
+
+- One page, laid out for who it is, each opening with a status line ("> 3 in design · 1 waiting on you") and
+  "Waiting on you": reviews to answer, changes asked, fees to pay or confirm, work running late, plans to choose,
+  new messages, most urgent first.
+- My house and My space: the newest project in focus with its plan drawing itself, "View in 3D" (the model loads only
+  when asked, so phones stay light), the stage rail, what's next, a mid-range estimate, and for a business its
+  opening day (from the design's timeline, theirs to change). Other projects below as cards with their plans.
+- Studio: billed and received fees, then every client in columns by stage (the stage comes from what happened, so
+  the columns aren't dragged); each card has its plan, the client and unread messages.
+- Sites: billed and received, then today on every site (progress, the phase, who's on site, what's behind), then the
+  other projects.
+- Ctrl+K (⌘K on a Mac), or the search button in the header: every project and each of its parts (style, plans, 3D,
+  budget, shopping, thread, site, files) and the app's pages; type any words in any order.
+- Checked as the test homeowner, architect and builder, at desktop and phone widths.
+
 ## 2026-10-16: Live Qloo strip, the market, questions, US first (Vicky)
 
 - Decided with Vicky in four rounds of questions (recorded in private/plan.md): the judges are American, so every demo,
