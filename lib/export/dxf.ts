@@ -1,5 +1,6 @@
 import type { Layout } from "../layout/schema.ts";
-import { elevation, OVERHANG, ROOF, schedule, SIDES } from "./drawings.ts";
+import { elevation, schedule, SIDES } from "./drawings.ts";
+import { PLAIN, type Exterior } from "../three/exterior.ts";
 
 // The drawings as a DXF that architects can open in any CAD program: each floor plan (rooms as closed outlines with
 // name and area, doors and windows across the wall with their schedule tags, overall dimensions), the floors side by
@@ -17,7 +18,7 @@ const text = (layer: string, x: number, y: number, h: number, value: string) =>
   pairs(0, "TEXT") + pairs(8, layer) + pairs(10, x) + pairs(20, y) + pairs(30, 0) + pairs(40, h) + pairs(1, value.replace(/[\r\n]+/g, " "));
 
 /** The layout as a DXF file. y runs up in CAD, so the street side (y = 0 in the plan) ends up at the bottom. */
-export function toDxf(layout: Layout, title: string): string {
+export function toDxf(layout: Layout, title: string, ex: Exterior = PLAIN): string {
   const { width: W, depth: D } = layout.shell;
   const tags = schedule(layout);
   const tagOf = new Map([...tags.doors, ...tags.windows].map((t) => [`${t.level}:${t.id}`, t.tag]));
@@ -59,15 +60,20 @@ export function toDxf(layout: Layout, title: string): string {
   // The four elevations in a row under the plans, ground at y = oy.
   const span = Math.max(W, D) + GAP;
   SIDES.forEach(({ side, name }, i) => {
-    const e = elevation(layout, side, tags);
+    const e = elevation(layout, side, tags, ex);
     const ox = i * span;
-    const oy = -(e.top + ROOF + 5);
+    const oy = -(e.high + 5);
     const L = e.length;
-    body += text("TITLE", ox, oy + e.top + ROOF + 0.6, 0.4, `${title} - ${name} elevation`);
+    body += text("TITLE", ox, oy + e.high + 0.6, 0.4, `${title} - ${name} elevation`);
+    const outline = (pts: [number, number][]) =>
+      pts.forEach(([t, y], k) => {
+        const [t2, y2] = pts[(k + 1) % pts.length];
+        body += line("ELEVATIONS", ox + t, oy + y, ox + t2, oy + y2);
+      });
     body += line("ELEVATIONS", ox - 1, oy, ox + L + 1, oy);
     for (const [x1, y1, x2, y2] of [[0, 0, L, 0], [L, 0, L, e.top], [L, e.top, 0, e.top], [0, e.top, 0, 0]]) body += line("ELEVATIONS", ox + x1, oy + y1, ox + x2, oy + y2);
-    for (const [x1, y1, x2, y2] of [[-OVERHANG, e.top, L + OVERHANG, e.top], [L + OVERHANG, e.top, L + OVERHANG, e.top + ROOF], [L + OVERHANG, e.top + ROOF, -OVERHANG, e.top + ROOF], [-OVERHANG, e.top + ROOF, -OVERHANG, e.top]])
-      body += line("ELEVATIONS", ox + x1, oy + y1, ox + x2, oy + y2);
+    outline(e.roof);
+    if (e.infill) outline(e.infill);
     for (const f of e.floors.filter((y) => y > 0)) body += line("ELEVATIONS", ox, oy + f, ox + L, oy + f);
     for (const o of e.openings) {
       for (const [x1, y1, x2, y2] of [[o.t0, o.y0, o.t1, o.y0], [o.t1, o.y0, o.t1, o.y1], [o.t1, o.y1, o.t0, o.y1], [o.t0, o.y1, o.t0, o.y0]]) body += line("ELEVATIONS", ox + x1, oy + y1, ox + x2, oy + y2);

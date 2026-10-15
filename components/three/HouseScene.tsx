@@ -5,7 +5,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
 import { ToneMappingMode } from "postprocessing";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
-import { Box3, CatmullRomCurve3, Plane, Raycaster, Vector2, Vector3 } from "three";
+import { Box3, BufferGeometry, CatmullRomCurve3, DoubleSide, Float32BufferAttribute, Plane, Raycaster, Vector2, Vector3, type Texture } from "three";
 import type { Layout } from "@/lib/layout/schema";
 import { decorate } from "@/lib/three/decor";
 import { furnish, type Item } from "@/lib/three/furniture";
@@ -14,7 +14,8 @@ import { blockers, step } from "@/lib/three/explore";
 import { buildSlabs, buildWalls, EYE, onTour, stairBoxes, STOREY, walkPlan, WALL_H, type Glass, type Slab, type WallBox } from "@/lib/three/geometry";
 import { look as lookOf, luminance, mix, scheme, type Look, type Scheme } from "@/lib/three/materials";
 import { LookCtx, Model } from "./models";
-import { planks, tiled, tiles } from "./textures";
+import { brick, planks, tiled, tiledOnce, tiles } from "./textures";
+import { exteriorOf, roofShape, type Exterior } from "@/lib/three/exterior";
 import { roomBell, step as playStep } from "@/components/fx/sfx";
 import { SketchFx, SketchMaterial } from "./Sketch";
 
@@ -51,6 +52,10 @@ type Props = {
   sketch?: boolean | "print";
   /** Shot mode: where the camera stands, and what to do with the finished picture (a PNG data URL). */
   shot?: Shot;
+  /** A new build gets its roof shape from taste; a fit-out keeps a flat roof. */
+  newBuild?: boolean;
+  /** Night: a dark sky, moonlight, the rooms lit and the windows glowing. Never for sketches. */
+  night?: boolean;
   onShot?: (png: string) => void;
 };
 
@@ -65,7 +70,51 @@ function wallGeom(w: WallBox | Glass, thick: number) {
     : { position: [w.at, y, mid] as const, size: [thick, h, len] as const };
 }
 
-function Building({ layout, colors, look, cutaway = false, upTo = "all", extraPlants, onPick }: { layout: Layout; colors: Scheme; look: Look; cutaway?: boolean; upTo?: number | "all"; extraPlants?: Record<string, number>; onPick?: (it: Item) => void }) {
+// Triangles as one mesh, lit from both sides (a roof seen from inside the cutaway, a gable from either side).
+function Triangles({ tris, color, map }: { tris: number[][][]; color: string; map?: Texture }) {
+  const geo = useMemo(() => {
+    const g = new BufferGeometry();
+    g.setAttribute("position", new Float32BufferAttribute(tris.flat(2), 3));
+    // Planar UVs from x + z and y, so cladding runs the right way on the gable ends.
+    g.setAttribute("uv", new Float32BufferAttribute(tris.flat().flatMap((p) => [(p[0] + p[2]) / 2.4, p[1] / 0.8]), 2));
+    g.computeVertexNormals();
+    return g;
+  }, [tris]);
+  return (
+    <mesh geometry={geo} castShadow receiveShadow>
+      <meshStandardMaterial color={map ? "#ffffff" : color} map={map} roughness={0.85} side={DoubleSide} />
+    </mesh>
+  );
+}
+
+// A low hedge along the street side and a few trees in the garden, for a planted exterior.
+function Garden({ W, D, colors }: { W: number; D: number; colors: Scheme }) {
+  const trees: [number, number, number][] = [[-2.2, D * 0.25, 1.1], [W + 2.4, D * 0.6, 1.3], [W * 0.8, D + 2.6, 1.2], [-2, D + 1.8, 0.9]];
+  return (
+    <group>
+      {[[W * 0.2, W * 0.36], [W * 0.78, W * 0.36]].map(([x, len], i) => (
+        <mesh key={i} position={[x, 0.35, -1.6]} castShadow>
+          <boxGeometry args={[len, 0.7, 0.6]} />
+          <meshStandardMaterial color={colors.plant} roughness={1} />
+        </mesh>
+      ))}
+      {trees.map(([x, z, r], i) => (
+        <group key={i} position={[x, 0, z]}>
+          <mesh position={[0, 1, 0]} castShadow>
+            <cylinderGeometry args={[0.12, 0.16, 2, 8]} />
+            <meshStandardMaterial color="#6b4f3a" roughness={1} />
+          </mesh>
+          <mesh position={[0, 2.4 + r * 0.4, 0]} castShadow>
+            <sphereGeometry args={[r, 14, 12]} />
+            <meshStandardMaterial color={mix(colors.plant, "#2f5d2a", (i % 2) * 0.35)} roughness={1} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function Building({ layout, colors, look, ex, night = false, cutaway = false, upTo = "all", extraPlants, onPick }: { layout: Layout; colors: Scheme; look: Look; ex: Exterior; night?: boolean; cutaway?: boolean; upTo?: number | "all"; extraPlants?: Record<string, number>; onPick?: (it: Item) => void }) {
   const shown = (level: number) => upTo === "all" || level <= upTo;
   // Show inside cuts the top floor's walls at 1.4 m, like an architect's section, so every room reads from above.
   const topShown = upTo === "all" ? (layout.floors.at(-1)?.level ?? 0) : upTo;
@@ -89,6 +138,9 @@ function Building({ layout, colors, look, cutaway = false, upTo = "all", extraPl
   const { width: W, depth: D } = layout.shell;
   const top = (layout.floors.length - 1) * STOREY + WALL_H;
   const skirting = mix(colors.wall, "#000000", 0.1);
+  // Outside walls in the cladding the taste chose: brick, timber boards or plain render.
+  const clad = useMemo(() => (ex.cladding === "brick" ? brick("#9a5a43") : ex.cladding === "timber" ? planks(mix(colors.wood, "#6b4a32", 0.25)) : null), [ex.cladding, colors.wood]);
+  const roof = useMemo(() => roofShape(ex, W, D, top), [ex, W, D, top]);
   const frame = luminance(colors.exterior) > 0.6 ? "#2b2d31" : "#f1efea";
   return (
     <group>
@@ -119,7 +171,11 @@ function Building({ layout, colors, look, cutaway = false, upTo = "all", extraPl
           <group key={`w-${i}`}>
             <mesh position={g.position} castShadow receiveShadow>
               <boxGeometry args={g.size} />
-              <meshStandardMaterial color={w.exterior ? colors.exterior : colors.wall} roughness={0.92} />
+              {w.exterior && clad ? (
+                <meshStandardMaterial map={tiledOnce(clad, Math.abs(w.to - w.from), w.y1 - w.y0, ex.cladding === "brick" ? 1.2 : 2.4, ex.cladding === "brick" ? 0.6 : 0.8)} roughness={0.92} />
+              ) : (
+                <meshStandardMaterial color={w.exterior ? colors.exterior : colors.wall} roughness={0.92} />
+              )}
             </mesh>
             {w.cut && (
               <mesh position={[g.position[0], w.y1 + 0.01, g.position[2]]}>
@@ -150,7 +206,7 @@ function Building({ layout, colors, look, cutaway = false, upTo = "all", extraPl
           <group key={`g-${i}`}>
             <mesh position={g.position}>
               <boxGeometry args={g.size} />
-              <meshPhysicalMaterial color="#cfe3f5" transparent opacity={0.22} roughness={0.03} metalness={0.1} />
+              <meshPhysicalMaterial color={night ? "#ffd08a" : "#cfe3f5"} emissive={night ? "#ffb85c" : "#000000"} emissiveIntensity={night ? 0.9 : 0} transparent opacity={night ? 0.55 : 0.22} roughness={0.03} metalness={0.1} />
             </mesh>
             {bars.map((b, j) => {
               const f = wallGeom(b, 0.08);
@@ -184,12 +240,19 @@ function Building({ layout, colors, look, cutaway = false, upTo = "all", extraPl
               }),
           )}
       {/* roof with a small overhang, lifted off in the cutaway view */}
-      {!cutaway && upTo === "all" && (
-        <mesh position={[W / 2, top + 0.15, D / 2]} castShadow>
-          <boxGeometry args={[W + 0.6, 0.3, D + 0.6]} />
-          <meshStandardMaterial color={colors.roof} roughness={0.8} />
-        </mesh>
-      )}
+      {!cutaway && upTo === "all" &&
+        (ex.roof === "flat" ? (
+          <mesh position={[W / 2, top + 0.15, D / 2]} castShadow>
+            <boxGeometry args={[W + 0.6, 0.3, D + 0.6]} />
+            <meshStandardMaterial color={colors.roof} roughness={0.8} />
+          </mesh>
+        ) : (
+          <>
+            <Triangles tris={roof.roof} color={colors.roof} />
+            <Triangles tris={roof.infill} color={colors.exterior} map={clad ?? undefined} />
+          </>
+        ))}
+      {ex.garden && <Garden W={W} D={D} colors={colors} />}
       {items.map((it, i) =>
         onPick && PIECES[it.name] ? (
           // A piece you can buy: click it to see the brand it comes from.
@@ -217,7 +280,7 @@ function Building({ layout, colors, look, cutaway = false, upTo = "all", extraPl
         .slice(0, 12)
         .map((s) => (
           <group key={`l-${s.level}-${s.id}`} position={[s.x + s.w / 2, s.y + WALL_H, s.z + s.d / 2]}>
-            <pointLight position={[0, -0.45, 0]} intensity={2.6} distance={7} decay={1.4} color="#ffe6c4" />
+            <pointLight position={[0, -0.45, 0]} intensity={night ? 6 : 2.6} distance={night ? 9 : 7} decay={1.4} color="#ffe6c4" />
             {!cutaway && (
               <mesh position={[0, -0.02, 0]}>
                 <cylinderGeometry args={[0.2, 0.2, 0.03, 24]} />
@@ -663,9 +726,9 @@ function WideLens() {
 }
 
 // Soft studio light for reflections and fill, built from light panels, so nothing has to download.
-function Studio() {
+function Studio({ night = false }: { night?: boolean }) {
   return (
-    <Environment resolution={256} frames={1} environmentIntensity={0.55}>
+    <Environment resolution={256} frames={1} environmentIntensity={night ? 0.12 : 0.55}>
       <Lightformer form="rect" intensity={2} position={[0, 8, 0]} rotation-x={Math.PI / 2} scale={[20, 20, 1]} color="#fff8ee" />
       <Lightformer form="rect" intensity={1.2} position={[-10, 3, 0]} rotation-y={Math.PI / 2} scale={[20, 6, 1]} color="#eaf2ff" />
       <Lightformer form="rect" intensity={1.2} position={[10, 3, 0]} rotation-y={-Math.PI / 2} scale={[20, 6, 1]} color="#fff1df" />
@@ -677,6 +740,9 @@ function Studio() {
 export default function HouseScene(props: Props) {
   const colors = useMemo(() => scheme(props.brief?.palette), [props.brief]);
   const look = useMemo(() => lookOf(props.brief, props.taste), [props.brief, props.taste]);
+  const ex = useMemo(() => exteriorOf(props.layout, look, !!props.newBuild), [props.layout, look, props.newBuild]);
+  // Sketches and saved pictures are always drawn by day.
+  const night = !!props.night && !props.sketch && props.mode !== "shot";
   const { width: W, depth: D } = props.layout.shell;
   const h = props.layout.floors.length * STOREY;
   const orbit = props.mode === "orbit";
@@ -688,6 +754,8 @@ export default function HouseScene(props: Props) {
       layout={props.layout}
       colors={colors}
       look={look}
+      ex={ex}
+      night={night}
       cutaway={(orbit || showcase || still) && props.cutaway}
       upTo={orbit || showcase || still ? props.upTo : "all"}
       extraPlants={props.extraPlants}
@@ -702,16 +770,16 @@ export default function HouseScene(props: Props) {
       dpr={still ? 2 : [1, 2]}
       gl={{ preserveDrawingBuffer: true }}
     >
-      {!props.sketch && <color attach="background" args={["#dfe8f3"]} />}
-      <hemisphereLight args={["#ffffff", "#d9cfc2", 0.7]} />
-      <directionalLight position={[W + 14, 26, -8]} intensity={2.2} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004} shadow-normalBias={0.02} shadow-camera-left={-30} shadow-camera-right={30} shadow-camera-top={30} shadow-camera-bottom={-30} />
-      <ambientLight intensity={0.25} />
-      <Studio />
+      {!props.sketch && <color attach="background" args={[night ? "#0d1424" : "#dfe8f3"]} />}
+      <hemisphereLight args={night ? ["#3a4a78", "#141018", 0.3] : ["#ffffff", "#d9cfc2", 0.7]} />
+      <directionalLight position={[W + 14, 26, -8]} intensity={night ? 0.6 : 2.2} color={night ? "#9fb4ff" : "#ffffff"} castShadow shadow-mapSize={[2048, 2048]} shadow-bias={-0.0004} shadow-normalBias={0.02} shadow-camera-left={-30} shadow-camera-right={30} shadow-camera-top={30} shadow-camera-bottom={-30} />
+      <ambientLight intensity={night ? 0.06 : 0.25} />
+      <Studio night={night} />
       {/* the site sits outside Bounds, so framing fits the building, not the lawn */}
       {!props.sketch && (
         <mesh rotation-x={-Math.PI / 2} position={[W / 2, -0.02, D / 2]} receiveShadow>
           <planeGeometry args={[W + 40, D + 40]} />
-          <meshStandardMaterial color={colors.ground} roughness={1} />
+          <meshStandardMaterial color={night ? mix(colors.ground, "#0d1424", 0.6) : colors.ground} roughness={1} />
         </mesh>
       )}
       <LookCtx.Provider value={look}>

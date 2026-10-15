@@ -61,10 +61,13 @@ check("crowd switch", young.status === 200 && (young.body.read?.places ?? []).le
 // The drawings pack (15 Oct) is drawn in the browser: check the live bundle for the page carries it.
 const page = await get(`/project/${CAFE}`, "owner");
 const scripts = [...String(page.body).matchAll(/src="(\/_next\/static\/[^"]+\.js)"/g)].map((m) => m[1]);
-let drawings = false;
-for (const s of scripts) if ((await (await fetch(BASE + s)).text()).includes("Door and window schedule")) drawings = true;
+const bundle = (await Promise.all(scripts.map(async (s) => (await fetch(BASE + s)).text()))).join(" ");
+const drawings = bundle.includes("Door and window schedule");
 check("project page loads", page.status === 200, `${scripts.length} scripts`);
 check("drawings pack in the live bundle", drawings);
+// The exterior from taste and day and night (16 Oct)
+check("exterior from taste in the live bundle", bundle.includes("a pitched gable roof") && bundle.includes("a planted garden"));
+check("day and night in the live bundle", bundle.includes("#0d1424"));
 
 console.log(failed ? `${failed} failed` : "all live checks passed");
 process.exit(failed ? 1 : 0);

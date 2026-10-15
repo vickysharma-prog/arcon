@@ -311,7 +311,7 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDon
                 </PlanSvg>
               </motion.div>
             ) : (
-              <HouseScene layout={layout} brief={p.brief as never} taste={p.taste} mode="orbit" cutaway upTo={level} playing={false} wheelZoom />
+              <HouseScene layout={layout} brief={p.brief as never} taste={p.taste} newBuild={(p.interview?.project as { newBuild?: boolean } | undefined)?.newBuild === true} mode="orbit" cutaway upTo={level} playing={false} wheelZoom />
             )}
           </div>
         </section>

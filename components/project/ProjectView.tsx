@@ -218,6 +218,7 @@ export function ProjectView({ id }: { id: string }) {
         <WalkthroughStep
           layout={d.options[d.chosen_option ?? 0]}
           spaceType={d.space_type}
+          newBuild={(d.interview?.project as { newBuild?: boolean } | undefined)?.newBuild === true}
           extraPlants={extraPlants}
           projectId={d.id}
           location={d.site.location}

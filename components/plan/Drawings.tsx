@@ -1,5 +1,5 @@
 import type { Layout } from "@/lib/layout/schema";
-import { OVERHANG, ROOF, sayLength, schedule, type Elevation } from "@/lib/export/drawings";
+import { sayLength, schedule, type Elevation } from "@/lib/export/drawings";
 
 // Architect-style drawings that sit beside the plan: an elevation of one side of the building, and the overall
 // dimensions and door and window tags drawn over a plan. All in metres; each drawing scales to its container.
@@ -9,14 +9,16 @@ type Units = "imperial" | "metric";
 
 /** One side of the building from outside: walls, roof, floor lines, every door and window with its tag, levels and width. */
 export function ElevationSvg({ e, units, className = "" }: { e: Elevation; units: Units; className?: string }) {
-  const H = e.top + ROOF;
+  const H = e.high;
+  const pts = (p: [number, number][]) => p.map(([t, y]) => `${t},${Y(y)}`).join(" ");
   const Y = (y: number) => H - y; // SVG runs down, buildings go up
   const level = (y: number) => (units === "metric" ? `+${y.toFixed(2)}` : `+${sayLength(y, units)}`);
   return (
     <svg viewBox={`${-PAD} ${-PAD * 0.6} ${e.length + PAD * 2.6} ${H + PAD * 1.8}`} className={className} role="img" aria-label={`Elevation, ${e.side}`}>
       <line x1={-PAD} y1={Y(0)} x2={e.length + 0.12} y2={Y(0)} className="stroke-ink" strokeWidth={0.06} />
       <rect x={0} y={Y(e.top)} width={e.length} height={e.top} className="fill-paper-raised stroke-ink" strokeWidth={0.06} />
-      <rect x={-OVERHANG} y={Y(H)} width={e.length + OVERHANG * 2} height={ROOF} className="fill-ink-soft stroke-ink" strokeWidth={0.03} />
+      {e.infill && <polygon points={pts(e.infill)} className="fill-paper-raised stroke-ink" strokeWidth={0.06} />}
+      <polygon points={pts(e.roof)} className="fill-ink-soft stroke-ink" strokeWidth={0.03} />
       {e.floors
         .filter((f) => f > 0)
         .map((f) => (
@@ -36,7 +38,7 @@ export function ElevationSvg({ e, units, className = "" }: { e: Elevation; units
         </g>
       ))}
       {/* levels on the right, the width underneath */}
-      {[...e.floors, e.top].map((y) => (
+      {[...e.floors, e.top, ...(e.high - e.top > 0.5 ? [e.high] : [])].map((y) => (
         <g key={`lv-${y}`}>
           <line x1={e.length + 0.15} y1={Y(y)} x2={e.length + 0.55} y2={Y(y)} className="stroke-ink" strokeWidth={0.02} />
           <text x={e.length + 0.65} y={Y(y) + 0.08} fontSize={0.22} className="fill-ink font-mono">

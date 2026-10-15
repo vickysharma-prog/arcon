@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { elevation, sayLength, schedule, wallTop } from "./drawings.ts";
+import type { Exterior } from "../three/exterior.ts";
 import type { Layout } from "../layout/schema.ts";
 import { placeConcept } from "../layout/concepts.ts";
 import { TEMPLATES, DEFAULT_SHELLS } from "../layout/templates.ts";
@@ -60,4 +61,17 @@ test("every generated house has a front with a door, and every tag appears once"
 test("lengths read in metres or feet and inches", () => {
   assert.equal(sayLength(12.4, "metric"), "12.40 m");
   assert.equal(sayLength(12.4, "imperial"), `40' 8"`);
+});
+
+test("a pitched roof shows on the elevations: the slope on the long sides, the gable triangle on the ends", () => {
+  const gable: Exterior = { roof: "gable", pitch: 35, overhang: 0.5, cladding: "timber", garden: false, because: ["x"] };
+  const top = wallTop(layout);
+  const front = elevation(layout, "front", undefined, gable);
+  const side = elevation(layout, "left", undefined, gable);
+  const ridge = top + 4 * Math.tan((35 * Math.PI) / 180); // half the 8 m span
+  assert.ok(Math.abs(front.high - ridge) < 1e-9);
+  assert.ok(Math.abs(side.high - (ridge + 0.3)) < 1e-9); // the end view also shows the roof's thickness
+  assert.equal(front.infill, null);
+  assert.equal(side.infill!.length, 3);
+  assert.equal(elevation(layout, "front").infill, null); // flat by default, as before
 });

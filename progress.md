@@ -2,6 +2,27 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: E2, part 1: the exterior from taste, and day and night
+
+- The outside of a house now comes from the client's taste, in the 3D and in the drawings alike: the roof's shape
+  (a pitched gable for Scandinavian or boho taste, a hipped roof for classic, a single slope for mid-century, flat
+  for modern and industrial), the cladding (timber, brick or render) and a planted garden when the taste leans green.
+  The walkthrough says so under the style line: "Outside: a pitched gable roof, timber walls and a planted garden,
+  from ..." naming what the client loves.
+- Only for houses. A fit-out keeps its roof (we don't rebuild it); flats and businesses keep the flat roof; and with
+  no place or brand behind it, nothing is presented as taste. No balcony or roof terrace yet, because nothing in
+  the plan leads to them.
+- One description (lib/three/exterior.ts) feeds the 3D roof, the elevations, the PDF and the DXF, so a gable shows as
+  the long slope on the street side and the triangle on the ends, with the ridge height labelled.
+- Day and night: a switch in the walkthrough. Night has a dark sky and moonlight, the rooms lit, and the windows
+  glowing warm. Sketches and the PDF are always drawn by day.
+
+Tested: unit tests for the rules and the roof geometry (gable, hip, single slope, flat) and pitched elevations; the
+real test houses checked (a Scandinavian new build gets the gable and timber, industrial gets brick and a flat roof,
+a fit-out keeps its roof); in the browser on a two-storey house: the roof, timber, trees, night with lit windows,
+and the gable elevations. Known: leaving the 3D with room labels on logs a React warning in development (the drei
+labels, as before); nothing breaks.
+
 ## 2026-10-15: Live checks after every push
 
 Vicky's rule: after a push, check the features on the live site too, not only locally. `scripts/live-check.ts` runs

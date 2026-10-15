@@ -34,6 +34,14 @@ export function tiled(t: Texture, w: number, h: number, unit: number, unitY = un
   return c;
 }
 
+const tiledCache = new Map<string, Texture>();
+/** Like `tiled`, but the same wall size gets the same texture back, for meshes drawn on every render. */
+export function tiledOnce(t: Texture, w: number, h: number, unit: number, unitY = unit) {
+  const key = `${t.uuid}|${w.toFixed(3)}|${h.toFixed(3)}|${unit}|${unitY}`;
+  if (!tiledCache.has(key)) tiledCache.set(key, tiled(t, w, h, unit, unitY));
+  return tiledCache.get(key)!;
+}
+
 /** Wood planks, 4 boards across one tile, staggered joints and grain. Stretch it along the boards for real lengths. */
 export const planks = (wood: string) =>
   paint(`planks${wood}`, 512, (g, s) => {

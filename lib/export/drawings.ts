@@ -1,13 +1,12 @@
 import type { Layout, Opening } from "../layout/schema.ts";
 import { DOOR_H, SILL, STOREY, WALL_H } from "../three/geometry.ts";
 import { doorIsOpen, wallPieces } from "../layout/walls.ts";
+import { PLAIN, roofOutline, type Exterior } from "../three/exterior.ts";
 
 // The drawings pack, as numbers every drawing shares (the screen, the PDF and the DXF): the door and window
 // schedule with a tag for each opening, and the four elevations with their openings in place. Heights are the
 // same ones the 3D uses, so the drawings and the walkthrough agree. All in metres.
 
-export const ROOF = 0.3; // roof slab thickness, as in the 3D
-export const OVERHANG = 0.3;
 
 /** The top of the walls: the last storey's walls, as built in the 3D. */
 export const wallTop = (layout: Layout) => (layout.floors.length - 1) * STOREY + WALL_H;
@@ -52,6 +51,11 @@ export type Elevation = {
   top: number; // top of the walls
   floors: number[]; // the height of each floor level
   openings: { tag: string; type: "door" | "window"; t0: number; t1: number; y0: number; y1: number }[];
+  /** The roof as seen from this side, and any wall above the wall tops (a gable end), as [t, y] outlines. */
+  roof: [number, number][];
+  infill: [number, number][] | null;
+  /** The highest point drawn. */
+  high: number;
 };
 
 function onSide(o: Opening, side: Side, W: number, D: number) {
@@ -71,7 +75,7 @@ function along(o: Opening, side: Side, W: number, D: number) {
 }
 
 /** One side of the building as seen from outside, with every outside door and window on it. */
-export function elevation(layout: Layout, side: Side, tags = schedule(layout)): Elevation {
+export function elevation(layout: Layout, side: Side, tags = schedule(layout), ex: Exterior = PLAIN): Elevation {
   const { width: W, depth: D } = layout.shell;
   const tagOf = new Map([...tags.doors, ...tags.windows].map((t) => [`${t.level}:${t.id}`, t.tag]));
   const openings: Elevation["openings"] = [];
@@ -85,10 +89,15 @@ export function elevation(layout: Layout, side: Side, tags = schedule(layout)): 
       openings.push({ tag, type: o.type, t0: c - o.width / 2, t1: c + o.width / 2, y0: base + (door ? 0 : SILL), y1: base + DOOR_H });
     }
   }
+  const top = wallTop(layout);
+  const { roof, infill } = roofOutline(ex, W, D, top, side);
   return {
     side,
     length: side === "front" || side === "back" ? W : D,
-    top: wallTop(layout),
+    top,
+    roof,
+    infill,
+    high: Math.max(top, ...roof.map((p) => p[1])),
     floors: layout.floors.map((f) => f.level * STOREY).sort((a, b) => a - b),
     openings: openings.sort((a, b) => a.y0 - b.y0 || a.t0 - b.t0),
   };

@@ -11,6 +11,8 @@ import { estimate, marketOf, money, CATEGORY_NAMES, TIER_NAMES, type Tier } from
 import { toDxf } from "@/lib/export/dxf";
 import { elevation, schedule, sayLength, SIDES, type Tagged } from "@/lib/export/drawings";
 import { ElevationSvg, PlanMarks } from "@/components/plan/Drawings";
+import { look as lookOf } from "@/lib/three/materials";
+import { exteriorOf } from "@/lib/three/exterior";
 import { SHOTS, type Shot } from "@/components/three/HouseScene";
 import { stampPng, TAGLINE } from "@/components/fx/watermark";
 import { Mark } from "@/components/Logo";
@@ -83,11 +85,13 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
   const rooms = layout.floors.flatMap((f) => f.spaces.filter((s) => s.zone !== "circulation").map((s) => ({ ...s, level: f.level })));
   const words = [...new Set((p.taste?.tags ?? []).map((t) => t.value.replaceAll("_", " ")))].slice(0, 6);
   const tags = schedule(layout);
-  const elevations = SIDES.map((s) => ({ ...s, e: elevation(layout, s.side, tags) }));
+  // The same exterior the 3D draws (roof and cladding from taste), so the drawings match the walkthrough.
+  const ex = exteriorOf(layout, lookOf(p.brief as Parameters<typeof lookOf>[0], p.taste as Parameters<typeof lookOf>[1]), newBuild);
+  const elevations = SIDES.map((s) => ({ ...s, e: elevation(layout, s.side, tags, ex) }));
 
   const dxf = () => {
     tick();
-    save(URL.createObjectURL(new Blob([toDxf(layout, title)], { type: "application/dxf" })), `${fileName(title)} plan.dxf`);
+    save(URL.createObjectURL(new Blob([toDxf(layout, title, ex)], { type: "application/dxf" })), `${fileName(title)} plan.dxf`);
   };
   const all = () => shots.forEach((s, i) => setTimeout(() => save(s, `${fileName(title)} sketch ${i + 1}.png`), i * 300));
   const share = async () => {
@@ -157,7 +161,7 @@ export function ExportStep({ p, tier, onWalkthrough }: { p: Project; tier: Tier 
                 {shots[i] ? (
                   <motion.img initial={still ? false : { opacity: 0, filter: "blur(6px)" }} animate={{ opacity: 1, filter: "blur(0px)" }} src={shots[i]} alt={`${title}, ${v.name.toLowerCase()}, hand-drawn sketch`} className="h-full w-full object-cover" />
                 ) : i === drawing ? (
-                  <HouseScene key={i} layout={layout} mode="shot" sketch="print" shot={v.shot} cutaway={v.cutaway} upTo={v.upTo} playing={false} onShot={onShot} />
+                  <HouseScene key={i} layout={layout} brief={p.brief as never} taste={p.taste as never} newBuild={newBuild} mode="shot" sketch="print" shot={v.shot} cutaway={v.cutaway} upTo={v.upTo} playing={false} onShot={onShot} />
                 ) : (
                   <div className="grid h-full place-items-center">
                     <Scanning label="Waiting to draw" />

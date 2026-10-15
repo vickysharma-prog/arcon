@@ -7,6 +7,7 @@ import type { Layout } from "@/lib/layout/schema";
 import type { Mode, Pose } from "@/components/three/HouseScene";
 import { PlanSvg } from "@/components/plan/PlanSvg";
 import { look as lookOf } from "@/lib/three/materials";
+import { exteriorOf, sayExterior } from "@/lib/three/exterior";
 import type { Item } from "@/lib/three/furniture";
 import { PIECES } from "@/lib/shop/list";
 import type { Shopping } from "@/lib/shop/fetch";
@@ -33,7 +34,7 @@ const HouseScene = dynamic(() => import("@/components/three/HouseScene"), {
 });
 
 export function WalkthroughStep({
-  layout, brief, taste, title, option = 0, planName, changePlan, next, extraPlants, projectId, location, tier, spaceType, preview = false, onDiscuss,
+  layout, brief, taste, title, option = 0, planName, changePlan, next, extraPlants, projectId, location, tier, spaceType, preview = false, onDiscuss, newBuild = false,
 }: {
   layout: Layout; spaceType?: string | null; extraPlants?: Record<string, number>; projectId?: string; location?: string | null; tier?: string | null; brief?: SceneProps["brief"]; taste?: SceneProps["taste"]; title?: string | null;
   /** Which of the three plan options this is, and a way back to pick another. */
@@ -43,6 +44,8 @@ export function WalkthroughStep({
   preview?: boolean;
   /** Open the project thread about the room being looked at. */
   onDiscuss?: (room: string) => void;
+  /** A new build: the roof shape comes from taste too. */
+  newBuild?: boolean;
 }) {
   const [mode, setMode] = useState<Mode>(preview ? "orbit" : "walk");
   // "Whole café", "Whole office": the button that steps back out names what was designed.
@@ -74,6 +77,8 @@ export function WalkthroughStep({
   const [go, setGo] = useState<{ x: number; z: number; key: number }>();
   const box = useRef<HTMLDivElement>(null);
   const style = useMemo(() => lookOf(brief, taste), [brief, taste]);
+  const ex = useMemo(() => exteriorOf(layout, style, newBuild), [layout, style, newBuild]);
+  const [night, setNight] = useState(false);
 
   // Download the walk as a video: the walk starts again from the street and the browser records the 3D canvas
   // until it ends, then saves the file. No server involved.
@@ -157,8 +162,27 @@ export function WalkthroughStep({
             {style.because.length > 0 && <> because you love {style.because.join(", ")}</>}
             {style.matched.length > 0 && <>{style.because.length ? ", and" : ", from"} brands that match your taste like {style.matched.join(" and ")}</>}.
           </p>
+          {ex.because.length > 0 && (
+            <p className="text-sm text-ink-soft">
+              Outside: <span className="font-medium text-ink">{sayExterior(ex).toLowerCase()}</span>, from {ex.because.join(", ")}.
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            tick();
+            setNight((n) => !n);
+          }}
+          aria-pressed={night}
+          className={`rounded-full border px-4 py-1.5 text-sm transition ${night ? "border-accent bg-[#0d1424] text-[#ffd08a]" : "border-line text-ink-soft hover:text-ink"}`}
+        >
+          <motion.span key={String(night)} initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} className="mr-1.5 inline-block">
+            {night ? "☾" : "☀"}
+          </motion.span>
+          {night ? "Night" : "Day"}
+        </button>
         <div role="radiogroup" aria-label="View" className="flex gap-1 rounded-full border border-line p-1">
           {(["walk", "explore", "orbit"] as const).map((m) => (
             <button
@@ -202,6 +226,8 @@ export function WalkthroughStep({
           onPick={projectId ? pick : undefined}
           brief={brief}
           taste={taste}
+          newBuild={newBuild}
+          night={night}
           fitKey={fitKey}
           mode={mode}
           playing={playing}
