@@ -87,5 +87,15 @@ const art = await get(`/api/projects/${CAFE}/art`, "owner");
 check("art and sound", art.status === 200 && (art.body.art ?? []).length > 0 && (art.body.music ?? []).length > 0, `${(art.body.art ?? []).length} galleries, ${(art.body.music ?? []).length} artists`);
 check("room moods in the live bundle", bundle.includes("Mood, read by Qloo"));
 
+// The app (16 Oct): installable, the logo in the tab, and someone signed in opens their projects, not the landing page
+const landing = String((await get("/")).body);
+check("logo in the browser tab", /<link rel="icon" href="\/icon\.svg/.test(landing) && (await fetch(BASE + "/icon.svg")).ok);
+const manifest = await get("/manifest.webmanifest");
+check("app manifest", manifest.status === 200 && manifest.body.short_name === "Arcon", String(manifest.status));
+const sw = await fetch(BASE + "/sw.js");
+check("service worker never cached", sw.ok && (sw.headers.get("cache-control") ?? "").includes("no-cache"), sw.headers.get("cache-control") ?? "");
+const opened = await fetch(BASE + "/", { headers: { cookie: await cookieFor("owner") }, redirect: "manual" });
+check("signed in opens their projects", opened.status >= 300 && opened.status < 400 && (opened.headers.get("location") ?? "").endsWith("/home"), `${opened.status} ${opened.headers.get("location")}`);
+
 console.log(failed ? `${failed} failed` : "all live checks passed");
 process.exit(failed ? 1 : 0);

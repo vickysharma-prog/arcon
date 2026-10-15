@@ -88,9 +88,8 @@ export function Hero() {
             initial={still ? false : { opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.2em] text-accent sm:text-xs sm:tracking-[0.3em]"
+            className="font-mono text-[11px] uppercase tracking-[0.2em] text-accent sm:text-xs sm:tracking-[0.3em]"
           >
-            <motion.span aria-hidden className="h-px w-10 origin-left bg-accent" initial={still ? false : { scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.4, duration: 0.8 }} />
             AI architect, powered by Qloo
           </motion.p>
           <h1 className="mt-6 font-serif text-5xl leading-[1.05] sm:text-6xl lg:text-7xl">

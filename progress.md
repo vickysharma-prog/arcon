@@ -2,6 +2,15 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: The logo back in the tab, and signed in opens the app (Vicky)
+
+- The browser tab showed a plain globe: the apple icon set in the page settings replaced the logo file, so no icon
+  link was sent. The apple icon is now a file next to the logo, and both are linked.
+- The short line before "AI architect, powered by Qloo" is gone; the line stands alone.
+- Someone signed in who opens arcon (the site or the installed app) goes straight to their projects; the landing page
+  is for people who haven't signed in.
+- Live checks added: the logo in the tab, the app manifest, the service worker never cached, signed in opens /home.
+
 ## 2026-10-16: The landing page, professional pass (Vicky's notes)
 
 - Larger on computers: at a normal 100% zoom everything read small, so text and spacing step up on laptops and big

@@ -26,7 +26,6 @@ export const metadata: Metadata = {
   applicationName: "Arcon",
   // Installed on an iPhone's home screen: its icon, its name, and a full-screen app.
   appleWebApp: { capable: true, title: "Arcon", statusBarStyle: "default" },
-  icons: { apple: "/icons/apple-180.png" },
 };
 
 export const viewport: Viewport = {

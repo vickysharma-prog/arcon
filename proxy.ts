@@ -1,9 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { ensureGuest, GUEST_COOKIE } from "./lib/auth/guest.ts";
+import { ensureGuest, GUEST_COOKIE, USER_COOKIE, verifyUser } from "./lib/auth/guest.ts";
 
 // Every browser gets a signed guest id on its first visit. The agents only answer requests that carry it.
 export async function proxy(request: NextRequest) {
-  const { set } = await ensureGuest(request.cookies.get(GUEST_COOKIE)?.value, process.env.ARCON_SESSION_SECRET ?? "");
+  const secret = process.env.ARCON_SESSION_SECRET ?? "";
+  // Someone signed in opens the app, not the landing page: their projects.
+  if (request.nextUrl.pathname === "/" && (await verifyUser(request.cookies.get(USER_COOKIE)?.value, secret))) return NextResponse.redirect(new URL("/home", request.url));
+  const { set } = await ensureGuest(request.cookies.get(GUEST_COOKIE)?.value, secret);
   const response = NextResponse.next();
   if (set)
     response.cookies.set(GUEST_COOKIE, set, {
