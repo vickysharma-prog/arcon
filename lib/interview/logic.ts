@@ -76,7 +76,11 @@ export function missingForDesign(p: Project): string[] {
 // The part of a profile the interviewer reflects back to the user.
 export function profileSummary(profile: Profile, words = 8, brands = 5) {
   return {
-    style: profile.tags.slice(0, words).map((t) => ({ word: t.value.replaceAll("_", " "), from: t.sources.map((s) => s.name) })),
+    // A word Qloo gives as both decor and ambience ("elegant") shows once.
+    style: profile.tags
+      .filter((t, i, all) => all.findIndex((x) => x.value === t.value) === i)
+      .slice(0, words)
+      .map((t) => ({ word: t.value.replaceAll("_", " "), from: t.sources.map((s) => s.name) })),
     brands: profile.brands.slice(0, brands).map((b) => ({ name: b.name, look: b.aesthetic.slice(0, 3).map((a) => a.replaceAll("_", " ")) })),
   };
 }

@@ -69,5 +69,13 @@ check("drawings pack in the live bundle", drawings);
 check("exterior from taste in the live bundle", bundle.includes("a pitched gable roof") && bundle.includes("a planted garden"));
 check("day and night in the live bundle", bundle.includes("#0d1424"));
 
+// The taste quiz (16 Oct): public, a fixed list, a card from Qloo with no sign-in
+check("quiz page", (await get("/quiz")).status === 200);
+const opts = await get("/api/quiz");
+check("quiz pictures", (opts.body.rounds ?? []).every((r: { options: unknown[] }) => r.options.length >= 6), (opts.body.rounds ?? []).map((r: { options: unknown[] }) => r.options.length).join("/"));
+const qcard = await get("/api/quiz?p=aman-tokyo.muji.spirited-away");
+check("quiz card", qcard.status === 200 && !!qcard.body.style && (qcard.body.words ?? []).length > 0, qcard.body.style);
+check("quiz refuses picks off the list", (await get("/api/quiz?p=aman-tokyo.supreme.amelie")).status === 400);
+
 console.log(failed ? `${failed} failed` : "all live checks passed");
 process.exit(failed ? 1 : 0);

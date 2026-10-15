@@ -1,5 +1,6 @@
 "use client";
 
+import { QUIZ_KEY } from "@/lib/quiz/picks";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
@@ -69,6 +70,15 @@ export function Interview() {
     try {
       const saved = localStorage.getItem(LANG_KEY);
       if (saved) setLang(langOf(saved).id);
+    } catch {}
+    // Coming from the taste quiz: its three picks answer the taste questions (the place, the brand, the film or music).
+    try {
+      const quiz = JSON.parse(sessionStorage.getItem(QUIZ_KEY) ?? "null") as { slot: string; id: string; name: string }[] | null;
+      sessionStorage.removeItem(QUIZ_KEY);
+      if (Array.isArray(quiz)) {
+        const from = Object.fromEntries(quiz.filter((p) => p && typeof p.id === "string").map((p) => [p.slot, { slot: p.slot, id: p.id, name: String(p.name) }]));
+        setAnswers((a) => ({ ...from, ...a }) as Answers);
+      }
     } catch {}
     // /start?project=… fills that project; the type and city the pro already gave are answered.
     const id = new URLSearchParams(location.search).get("project");

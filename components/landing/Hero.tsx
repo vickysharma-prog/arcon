@@ -123,7 +123,12 @@ export function Hero() {
               I have a floor plan
             </Link>
           </div>
-          <p className="mt-5 text-sm text-ink-soft">English, हिंदी or Hinglish · type or talk · no account needed</p>
+          <p className="mt-5 text-sm text-ink-soft">
+            English, हिंदी or Hinglish · type or talk · no account needed ·{" "}
+            <Link href="/quiz" onClick={() => tick()} className="text-accent underline-offset-2 hover:underline">
+              Find your space style in three taps
+            </Link>
+          </p>
         </div>
 
         <motion.div initial={still ? false : { opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>

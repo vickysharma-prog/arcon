@@ -2,6 +2,25 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16: E2, part 2: the taste quiz
+
+- /quiz, "What's your space style?": three rounds of pictures, one tap each (a place, a brand, a film or music),
+  then a style card read from Qloo: the style (Scandinavian, Industrial...), the words it's made of with the pick each
+  came from (at most three per pick, so every pick shows), and brands that match.
+- No model call and no sign-in. Only picks from a fixed list are accepted (eight per round), so a public page can't
+  spend the Qloo quota on anything typed in, and every result is cached. Only the names are in the repo; Qloo finds
+  each one and its photo at runtime, and a result only counts when it is the thing asked for (that check dropped a
+  wrong hotel, a fashion label and Google Earth from the first list).
+- The picks travel in the link (?p=...), so a shared card opens with nothing stored. "Share my style" uses the
+  phone's share sheet or copies the link.
+- "Design your space" carries the three picks into the interview, which starts with the taste questions answered.
+- A link from the landing page: "Find your space style in three taps".
+- Fixed on the way: the interview's taste card showed a word twice when Qloo gives it as both decor and ambience.
+
+Tested: unit tests for the list, the link and the name check, and the taste card words; in the browser the three
+rounds, the card, a shared link opening on its card, and "Design your space" starting the interview with the picks.
+Live checks: the page, the pictures, a card, and a pick off the list refused.
+
 ## 2026-10-16: E2, part 1: the exterior from taste, and day and night
 
 - The outside of a house now comes from the client's taste, in the 3D and in the drawings alike: the roof's shape

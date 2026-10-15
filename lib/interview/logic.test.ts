@@ -97,3 +97,16 @@ test("a size as people say it gives width and depth, keeping what the model alre
   assert.deepEqual(sizeFrom(undefined, 12, 10), { width: 12, depth: 10 });
   assert.deepEqual(sizeFrom("a big plot"), { width: undefined, depth: undefined });
 });
+
+test("the taste card shows each word once, even when Qloo gives it as both decor and ambience", () => {
+  const src = [{ entityId: "a", name: "A hotel", layer: 1 as const }];
+  const profile = {
+    tags: [
+      { family: "decor" as const, value: "elegant", weight: 2, sources: src },
+      { family: "ambience" as const, value: "elegant", weight: 1.5, sources: src },
+      { family: "decor" as const, value: "modern", weight: 1, sources: src },
+    ],
+    brands: [],
+  };
+  assert.deepEqual(profileSummary(profile).style.map((s) => s.word), ["elegant", "modern"]);
+});
