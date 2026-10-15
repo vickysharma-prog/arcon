@@ -2,6 +2,14 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-15: Live checks after every push
+
+Vicky's rule: after a push, check the features on the live site too, not only locally. `scripts/live-check.ts` runs
+against arcon-ten.vercel.app as the test accounts (approved by Vicky, from the server, never in her browser): pages
+load, the builder sees site costs and the client only the budget, the client can't change the site, the owner gets
+the steps to get building, the neighbourhood read returns real places one per chain and switches crowd, and the live
+bundle carries the drawings pack. First run: all 12 checks passed.
+
 ## 2026-10-15: D2, the drawings pack
 
 What an architect or builder works from, in Share & export, in the PDF pack and in the DXF:

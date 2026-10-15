@@ -38,6 +38,9 @@ with the three steps to get building, and an owner can manage the build themselv
 builder's costs (15 Oct).
 D3 is built (15 Oct): the neighbourhood read for business spaces, with Q8 and Q9. D2 is built (15 Oct): dimensioned plans, four elevations, door and window schedules, in the PDF and the DXF. Next: E2.
 
+After every push: wait for the deploy, then `node --env-file=.env.local --env-file=.env scripts/live-check.ts`
+(test accounts on the live site, from the server). Add a check for each new feature.
+
 Vicky found the shared flow confusing, so the app now behaves differently for each person. Decided 13 Oct
 (full list in private/plan.md, "One app, different for each person" and "Decisions from the 13 Oct grilling"):
 - Sign-up asks the main role. Every project a person is on shows under My projects with their role on it; pros
