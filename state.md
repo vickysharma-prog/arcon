@@ -78,6 +78,8 @@ list in m² and kg on US projects (needs the quantities converted, not just the 
    including new ones for /api/shell, the business views and move-in). Re-run in Chrome on the local build, by
    hand, every journey in private/e2e-run.md (1 to 8, phone width too) and note each result there. Fix anything that
    breaks before new work.
+0b. **Landing page, more UI and content (Vicky, 17 Oct):** after the re-check, work on the landing page's design and
+   what it says. Ask Vicky what she wants changed first, then go section by section.
 1. **The app frame and sidebar** (pushed and live 17 Oct): Vicky to review on live; check phone width, dark mode and
    a guest on a project during the re-check.
 1b. **From the flow audit** (private/flows-audit.md): the builder's quote, fees from the site's phases, the
