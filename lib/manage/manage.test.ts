@@ -89,3 +89,11 @@ test("a tap on another site moves the worker; a tap where they are takes them of
   assert.deepEqual(tapSite(["a"], "b"), [{ project_id: "a", present: false }, { project_id: "b", present: true }]);
   assert.deepEqual(tapSite(["b"], "b"), [{ project_id: "b", present: false }]);
 });
+
+test("on a project with two pros, each sees only the fees they set out; the client sees both", () => {
+  const rows = [fee({ id: 1, created_by: "arch" }), fee({ id: 2, created_by: "build", amount: 9000 })];
+  const as = (role: string, me: string) => ledger(rows, [{ id: "a", name: "LA house", role, mode: "owner" }], NOW, me).lines.map((l) => l.id);
+  assert.deepEqual(as("architect", "arch"), [1]);
+  assert.deepEqual(as("builder", "build"), [2]);
+  assert.deepEqual(as("owner", "owner1").sort(), [1, 2]);
+});

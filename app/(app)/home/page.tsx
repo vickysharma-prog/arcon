@@ -97,7 +97,7 @@ async function HomePageBody({ searchParams }: { searchParams: Promise<Record<str
   const mine = projects.map((p) => ({ id: p.id, name: projectName(p), role: p.role, mode: p.mode as "owner" | "pro", location: p.site?.location ?? null }));
   const sites = view === "crew" || view === "deliveries" || view === "money" ? await sitesRunBy(mine) : [];
   const [fees, crew, deliveries, siteMoney] = await Promise.all([
-    view === "fees" ? feeLedger(mine) : null,
+    view === "fees" ? feeLedger(mine, userId) : null,
     view === "crew" ? crewOf(userId, sites, today) : null,
     view === "deliveries" ? deliveriesOf(sites, today) : null,
     view === "money" ? moneyOf(sites) : null,

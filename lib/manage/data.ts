@@ -35,10 +35,10 @@ export async function sitesRunBy(projects: (LedgerProject & { location?: string 
 }
 
 /** Every fee across this person's projects, from their side. */
-export async function feeLedger(projects: LedgerProject[]) {
+export async function feeLedger(projects: LedgerProject[], me: string) {
   const ids = projects.map((p) => p.id);
-  const rows = ids.length ? await must<FeeRow[]>(db().from("milestones").select("id, project_id, label, amount, currency, status, billed_at").in("project_id", ids).order("position")) : [];
-  return ledger(rows, projects);
+  const rows = ids.length ? await must<FeeRow[]>(db().from("milestones").select("id, project_id, label, amount, currency, status, billed_at, created_by").in("project_id", ids).order("position")) : [];
+  return ledger(rows, projects, Date.now(), me);
 }
 
 /** The crew this person employs, across the sites they run, for the week `today` is in. */

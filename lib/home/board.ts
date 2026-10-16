@@ -4,7 +4,7 @@ import { sketchOf, type Sketch } from "./sketch.ts";
 import { waitsFor, type Wait, type WaitInput } from "./waiting.ts";
 import { unreadCount } from "../project/thread.ts";
 import { sitesToday } from "../site/store.ts";
-import { money } from "../project/fees.ts";
+import { money, sideOf } from "../project/fees.ts";
 import { estimate, marketOf, money as cost } from "../budget/costs.ts";
 import { timeline } from "../budget/timeline.ts";
 
@@ -42,7 +42,7 @@ export async function boardFor(userId: string, projects: BoardProject[], day?: s
   const [versions, approvals, fees, clients, sites, unreadList] = await Promise.all([
     light ? { data: [] } : db().from("project_versions").select("project_id, version, layout").in("project_id", ids).order("version", { ascending: false }),
     db().from("approvals").select("project_id, decision, created_at").in("project_id", ids).order("created_at", { ascending: false }),
-    db().from("milestones").select("project_id, label, amount, currency, status").in("project_id", ids).order("position"),
+    db().from("milestones").select("project_id, label, amount, currency, status, created_by").in("project_id", ids).order("position"),
     db().from("project_members").select("project_id").in("project_id", ids).eq("role", "client"),
     sitesToday(projects.filter((p) => p.status === "building").map((p) => p.id), day),
     Promise.all(ids.slice(0, 20).map(async (id) => [id, await unreadCount(id, userId).catch(() => 0)] as const)),
@@ -64,7 +64,11 @@ export async function boardFor(userId: string, projects: BoardProject[], day?: s
   for (const a of (approvals.data ?? []) as { project_id: string; decision: string }[]) if (!lastAnswer.has(a.project_id)) lastAnswer.set(a.project_id, a.decision);
   const withClient = new Set(((clients.data ?? []) as { project_id: string }[]).map((c) => c.project_id));
   const unread = Object.fromEntries(unreadList);
-  const feeRows = (fees.data ?? []) as { project_id: string; label: string; amount: number; currency: string; status: string }[];
+  // A pro's fees are their own milestones (another pro on the project bills separately); a payer sees all they owe.
+  const sideIn = new Map(projects.map((p) => [p.id, sideOf(p.role, p.mode as "owner" | "pro")]));
+  const feeRows = ((fees.data ?? []) as { project_id: string; label: string; amount: number; currency: string; status: string; created_by: string }[]).filter(
+    (f) => sideIn.get(f.project_id) !== "pro" || f.created_by === userId,
+  );
 
   const waits = waitsFor(
     projects.slice(0, 40).map((p) => ({
