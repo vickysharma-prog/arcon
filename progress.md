@@ -2,6 +2,22 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16 (late): Every project path, end to end, and what it broke (Vicky)
+
+- Traced every way a project runs to move-in (owner alone; owner with architect and builder; finding a pro; a client
+  going straight to an architect; builder design-and-build) through the code: private/flows-audit.md.
+- Fixed: choosing another plan mid-build sent the project back to Design; two people ran the same site (the architect
+  saw the builder's costs); any pro could step another pro's fees (the new ledger counted them too).
+- Vicky's calls, built: change requests after approval (cost difference, approve or decline, back to the approved
+  version on a no); in-person client answers recorded as theirs; one client per project; a lapsed pro's projects
+  stay readable with the site running, and a trial no longer unlocks an owner's project; Priya's project reads
+  "Priya's design".
+- Checked over HTTP as the test owner, builder and client on the Austin test house: a plan change mid-build is refused,
+  adding a bathroom becomes a +$10.2K request, the builder can't approve it, the client declines it and the design is
+  back to version 1 with the history on record.
+- Next from the audit: the move-in flow (snags, handover, last fee, review of the pro), the builder's quote, fees from
+  the site's phases, the architect's site visits.
+
 ## 2026-10-16 (evening): The app frame with a sidebar, the bell, and running the business (Vicky)
 
 - Signed-in pages now sit in one frame: a sidebar with the role's tools, the project in front of you opening out into

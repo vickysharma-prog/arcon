@@ -66,6 +66,8 @@ last commit 110212a is live, 348 unit tests pass, tsc and the build are clean, a
 
 1. **The app frame and sidebar** (built 16 Oct evening, two local commits not pushed): Vicky to review; then check
    phone width, dark mode and a guest on a project, push, run live checks, add a live check for /api/shell.
+1b. **From the flow audit** (private/flows-audit.md): the move-in flow (snag list, final walkthrough, handover pack,
+   last fee, review of the pro), the builder's quote, fees from the site's phases, the architect's site visits.
 2. **US demo world** (part of R5; judges are American, Jason Calacanis leads): a family house in Los Angeles in
    review, a café in New York with the neighbourhood read, an architect's studio in Austin with three clients, a
    builder's live site; fees in dollars. Then the judge demo: /demo with role cards and a role switcher bar.
