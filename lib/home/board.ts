@@ -39,13 +39,14 @@ export async function boardFor(userId: string, projects: BoardProject[], day?: s
   const ids = projects.slice(0, 40).map((p) => p.id);
   if (!ids.length) return { sketches: {}, unread: {}, sites: [], waits: [], money: { billed: null, received: null }, focus: null };
 
-  const [versions, approvals, fees, clients, sites, unreadList] = await Promise.all([
+  const [versions, approvals, fees, clients, sites, snags, unreadList] = await Promise.all([
     // the light board needs only the version numbers (for changes waiting), not the plans
     db().from("project_versions").select(light ? "project_id, version" : "project_id, version, layout").in("project_id", ids).order("version", { ascending: false }),
     db().from("approvals").select("project_id, decision, version, created_at").in("project_id", ids).order("created_at", { ascending: false }),
     db().from("milestones").select("project_id, label, amount, currency, status, created_by").in("project_id", ids).order("position"),
-    db().from("project_members").select("project_id").in("project_id", ids).eq("role", "client"),
+    db().from("project_members").select("project_id, role").in("project_id", ids).in("role", ["client", "builder"]),
     sitesToday(projects.filter((p) => p.status === "building").map((p) => p.id), day),
+    db().from("snags").select("project_id, status").in("project_id", ids).neq("status", "closed"),
     Promise.all(ids.slice(0, 20).map(async (id) => [id, await unreadCount(id, userId).catch(() => 0)] as const)),
   ]);
 
@@ -69,7 +70,10 @@ export async function boardFor(userId: string, projects: BoardProject[], day?: s
   for (const a of (approvals.data ?? []) as { project_id: string; decision: string; version: number }[]) if (a.decision === "approved" && !approvedV.has(a.project_id)) approvedV.set(a.project_id, a.version);
   const lastAnswer = new Map<string, string>();
   for (const a of (approvals.data ?? []) as { project_id: string; decision: string }[]) if (!lastAnswer.has(a.project_id)) lastAnswer.set(a.project_id, a.decision);
-  const withClient = new Set(((clients.data ?? []) as { project_id: string }[]).map((c) => c.project_id));
+  const snagRows = (snags.data ?? []) as { project_id: string; status: string }[];
+  const members = (clients.data ?? []) as { project_id: string; role: string }[];
+  const withClient = new Set(members.filter((m) => m.role === "client").map((c) => c.project_id));
+  const withBuilder = new Set(members.filter((m) => m.role === "builder").map((c) => c.project_id));
   const unread = Object.fromEntries(unreadList);
   // A pro's fees are their own milestones (another pro on the project bills separately); a payer sees all they owe.
   const sideIn = new Map(projects.map((p) => [p.id, sideOf(p.role, p.mode as "owner" | "pro")]));
@@ -87,6 +91,10 @@ export async function boardFor(userId: string, projects: BoardProject[], day?: s
       chosen: p.chosen_option !== null,
       decides: p.role === "client" || (p.role === "owner" && !withClient.has(p.id)),
       changesAsked: lastAnswer.get(p.id) === "changes",
+      handoverReady: p.status === "building" && (sites.find((s) => s.id === p.id)?.overall ?? 0) >= 100,
+      // who fixes snags: the builder, or a pro who owns it with no builder, or an owner building it themselves
+      snagsToFix: (p.role === "builder" || (p.role === "owner" && p.mode === "pro" && !withBuilder.has(p.id))) ? snagRows.filter((s) => s.project_id === p.id && s.status === "open").length : 0,
+      snagsToCheck: snagRows.filter((s) => s.project_id === p.id && s.status === "fixed").length,
       changePending: (p.status === "approved" || p.status === "building") && approvedV.has(p.id) && (latestV.get(p.id) ?? 0) > approvedV.get(p.id)!,
       unread: unread[p.id] ?? 0,
       late: sites.find((s) => s.id === p.id)?.late ?? 0,

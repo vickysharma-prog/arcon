@@ -7,6 +7,7 @@ import { Decode } from "@/components/fx/Decode";
 import { ok, tick } from "@/components/fx/sfx";
 import { money } from "@/lib/project/fees";
 import { expectedPct, stockOf } from "@/lib/site/progress";
+import { MoveIn } from "./MoveIn";
 
 type Phase = { id: number; key: string; name: string; note: string | null; start_date: string; end_date: string; status: "planned" | "active" | "done"; pct: number };
 type Task = { id: number; title: string; due: string | null; status: "todo" | "doing" | "done"; phase_id: number | null; crew_id: number | null };
@@ -31,6 +32,7 @@ type Site = {
 type Data = { site: Site | null; runs: boolean; status: string; roster: Crew[]; steps: Steps };
 
 const SECTIONS = [
+  ["movein", "Move in"],
   ["today", "Today"],
   ["phases", "Phases & tasks"],
   ["crew", "Crew"],
@@ -47,7 +49,8 @@ const input = "rounded-full border border-line bg-paper px-3 py-1.5 text-sm outl
 // updates); the owner, client and architect follow it read only. Every change posts what matters in the thread.
 export function SiteView({ projectId, onStatus, onPlans, onTeam }: { projectId: string; onStatus: (s: string) => void; onPlans?: () => void; onTeam?: () => void }) {
   const [data, setData] = useState<Data | null>(null);
-  const [section, setSection] = useState<Section>("today");
+  // null: the default, which is Move in once the build is finished, else Today
+  const [picked, setSection] = useState<Section | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const today = localDay();
@@ -103,21 +106,25 @@ export function SiteView({ projectId, onStatus, onPlans, onTeam }: { projectId: 
       </div>
     );
   const { site, runs } = data;
+  const finishing = !!site && (site.overall >= 100 || data.status === "done");
+  const shown = SECTIONS.filter(([id]) => id !== "movein" || finishing);
+  const section = picked ?? (finishing ? "movein" : "today");
+  const at: Section = section === "movein" && !finishing ? "today" : section;
   if (!site) return <NotStarted data={data} act={act} busy={busy} error={error} review={review} onPlans={onPlans} onTeam={onTeam} />;
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-16">
       <Header site={site} />
       <div className="mt-4 flex flex-wrap gap-1.5">
-        {SECTIONS.map(([id, label]) => (
+        {shown.map(([id, label]) => (
           <button
             key={id}
             onClick={() => {
               tick();
               setSection(id);
             }}
-            aria-pressed={section === id}
-            className={`rounded-full px-3.5 py-1.5 text-sm transition ${section === id ? "bg-btn text-btn-ink" : "border border-line text-ink-soft hover:text-ink"}`}
+            aria-pressed={at === id}
+            className={`rounded-full px-3.5 py-1.5 text-sm transition ${at === id ? "bg-btn text-btn-ink" : "border border-line text-ink-soft hover:text-ink"}`}
           >
             {label}
             {id === "today" && site.alerts.length > 0 && <span className="ml-1.5 rounded-full bg-red-500 px-1.5 text-[11px] text-white">{site.alerts.length}</span>}
@@ -129,12 +136,13 @@ export function SiteView({ projectId, onStatus, onPlans, onTeam }: { projectId: 
           {error}
         </p>
       )}
-      <motion.div key={section} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-4">
-        {section === "today" && <Today site={site} runs={runs} act={act} today={today} busy={busy} />}
-        {section === "phases" && <Phases site={site} runs={runs} act={act} busy={busy} />}
-        {section === "crew" && <CrewPanel site={site} runs={runs} roster={data.roster} act={act} today={today} busy={busy} />}
-        {section === "materials" && <Materials site={site} runs={runs} act={act} busy={busy} />}
-        {section === "updates" && <Updates projectId={projectId} site={site} runs={runs} act={act} busy={busy} />}
+      <motion.div key={at} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-4">
+        {at === "movein" && <MoveIn projectId={projectId} onStatus={onStatus} />}
+        {at === "today" && <Today site={site} runs={runs} act={act} today={today} busy={busy} />}
+        {at === "phases" && <Phases site={site} runs={runs} act={act} busy={busy} />}
+        {at === "crew" && <CrewPanel site={site} runs={runs} roster={data.roster} act={act} today={today} busy={busy} />}
+        {at === "materials" && <Materials site={site} runs={runs} act={act} busy={busy} />}
+        {at === "updates" && <Updates projectId={projectId} site={site} runs={runs} act={act} busy={busy} />}
       </motion.div>
     </main>
   );

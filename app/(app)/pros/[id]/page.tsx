@@ -35,12 +35,24 @@ async function Profile({ params }: { params: PageProps<"/pros/[id]">["params"] }
         <div className="rounded-2xl border border-line bg-paper-raised p-4">
           <p className="font-serif text-3xl">{p.projects}</p>
           <p className="text-sm text-ink-soft">projects designed on Arcon</p>
+          {p.rating && <p className="mt-1 text-sm text-amber-600">{p.rating} from clients who moved in</p>}
         </div>
         <div className="rounded-2xl border border-line bg-paper-raised p-4">
           <p className="text-sm font-medium">Fees</p>
           <p className="text-sm text-ink-soft">{p.fee_note ?? "Ask in your request"}</p>
         </div>
       </Reveal>
+      {p.said.length > 0 && (
+        <Reveal delay={0.12} className="mt-6 space-y-2">
+          <p className="text-sm font-medium">What clients said</p>
+          {p.said.map((r, i) => (
+            <blockquote key={i} className="rounded-2xl border border-line bg-paper-raised p-4 text-sm">
+              <span className="text-amber-600">{"★".repeat(r.rating)}</span>
+              <span className="mt-1 block">&ldquo;{r.text}&rdquo;</span>
+            </blockquote>
+          ))}
+        </Reveal>
+      )}
       {p.styles.length > 0 && (
         <Reveal delay={0.15} className="mt-6">
           <p className="text-sm font-medium">Styles of their past work</p>

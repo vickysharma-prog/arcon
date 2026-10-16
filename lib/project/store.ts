@@ -32,6 +32,9 @@ export type Project = {
   toured_at?: string | null; // the guided steps are done; the project opens on its home
   self_build?: boolean; // the owner runs the site themselves
   designed_for?: string | null; // the person it was designed for, when a pro created it
+  handed_over_at?: string | null; // the client accepted the handover and moved in
+  warranty_months?: number | null; // the builder's warranty, from the handover
+  handover_note?: string | null; // the builder's notes in the handover pack
 };
 
 type Patch = Partial<Omit<Project, "id">>;

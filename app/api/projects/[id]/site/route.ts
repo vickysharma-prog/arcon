@@ -101,13 +101,11 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
       const { data: ph } = await db().from("site_phases").update(patch).eq("id", o.id).select("name, status").single();
       if (ph?.status === "done") {
         await postEvent(p, who, { type: "site", what: "phase", name: ph.name }).catch(() => {});
-        // The next phase starts; when none is left, the build is done.
+        // The next phase starts; when none is left, the build is finished and the handover begins (moving in is
+        // the client's acceptance, in the Move in section).
         const { data: rest } = await db().from("site_phases").select("id, status").eq("project_id", id).neq("status", "done").order("position").limit(1);
         if (rest?.[0]) await db().from("site_phases").update({ status: "active" }).eq("id", rest[0].id).eq("status", "planned");
-        else {
-          await updateProject(id, { status: "done" });
-          await postEvent(p, who, { type: "site", what: "finished" }).catch(() => {});
-        }
+        else await postEvent(p, who, { type: "site", what: "finished" }).catch(() => {});
       }
       break;
     }

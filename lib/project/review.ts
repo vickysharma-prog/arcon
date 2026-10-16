@@ -12,6 +12,7 @@ export type ThreadEvent =
   | { type: "changes"; version: number; note?: string | null; for?: string | null }
   | { type: "fee"; action: "added" | "bill" | "paid" | "received"; label: string; amount: string }
   | { type: "handover"; to: string }
+  | { type: "movein"; what: "snag" | "fixed" | "closed" | "reopened" | "pack" | "moved"; note?: string | null; for?: string | null }
   | { type: "change"; what: "asked" | "approved" | "declined"; version: number; cost?: string; note?: string | null; for?: string | null }
   | { type: "site"; what: "started" | "phase" | "update" | "finished"; name?: string; pct?: number; note?: string };
 
@@ -45,8 +46,24 @@ export function eventText(e: ThreadEvent, who: string): string {
         : e.what === "phase"
           ? `${who} finished ${e.name}.`
           : e.what === "finished"
-            ? `${who} finished the build. Time to move in.`
+            ? `${who} finished the build. Next: walk through it together and list anything to fix before the handover.`
             : `Site update from ${who}${e.name ? ` (${e.name}${e.pct !== undefined ? `, ${e.pct}%` : ""})` : ""}: ${e.note}`;
+    case "movein":
+      switch (e.what) {
+        case "snag":
+          return `${who} listed a snag: ${e.note}`;
+        case "fixed":
+          return `${who} fixed a snag: ${e.note}`;
+        case "closed":
+          return `${who} signed off a snag: ${e.note}`;
+        case "reopened":
+          return `${who} sent a snag back: ${e.note}`;
+        case "pack":
+          return `${who} handed over the pack: ${e.note}, the drawings and the notes.`;
+        case "moved":
+          return `${e.for ? `${e.for} (in person, recorded by ${who})` : who} accepted the handover. Moved in!${e.note ? ` "${e.note}"` : ""}`;
+      }
+      return "";
     case "change": {
       const by = e.for ? `${e.for} (in person, recorded by ${who})` : who;
       return e.what === "asked"

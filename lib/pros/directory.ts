@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "../supabase/admin.ts";
 import { proActive } from "../project/unlock.ts";
+import { ratingLine } from "../project/movein.ts";
 import { fitOf, rank, type Fit } from "./match.ts";
 import type { Project } from "../project/store.ts";
 
@@ -12,7 +13,15 @@ export type ProRole = "architect" | "builder";
 type ProfileRow = { user_id: string; role: string; name: string; company: string | null; city: string | null; logo_url: string | null; about: string | null; fee_note: string | null; plan: string; plan_until: string | null; trial_until: string | null; demo: boolean };
 type Work = { id: string; title: string | null; taste: { tags: { family: string; value: string; weight: number }[] } | null; brief: { name?: string } | null };
 
-export type ProCard = Omit<ProfileRow, "plan" | "plan_until" | "trial_until" | "demo" | "role"> & { role: ProRole; fit: Fit; projects: number; styles: string[]; requested: boolean };
+export type ProCard = Omit<ProfileRow, "plan" | "plan_until" | "trial_until" | "demo" | "role"> & { role: ProRole; fit: Fit; projects: number; styles: string[]; requested: boolean; rating: string | null };
+
+/** What clients who moved in said, as "★ 4.7 · 3 reviews", per pro. */
+async function ratingsOf(ids: string[]): Promise<Map<string, string | null>> {
+  if (!ids.length) return new Map();
+  const { data } = await db().from("reviews").select("pro_id, rating").in("pro_id", ids);
+  const rows = (data ?? []) as { pro_id: string; rating: number }[];
+  return new Map(ids.map((id) => [id, ratingLine(rows.filter((r) => r.pro_id === id).map((r) => r.rating))]));
+}
 
 /** Every project a pro has worked on: their own and the ones they joined as architect or builder. */
 async function workOf(userIds: string[]): Promise<Map<string, Work[]>> {
@@ -42,7 +51,7 @@ export async function prosFor(p: Pick<Project, "id" | "owner_id" | "taste" | "si
   ]);
   const on = new Set([p.owner_id, ...(members ?? []).map((m) => m.user_id)]);
   const pros = ((data ?? []) as ProfileRow[]).filter((x) => proActive(x) && !on.has(x.user_id));
-  const work = await workOf(pros.map((x) => x.user_id));
+  const [work, ratings] = await Promise.all([workOf(pros.map((x) => x.user_id)), ratingsOf(pros.map((x) => x.user_id))]);
   const requested = new Set((asked ?? []).map((r) => r.pro_id));
   return rank(
     pros.map(({ plan: _p, plan_until: _u, trial_until: _t, demo: _d, role: _r, ...x }) => {
@@ -54,6 +63,7 @@ export async function prosFor(p: Pick<Project, "id" | "owner_id" | "taste" | "si
         projects: done.length,
         styles: [...new Set(done.map((w) => w.brief?.name).filter((n): n is string => !!n))].slice(0, 3),
         requested: requested.has(x.user_id),
+        rating: ratings.get(x.user_id) ?? null,
       };
     }),
   );
@@ -124,6 +134,11 @@ export async function answerRequest(id: number, pro: { id: string; name: string 
 export async function proProfile(userId: string) {
   const { data } = await db().from("profiles").select("user_id, role, name, company, city, logo_url, about, fee_note, listed").eq("user_id", userId).maybeSingle();
   if (!data || !data.listed || (data.role !== "architect" && data.role !== "builder")) return null;
-  const done = (await workOf([userId])).get(userId) ?? [];
-  return { ...data, projects: done.length, styles: [...new Set(done.map((w) => w.brief?.name).filter((n): n is string => !!n))].slice(0, 6) };
+  const [work, ratings, { data: said }] = await Promise.all([
+    workOf([userId]),
+    ratingsOf([userId]),
+    db().from("reviews").select("rating, text, created_at").eq("pro_id", userId).not("text", "is", null).order("created_at", { ascending: false }).limit(5),
+  ]);
+  const done = work.get(userId) ?? [];
+  return { ...data, rating: ratings.get(userId) ?? null, said: (said ?? []) as { rating: number; text: string; created_at: string }[], projects: done.length, styles: [...new Set(done.map((w) => w.brief?.name).filter((n): n is string => !!n))].slice(0, 6) };
 }

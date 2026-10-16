@@ -19,6 +19,7 @@ type Pro = {
   projects: number;
   styles: string[];
   requested: boolean;
+  rating: string | null;
 };
 
 const initials = (n: string) => n.split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("");
@@ -134,6 +135,7 @@ function Card({ pro: p, project }: { pro: Pro; project: string }) {
             {p.city}
             {p.fit.sameCity && <span className="ml-1 text-leaf">· near you</span>}
           </p>
+          {p.rating && <p className="text-sm text-amber-600">{p.rating}</p>}
         </div>
         <div className="text-right">
           <p className="font-serif text-3xl text-accent">{p.fit.score}%</p>
