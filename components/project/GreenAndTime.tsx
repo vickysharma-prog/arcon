@@ -1,5 +1,6 @@
 "use client";
 
+import { sayArea } from "@/lib/export/drawings";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { HudCard, Reveal, Ring, Scanning } from "@/components/fx/Motion";
@@ -25,6 +26,7 @@ type Props = {
   /** Greenery changes ticked so far, and where to report a new list (the 3D reads it). */
   ticked: Ticked;
   onTicked: (t: Ticked) => void;
+  units: "imperial" | "metric";
 };
 
 /** A Google Maps search for a place: opens the map on any device, no key needed. */
@@ -33,7 +35,7 @@ export const mapsLink = (name: string, address: string) =>
 
 // How long it takes, and how green it is: a phase chart, then the greenery score with one tip per room, the eco
 // brands in their taste and plant nurseries near the site.
-export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, said, ticked, onTicked }: Props) {
+export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, said, ticked, onTicked, units }: Props) {
   const [saving, setSaving] = useState<"idle" | "saving" | "saved" | "failed">("idle");
   const still = useReducedMotion();
   const [showDone, setShowDone] = useState(false);
@@ -109,7 +111,7 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
             <h2 id="green" className="font-serif text-2xl">Greenery: {g.score} out of 100</h2>
             <p className="text-sm text-ink-soft">
               Plants per room, how well they suit each room&apos;s light, how many kinds, and how easy they are to keep
-              {g.garden ? `, plus ${Math.round(g.garden.area)} m² of garden` : ""}.
+              {g.garden ? `, plus ${sayArea(g.garden.area, units)} of garden` : ""}.
             </p>
             {g.species.length > 0 && <p className="mt-1 text-sm">Your plants: {g.species.join(", ")}.</p>}
           </div>

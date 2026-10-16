@@ -417,6 +417,16 @@ const TYPE_WORD: Record<SpaceType, string> = { house: "house", apartment: "apart
  * the same sections and fields the old agent saved (people, needs, living or running, budget). The taste is added
  * by the finish route once Qloo has confirmed the three picks.
  */
+const US_STATES = "AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY".split(" ");
+const US_CITIES = /\b(new york|brooklyn|manhattan|queens|los angeles|san francisco|chicago|houston|austin|dallas|seattle|portland|boston|miami|atlanta|denver|phoenix|philadelphia|san diego|nashville|detroit|minneapolis|las vegas|washington|silver lake|echo park|oakland|honolulu)\b/i;
+
+/** Feet for a place in the US (or Liberia or Myanmar), metres everywhere else: "Austin, TX", "Brooklyn", "Pune". */
+export function usesFeet(city: string): boolean {
+  const c = city.trim();
+  const last = c.split(",").at(-1)?.trim() ?? "";
+  return /\b(usa|u\.s\.a?\.?|united states|america|liberia|myanmar)\b/i.test(c) || US_STATES.includes(last.toUpperCase()) || US_CITIES.test(c);
+}
+
 export function toProject(a: Answers, lang: LangId) {
   const spaceType = a.type as SpaceType;
   const size = a.size as Size;
@@ -427,7 +437,8 @@ export function toProject(a: Answers, lang: LangId) {
     depth: +shell.depth.toFixed(2),
     floors: spaceType === "house" ? Number(a.floors) : TEMPLATES[spaceType].floors,
     location: city,
-    units: shell.unit === "m" ? "metric" : "imperial",
+    // a typical size has no unit of its own: the city decides
+    units: ("typical" in size ? usesFeet(city) : shell.unit !== "m") ? "imperial" : "metric",
   };
 
   const interview: Record<string, unknown> = { project: { newBuild: a.build === "new" }, budget: { level: a.budget }, scripted: true, language: lang };

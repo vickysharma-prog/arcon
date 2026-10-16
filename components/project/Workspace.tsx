@@ -1,5 +1,6 @@
 "use client";
 
+import { sayArea, sayLength } from "@/lib/export/drawings";
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
@@ -31,7 +32,7 @@ type Project = {
   status?: string;
   id: string;
   space_type: string | null;
-  site: { width?: number; depth?: number; location?: string };
+  site: { width?: number; depth?: number; location?: string; units?: "imperial" | "metric" };
   interview: Record<string, unknown>;
   brief: unknown;
   taste: Parameters<typeof look>[1];
@@ -46,6 +47,7 @@ type Version = { version: number; note: string; created_at: string };
 export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDone }: { p: P; tier: Tier | null; ticked: Ticked; onProject: (p: P) => void; onDone: (changes: number) => void }) {
   const still = useReducedMotion();
   const layout = p.options?.[p.chosen_option ?? 0];
+  const units = p.site.units ?? "imperial";
   const [view, setView] = useState<"plan" | "3d">("plan");
   const [level, setLevel] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
@@ -235,7 +237,7 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDon
 
           <section className="rounded-2xl border border-line bg-paper-raised p-4">
             {room ? (
-              <RoomCard key={room.id} room={room} onChange={change} onClose={() => setSelected(null)} />
+              <RoomCard units={units} key={room.id} room={room} onChange={change} onClose={() => setSelected(null)} />
             ) : (
               <p className="text-sm text-ink-soft">Tap a room on the plan to resize, rename or remove it.</p>
             )}
@@ -312,7 +314,7 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDon
           <div className="relative h-[62vh] min-h-[420px]">
             {view === "plan" ? (
               <motion.div key={JSON.stringify(layout.floors[level]?.spaces.map((s) => s.rect))} initial={still ? false : { opacity: 0.4, scale: 0.99 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.35 }} className="grid h-full place-items-center p-4">
-                <PlanSvg layout={layout} level={level} units={p.site.location && /\b(US|USA|TX|CA|NY|FL)\b/.test(p.site.location) ? "imperial" : "metric"} className="max-h-full w-full cursor-pointer" onPick={pick}>
+                <PlanSvg layout={layout} level={level} units={units} className="max-h-full w-full cursor-pointer" onPick={pick}>
                   {room && room.level === level && (
                     <rect x={room.rect.x} y={room.rect.y} width={room.rect.w} height={room.rect.h} fill="var(--accent)" fillOpacity={0.14} stroke="var(--accent)" strokeWidth={0.12} pointerEvents="none" />
                   )}
@@ -345,7 +347,7 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDon
             <CountUp value={green} />
           </Stat>
           <Stat label="Floor area">
-            <CountUp value={cost?.area ?? 0} /> m²
+            {units === "imperial" ? <><CountUp value={Math.round((cost?.area ?? 0) * 10.7639)} /> sq ft</> : <><CountUp value={cost?.area ?? 0} /> m²</>}
           </Stat>
         </div>
       </div>
@@ -372,7 +374,7 @@ function Stat({ label, children, tone = "text-ink" }: { label: string; children:
 }
 
 // The room someone tapped: rename it, make it bigger or smaller, or take it out.
-function RoomCard({ room, onChange, onClose }: { room: Space & { level: number }; onChange: (c: Change) => void; onClose: () => void }) {
+function RoomCard({ room, units, onChange, onClose }: { room: Space & { level: number }; units: "imperial" | "metric"; onChange: (c: Change) => void; onClose: () => void }) {
   const [name, setName] = useState(room.name);
   const area = room.rect.w * room.rect.h;
   const rename = () => {
@@ -395,7 +397,7 @@ function RoomCard({ room, onChange, onClose }: { room: Space & { level: number }
         </button>
       </div>
       <p className="px-1 text-sm text-ink-soft">
-        {area.toFixed(1)} m² · {room.rect.w.toFixed(1)} × {room.rect.h.toFixed(1)} m · {room.level ? "upstairs" : "ground floor"}
+        {sayArea(area, units)} · {sayLength(room.rect.w, units)} × {sayLength(room.rect.h, units)} · {room.level ? "upstairs" : "ground floor"}
       </p>
       <div className="mt-3 grid grid-cols-3 gap-2">
         <button type="button" onClick={() => onChange({ op: "resize", room: room.id, by: 1.25 })} className="rounded-xl border border-line py-2 text-sm transition hover:border-accent hover:text-accent">

@@ -337,6 +337,7 @@ export function ProjectView({ id }: { id: string }) {
           lot={d.site.width && d.site.depth ? { width: d.site.width, depth: d.site.depth } : null}
           ticked={greenTicked(d.interview)}
           onTicked={(t) => setP((old) => (old ? { ...old, interview: { ...old.interview, green: t } } : old))}
+          units={d.site.units ?? "imperial"}
         />
       )}
       {s === "shop" && <ShoppingStep id={d.id} location={d.site.location} tier={tier} onTier={setTier} />}

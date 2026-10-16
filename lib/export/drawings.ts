@@ -104,6 +104,9 @@ export function elevation(layout: Layout, side: Side, tags = schedule(layout), e
 }
 
 const FT = 3.28084;
+/** An area in the plan's units: "306 sq ft" or "28 m²". */
+export const sayArea = (m2: number, units: "imperial" | "metric") => (units === "imperial" ? `${Math.round(m2 * FT * FT).toLocaleString()} sq ft` : `${Math.round(m2)} m²`);
+
 /** A length on a drawing: "12.40 m", or feet and inches ("40' 8\"") for imperial plans. */
 export function sayLength(m: number, units: "imperial" | "metric") {
   if (units === "metric") return `${m.toFixed(2)} m`;

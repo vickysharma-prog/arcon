@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { asked, labelOf, matchChoices, next, picksOf, problems, QUESTIONS, toProject, type Answers } from "./script.ts";
+import { asked, labelOf, matchChoices, next, picksOf, problems, QUESTIONS, toProject, usesFeet, type Answers } from "./script.ts";
 import { missingForDesign } from "./logic.ts";
 import { livingOf, Living } from "./living.ts";
 import { runningOf } from "./running.ts";
@@ -132,4 +132,9 @@ test("the style is three picks after the interview's questions: a place, a brand
   const order = QUESTIONS.map((q) => q.id);
   assert.ok(QUESTIONS.filter((q) => q.kind !== "taste").every((q) => order.indexOf(q.id) < order.indexOf("place")));
   assert.match(QUESTIONS.find((q) => q.id === "place")!.lead!.en, /find your style/);
+});
+
+test("a typical size takes its units from the city: feet in the US, metres elsewhere", () => {
+  for (const c of ["Austin, TX", "Brooklyn", "Los Angeles", "Portland, OR", "Boston, USA"]) assert.equal(usesFeet(c), true, c);
+  for (const c of ["Pune", "London, UK", "Paris, France", "Toronto, ON", "Mumbai, India"]) assert.equal(usesFeet(c), false, c);
 });

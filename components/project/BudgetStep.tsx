@@ -1,5 +1,6 @@
 "use client";
 
+import { sayArea } from "@/lib/export/drawings";
 import { useEffect, useMemo, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Bar, CountUp, HudCard, Reveal, Scanning } from "@/components/fx/Motion";
@@ -25,11 +26,12 @@ type Props = {
   lot: { width: number; depth: number } | null;
   ticked: Ticked;
   onTicked: (t: Ticked) => void;
+  units: "imperial" | "metric";
 };
 
 // What the chosen plan will cost: a range for the whole job, by trade and by room, at a quality tier read from the
 // price of what they love. The tier can be changed; the estimate follows at once.
-export function BudgetStep({ tier, onTier, id, layout, location, interview, brief, profile, lot, ticked, onTicked }: Props) {
+export function BudgetStep({ tier, onTier, id, layout, location, interview, brief, profile, lot, ticked, onTicked, units }: Props) {
   const [taste, setTaste] = useState<{ tier: Tier; signals: PriceSignal[] } | null>(null);
   const setTier = onTier;
   const [marketId, setMarketId] = useState<string | null>(null);
@@ -72,7 +74,7 @@ export function BudgetStep({ tier, onTier, id, layout, location, interview, brie
         </h1>
       )}
       <p className="mt-3 max-w-2xl text-ink-soft">
-        {newBuild ? "Building and fitting out" : "Fitting out"} {Math.round(e.area)} m² at {TIER_NAMES[active].toLowerCase()} quality, in{" "}
+        {newBuild ? "Building and fitting out" : "Fitting out"} {sayArea(e.area, units)} at {TIER_NAMES[active].toLowerCase()} quality, in{" "}
         {market.currency}. An early estimate from typical {market.name} costs, not a quote: builders&apos; prices vary by about this range.
         {!location && !marketId ? " We don't know where it is yet: pick the country below." : !knownMarket(location) ? " We don't have costs for this country yet, so these are US costs." : ""}
       </p>
@@ -169,7 +171,7 @@ export function BudgetStep({ tier, onTier, id, layout, location, interview, brie
                   transition={{ delay: 0.15 + i * 0.04 }}
                 >
                   <td className="py-2">{r.name}</td>
-                  <td className="py-2 text-ink-soft">{Math.round(r.area)} m²</td>
+                  <td className="py-2 text-ink-soft">{sayArea(r.area, units)}</td>
                   <td className="py-2 text-right tabular-nums">{fmt(r.total)}</td>
                 </motion.tr>
               ))}
@@ -190,6 +192,7 @@ export function BudgetStep({ tier, onTier, id, layout, location, interview, brie
         newBuild={newBuild}
         ticked={ticked}
         onTicked={onTicked}
+        units={units}
         said={Object.values((interview?.timeline ?? {}) as Record<string, unknown>).filter((v): v is string | number => typeof v === "string" || typeof v === "number").map(String)}
       />
     </main>
