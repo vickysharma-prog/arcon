@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import QRCode from "qrcode";
@@ -18,7 +18,7 @@ const TYPES = [
 
 // "+ New client" for architects and builders: who the client is, then answer the questions together now, or send
 // the client a link (and a QR code) so they answer at home.
-export function NewClient() {
+export function NewClient({ className = "glow-btn rounded-full px-5 py-2.5 text-sm", label = "+ New client" }: { className?: string; label?: ReactNode } = {}) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -27,9 +27,10 @@ export function NewClient() {
           tick();
           setOpen(true);
         }}
-        className="glow-btn rounded-full px-5 py-2.5 text-sm"
+        title="New client"
+        className={className}
       >
-        + New client
+        {label}
       </button>
       {typeof document !== "undefined" && createPortal(<AnimatePresence>{open && <Form onClose={() => setOpen(false)} />}</AnimatePresence>, document.body)}
     </>

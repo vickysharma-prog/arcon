@@ -34,12 +34,13 @@ export type Board = {
 
 const db = () => supabaseAdmin();
 
-export async function boardFor(userId: string, projects: BoardProject[], day?: string, today = new Date()): Promise<Board> {
+/** `light` leaves out the drawings and the project in focus, for the sidebar on every page. */
+export async function boardFor(userId: string, projects: BoardProject[], day?: string, today = new Date(), light = false): Promise<Board> {
   const ids = projects.slice(0, 40).map((p) => p.id);
   if (!ids.length) return { sketches: {}, unread: {}, sites: [], waits: [], money: { billed: null, received: null }, focus: null };
 
   const [versions, approvals, fees, clients, sites, unreadList] = await Promise.all([
-    db().from("project_versions").select("project_id, version, layout").in("project_id", ids).order("version", { ascending: false }),
+    light ? { data: [] } : db().from("project_versions").select("project_id, version, layout").in("project_id", ids).order("version", { ascending: false }),
     db().from("approvals").select("project_id, decision, created_at").in("project_id", ids).order("created_at", { ascending: false }),
     db().from("milestones").select("project_id, label, amount, currency, status").in("project_id", ids).order("position"),
     db().from("project_members").select("project_id").in("project_id", ids).eq("role", "client"),
@@ -50,7 +51,7 @@ export async function boardFor(userId: string, projects: BoardProject[], day?: s
   // the latest saved version of each design, or else the chosen plan
   const layouts = new Map<string, Layout>();
   for (const v of (versions.data ?? []) as { project_id: string; layout: Layout }[]) if (!layouts.has(v.project_id)) layouts.set(v.project_id, v.layout);
-  const missing = projects.filter((p) => !layouts.has(p.id) && p.chosen_option !== null).map((p) => p.id);
+  const missing = light ? [] : projects.filter((p) => !layouts.has(p.id) && p.chosen_option !== null).map((p) => p.id);
   if (missing.length) {
     const { data } = await db().from("projects").select("id, options, chosen_option").in("id", missing);
     for (const p of (data ?? []) as { id: string; options: Layout[] | null; chosen_option: number | null }[]) {
@@ -90,7 +91,7 @@ export async function boardFor(userId: string, projects: BoardProject[], day?: s
   const first = projects[0];
   const layout = layouts.get(first.id) ?? null;
   let focus: Board["focus"] = null;
-  if (first) {
+  if (first && !light) {
     const market = marketOf(first.site?.location);
     const est = layout ? estimate(layout, "mid", market, false, first.site?.location) : null;
     const weeks = layout ? timeline(layout, "mid").weeks : null;

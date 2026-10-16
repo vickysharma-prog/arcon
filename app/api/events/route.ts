@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   if ("error" in who) return who.error;
   const db = supabaseAdmin();
   const [{ data }, { count }] = await Promise.all([
-    db.from("events").select("id, project_id, kind, data, read, created_at").eq("user_id", who.userId).order("created_at", { ascending: false }).limit(20),
+    db.from("events").select("id, project_id, kind, data, read, created_at").eq("user_id", who.userId).order("created_at", { ascending: false }).limit(40),
     db.from("events").select("id", { count: "exact", head: true }).eq("user_id", who.userId).eq("read", false),
   ]);
   return Response.json({ events: data ?? [], unread: count ?? 0 });

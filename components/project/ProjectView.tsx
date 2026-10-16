@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AnimatedMark } from "@/components/AnimatedMark";
 import { Decode, TypeLog } from "@/components/fx/Decode";
 import { processingLog } from "@/lib/design/log";
@@ -46,7 +47,13 @@ export function ProjectView({ id }: { id: string }) {
   const [p, setP] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [work, setWork] = useState(0);
-  const [step, setStepState] = useState<StepId>("brief");
+  // The URL names the part on show (?step=plans, ?tab=thread): links and the sidebar open a part by changing it, and
+  // the page writes it back as people move around, so the two always agree.
+  const search = useSearchParams();
+  const askedStep = search.get("step");
+  const askedTab = search.get("tab");
+  const asTab = (t: string | null) => (t === "overview" || t === "thread" || t === "site" ? t : null);
+  const [step, setStepState] = useState<StepId>(() => (isStep(askedStep) ? askedStep : "brief"));
   const still = useReducedMotion();
   // The quality tier the client picks on the budget or the shopping list; null keeps their taste's tier.
   const [tier, setTier] = useState<Tier | null>(null);
@@ -58,7 +65,7 @@ export function ProjectView({ id }: { id: string }) {
   // How many changes were just made in "Make changes", shown on the steps that now reflect them.
   const [edited, setEdited] = useState(0);
   // On the project home: the Overview tab, or the tab holding `step`. Taking the guided tour again sets `touring`.
-  const [pane, setPane] = useState<"overview" | "thread" | "site" | null>("overview");
+  const [pane, setPane] = useState<"overview" | "thread" | "site" | null>(() => (isStep(askedStep) ? null : (asTab(askedTab) ?? "overview")));
   // A room someone wants to talk about, picked in the 3D ("Discuss this room").
   const [discuss, setDiscuss] = useState<{ id: string; name: string; level: number } | null>(null);
   const [touring, setTouring] = useState(false);
@@ -74,17 +81,43 @@ export function ProjectView({ id }: { id: string }) {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // With no part in the URL, resume where this browser tab left off.
   useEffect(() => {
     try {
-      // A link can open a step directly (?step=walkthrough); otherwise resume where this tab left off.
-      const asked = new URLSearchParams(location.search).get("step");
-      const saved = isStep(asked) ? asked : sessionStorage.getItem(key);
+      const params = new URLSearchParams(location.search);
+      if (params.has("step") || params.has("tab")) return;
+      const saved = sessionStorage.getItem(key);
       if (isStep(saved)) setStepState(saved);
-      if (isStep(asked)) setPane(null);
-      const tab = new URLSearchParams(location.search).get("tab");
-      if (tab === "thread" || tab === "site") setPane(tab);
     } catch {}
   }, [key]);
+
+  // A new part asked for in the URL, or by the sidebar on this page: show it. No sound or scroll; the link moved.
+  const show = useCallback((s: string | null, t: string | null) => {
+    if (isStep(s)) {
+      setPane(null);
+      setStepState((old) => (old === s ? old : s));
+    } else if (asTab(t)) setPane(asTab(t));
+  }, []);
+  useEffect(() => show(askedStep, askedTab), [show, askedStep, askedTab]);
+  useEffect(() => {
+    const part = (e: Event) => {
+      const q = new URLSearchParams((e as CustomEvent<string>).detail);
+      show(q.get("step"), q.get("tab"));
+    };
+    window.addEventListener("arcon:part", part);
+    return () => window.removeEventListener("arcon:part", part);
+  }, [show]);
+
+  // ...and the part on show goes back into the URL, so a link to the same part from elsewhere still lands.
+  const homeMode = !!p && ((p.role ?? "owner") !== "owner" || !!p.toured_at || p.mode === "pro") && !touring;
+  useEffect(() => {
+    if (!p) return;
+    const want = homeMode && pane ? `tab=${pane}` : `step=${step}`;
+    if (location.search === `?${want}`) return;
+    history.replaceState(history.state, "", `${location.pathname}?${want}`);
+    // the sidebar and breadcrumb follow the URL; a rewrite like this one doesn't reach them by itself
+    window.dispatchEvent(new Event("arcon:url"));
+  }, [p, homeMode, pane, step]);
 
   // Reaching Share & export finishes the guided tour: from the next visit the project opens on its home.
   const toured = !!p?.toured_at;

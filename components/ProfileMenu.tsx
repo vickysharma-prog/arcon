@@ -11,6 +11,12 @@ type Mode = "light" | "dark" | "system";
 type Me = { user: { id: string; email: string | null } | null; profile?: { name: string; company: string | null; role: Role; logo_url?: string | null } | null };
 const KEY = "arcon-theme";
 
+// The round face of the profile button in the sidebar: the studio's logo, the first letter, or a plain figure.
+function Avatar({ side, children }: { side: boolean; children: React.ReactNode }) {
+  if (!side) return <>{children}</>;
+  return <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-btn text-btn-ink ring-2 ring-accent/30">{children}</span>;
+}
+
 function apply(mode: Mode) {
   const root = document.documentElement;
   try {
@@ -24,8 +30,10 @@ function apply(mode: Mode) {
   } catch {}
 }
 
-// The profile menu in the header. Settings sit inside it, with Appearance first.
-export function ProfileMenu() {
+// The profile menu, in the header or at the foot of the sidebar (opening upward). Settings sit inside it, with
+// Appearance first.
+export function ProfileMenu({ placement = "header" }: { placement?: "header" | "sidebar" } = {}) {
+  const side = placement === "sidebar";
   const [open, setOpen] = useState(false);
   const [settings, setSettings] = useState(false);
   const [mode, setMode] = useState<Mode>("system");
@@ -81,13 +89,16 @@ export function ProfileMenu() {
       <button
         type="button"
         onClick={() => {
+          tick();
           setOpen((v) => !v);
           setSettings(false);
         }}
         aria-label="Your profile"
         aria-expanded={open}
-        className="grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-btn text-btn-ink ring-accent/40 transition hover:opacity-90 hover:ring-2"
+        title={side ? (me?.profile?.name ?? "Your profile") : undefined}
+        className={side ? "shell-item flex w-full items-center gap-2.5 rounded-xl p-1.5 text-left transition hover:bg-paper" : "grid h-9 w-9 place-items-center overflow-hidden rounded-full bg-btn text-btn-ink ring-accent/40 transition hover:opacity-90 hover:ring-2"}
       >
+        <Avatar side={side}>
         {me?.profile?.logo_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={me.profile.logo_url} alt="" className="h-full w-full bg-paper-raised object-contain" />
@@ -99,9 +110,21 @@ export function ProfileMenu() {
             <path d="M4 21a8 8 0 0 1 16 0" />
           </svg>
         )}
+        </Avatar>
+        {side && (
+          <span className="shell-label min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium">{me?.profile?.name ?? "…"}</span>
+            <span className="block truncate font-mono text-[10px] uppercase tracking-wider text-ink-soft">{me?.profile ? (me.profile.company ?? ROLE_SHORT[me.profile.role]) : ""}</span>
+          </span>
+        )}
+        {side && (
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden className="shell-label shrink-0 text-ink-soft">
+            <path d="m7 15 5-5 5 5" />
+          </svg>
+        )}
       </button>
       {open && (
-        <div role="menu" aria-label="Profile" className="absolute right-0 z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-line bg-paper-raised shadow-lg">
+        <div role="menu" aria-label="Profile" className={`absolute z-[70] w-64 overflow-hidden rounded-2xl border border-line bg-paper-raised shadow-lg ${side ? "bottom-full left-0 mb-2" : "right-0 mt-2"}`}>
           <div className="border-b border-line px-4 py-3">
             {me?.user ? (
               <>

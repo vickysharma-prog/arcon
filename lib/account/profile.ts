@@ -76,12 +76,12 @@ export async function claimGuestProjects(userId: string, guestId: string | null)
   return data.length;
 }
 
-export type ProjectCard = { id: string; title: string | null; space_type: string | null; status: string; mode: string; site: { location?: string }; updated_at: string; chosen_option: number | null; unlocked_at: string | null; designed_for: string | null };
+export type ProjectCard = { id: string; title: string | null; space_type: string | null; status: string; mode: string; site: { location?: string }; updated_at: string; chosen_option: number | null; unlocked_at: string | null; designed_for: string | null; toured_at?: string | null };
 
 export async function projectsOf(userId: string): Promise<ProjectCard[]> {
   const { data, error } = await supabaseAdmin()
     .from("projects")
-    .select("id, title, space_type, status, mode, site, updated_at, chosen_option, unlocked_at, designed_for")
+    .select("id, title, space_type, status, mode, site, updated_at, chosen_option, unlocked_at, designed_for, toured_at")
     .eq("owner_id", userId)
     .order("updated_at", { ascending: false })
     .limit(100);

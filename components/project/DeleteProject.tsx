@@ -1,5 +1,6 @@
 "use client";
 
+import { refreshShell } from "@/components/shell/AppShell";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
@@ -26,6 +27,7 @@ export function DeleteProject({ id, name, variant }: { id: string; name: string;
     if (variant === "link") return window.location.assign("/home");
     setOpen(false);
     router.refresh();
+    refreshShell();
   }
 
   const show = (e: React.MouseEvent) => {

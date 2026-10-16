@@ -4,6 +4,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SiteHeader } from "@/components/SiteHeader";
+import { HOME_TITLE } from "@/lib/shell/nav";
 import { Reveal } from "@/components/fx/Motion";
 import { currentUser } from "@/lib/auth/server";
 import { getProfile, projectsOf, type Profile, type ProjectCard } from "@/lib/account/profile";
@@ -25,13 +26,16 @@ import { OpeningDay, PlanOr3D } from "@/components/home/Focus";
 
 export const metadata: Metadata = { title: "Your projects · Arcon" };
 
-// The signed-in home. One page, laid out for who it is: "My spaces" puts an owner's newest project in focus with its
-// plan, what's next and where it stands; "Studio" lays an architect's clients out by stage; "Sites" puts a builder's
-// day first. All of them open with a status line and what's waiting on this person.
+// The signed-in home, on the right of the sidebar. By default it puts the project in focus up front (the one last
+// opened, ?p=, else the newest): its plan, where it stands, what's next, and what's waiting on this person. Each of
+// the sidebar's tools opens here as a view (?view=): what's waiting, the inbox, every project, a studio's pipeline,
+// a builder's day on site, requests and fees.
 
 const YOUR: Record<string, string> = { house: "Your house", apartment: "Your home", studio: "Your studio", cafe: "Your café", office: "Your office", shop: "Your shop", hotel: "Your hotel" };
 const BUSINESS = ["cafe", "office", "shop", "hotel"];
-const TITLE = { owner: "My spaces", architect: "Studio", builder: "Sites" } as const;
+const VIEWS = { waiting: "Waiting on you", inbox: "Inbox", all: "All projects", pipeline: "Pipeline", today: "Today on site", requests: "Requests", fees: "Fees and payments" } as const;
+type View = keyof typeof VIEWS;
+const isView = (v: string | undefined): v is View => !!v && v in VIEWS;
 
 type Card = ProjectCard & { role: ProjectRole; owner?: string | null };
 
@@ -56,7 +60,10 @@ function planLine(p: Profile): string | null {
 
 const stage = (p: Card) => stageOf(p as Parameters<typeof stageOf>[0]);
 
-async function HomePageBody() {
+async function HomePageBody({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const q = await searchParams;
+  const one = (k: string) => (typeof q[k] === "string" ? (q[k] as string) : undefined);
+  const view = isView(one("view")) ? (one("view") as View) : null;
   const userId = await currentUser();
   if (!userId) redirect(`/login?next=${encodeURIComponent("/home")}`);
   const profile = await getProfile(userId);
@@ -64,6 +71,9 @@ async function HomePageBody() {
   const [own, shared] = await Promise.all([projectsOf(userId), memberProjects(userId)]);
   // Every project this person is on, newest first, each with their role on it.
   const projects: Card[] = [...own.map((p) => ({ ...p, role: "owner" as ProjectRole })), ...shared].sort((a, b) => b.updated_at.localeCompare(a.updated_at));
+  // the project asked for (the one last opened) leads, so the board works out its estimate and opening day
+  const asked = projects.findIndex((p) => p.id === one("p"));
+  if (asked > 0) projects.unshift(...projects.splice(asked, 1));
   const board = await boardFor(
     userId,
     projects.map((p) => ({ id: p.id, name: projectName(p), role: p.role, mode: p.mode, status: p.status, chosen_option: p.chosen_option, space_type: p.space_type, site: p.site })),
@@ -74,8 +84,10 @@ async function HomePageBody() {
   const plan = planLine(profile);
   const line = statusLine(projects.map((p) => STAGES[stage(p)].label), board.waits.length);
 
+  const title = view ? (view === "fees" && role === "owner" ? "Payments" : view === "all" && role === "owner" ? "All my spaces" : VIEWS[view]) : HOME_TITLE[role];
+
   return (
-    <main className="relative mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-8">
+    <main className="relative mx-auto w-full max-w-6xl flex-1 px-4 pb-12 pt-2 sm:px-8">
       {/* a faint blueprint grid behind the top of the page */}
       <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-96 opacity-[0.06] [background-image:linear-gradient(var(--accent)_1px,transparent_1px),linear-gradient(90deg,var(--accent)_1px,transparent_1px)] [background-size:36px_36px] [mask-image:linear-gradient(to_bottom,black,transparent)]" />
       <Reveal>
@@ -84,23 +96,9 @@ async function HomePageBody() {
           <span className="ml-2 rounded-full bg-accent/10 px-2.5 py-0.5 text-xs text-accent">{ROLE_SHORT[role]}</span>
           {profile.company && <> · {profile.company}</>}
         </p>
-        <div className="mt-1 flex flex-wrap items-end justify-between gap-4">
-          <h1 className="font-serif text-5xl sm:text-6xl">
-            <Decode text={TITLE[role]} />
-          </h1>
-          <div className="flex gap-2">
-            <Link href="/start/plan" className="rounded-full border border-line px-5 py-2.5 text-sm transition hover:border-accent hover:text-accent">
-              Upload a plan
-            </Link>
-            {pro ? (
-              <NewClient />
-            ) : (
-              <Link href="/start" className="glow-btn rounded-full px-5 py-2.5 text-sm">
-                + New design
-              </Link>
-            )}
-          </div>
-        </div>
+        <h1 className="mt-1 font-serif text-5xl sm:text-6xl">
+          <Decode key={title} text={title} />
+        </h1>
         <p className="mt-3 font-mono text-xs text-ink-soft">
           <span className="text-accent">&gt; </span>
           <Decode text={line} delay={0.4} speed={14} />
@@ -108,19 +106,39 @@ async function HomePageBody() {
         </p>
       </Reveal>
 
-      {projects.length > 0 && <Waiting waits={board.waits} />}
-
-      {projects.length === 0 ? (
+      {projects.length === 0 && view !== "requests" ? (
         <Empty pro={pro} />
-      ) : role === "architect" ? (
+      ) : view === "waiting" ? (
+        <Waiting waits={board.waits} all />
+      ) : view === "inbox" ? (
+        <Inbox projects={projects} board={board} />
+      ) : view === "all" ? (
+        <Grid projects={projects} board={board} />
+      ) : view === "pipeline" ? (
         <StudioBoard projects={projects} board={board} />
-      ) : role === "builder" ? (
+      ) : view === "today" ? (
         <SitesBoard projects={projects} board={board} />
+      ) : view === "requests" ? (
+        <RequestsView />
+      ) : view === "fees" ? (
+        <Fees board={board} pro={pro} />
       ) : (
-        <OwnerBoard projects={projects} board={board} />
+        <>
+          <Cockpit projects={projects} board={board} pro={pro} />
+          <Waiting waits={board.waits} />
+          {projects.length > 1 && (
+            <>
+              <p className="mt-10 flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">
+                Recent
+                <Link href="/home?view=all" className="normal-case tracking-normal text-accent hover:underline">
+                  All {projects.length} →
+                </Link>
+              </p>
+              <Grid projects={projects.slice(1, 4)} board={board} />
+            </>
+          )}
+        </>
       )}
-
-      {pro && <Requests />}
     </main>
   );
 }
@@ -136,13 +154,21 @@ const KIND: Record<Wait["kind"], { mark: string; tone: string }> = {
   messages: { mark: "Thread", tone: "text-ink-soft border-line bg-paper" },
 };
 
-function Waiting({ waits }: { waits: Wait[] }) {
+function Waiting({ waits, all = false }: { waits: Wait[]; all?: boolean }) {
   if (!waits.length) return <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-leaf/40 bg-leaf/5 px-3 py-1 text-sm text-leaf">✓ Nothing waiting on you</p>;
+  const shown = all ? waits : waits.slice(0, 5);
   return (
     <Reveal delay={0.05} className="mt-6 rounded-2xl border border-line bg-paper-raised p-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">Waiting on you · {waits.length}</p>
+      <p className="flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">
+        Waiting on you · {waits.length}
+        {shown.length < waits.length && (
+          <Link href="/home?view=waiting" className="normal-case tracking-normal text-accent hover:underline">
+            See all →
+          </Link>
+        )}
+      </p>
       <ul className="mt-2 divide-y divide-line">
-        {waits.slice(0, 6).map((w, i) => (
+        {shown.map((w, i) => (
           <li key={i}>
             <Link href={w.href} className="group flex items-center gap-3 py-2.5 text-sm">
               <span className={`w-20 shrink-0 rounded-full border px-2 py-0.5 text-center font-mono text-[10px] uppercase tracking-wider ${KIND[w.kind].tone}`}>{KIND[w.kind].mark}</span>
@@ -170,10 +196,12 @@ function Rail({ at }: { at: number }) {
   );
 }
 
-// My spaces: the newest project in focus, the rest below. A business (by its kind of space) also gets its opening day.
-function OwnerBoard({ projects, board }: { projects: Card[]; board: Board }) {
-  const [focus, ...rest] = projects;
+// The project in focus, for every role: its plan (3D on a tap), where it stands, what's next, its numbers, and the
+// ways in. A business (by its kind of space) also gets its opening day; a site being built, today's progress.
+function Cockpit({ projects, board, pro }: { projects: Card[]; board: Board; pro: boolean }) {
+  const focus = projects[0];
   const at = stage(focus);
+  const site = board.sites.find((s) => s.id === focus.id);
   const isBusiness = BUSINESS.includes(focus.space_type ?? "");
   return (
     <>
@@ -192,7 +220,26 @@ function OwnerBoard({ projects, board }: { projects: Card[]; board: Board }) {
             <Link href={`/project/${focus.id}`} className="mt-2 block font-serif text-4xl leading-tight hover:text-accent">
               {projectName(focus)}
             </Link>
+            {focus.owner && focus.role !== "owner" && (
+              <p className="text-sm text-ink-soft">
+                {focus.owner.split(" ")[0]}&apos;s design · you&apos;re the {ROLE_NAME[focus.role].toLowerCase()}
+              </p>
+            )}
             <Rail at={at} />
+            {site && (
+              <div className="mt-4">
+                <p className="flex items-baseline justify-between text-xs text-ink-soft">
+                  <span>
+                    {site.now ?? "Handed over"} · {site.onSite} on site today
+                    {site.late > 0 && <span className="text-red-600"> · {site.late} behind</span>}
+                  </span>
+                  <span className="font-serif text-xl text-ink">{site.overall}%</span>
+                </p>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-line">
+                  <div className="h-full rounded-full bg-gradient-to-r from-leaf to-accent" style={{ width: `${site.overall}%` }} />
+                </div>
+              </div>
+            )}
             <p className="mt-5 rounded-2xl border border-accent/30 bg-accent/5 px-4 py-3">
               <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-accent">Next</span>
               <span className="mt-0.5 block">{nextLine(focus as Parameters<typeof nextLine>[0], focus.role)}</span>
@@ -222,7 +269,7 @@ function OwnerBoard({ projects, board }: { projects: Card[]; board: Board }) {
               <Link href={`/project/${focus.id}?tab=thread`} className="rounded-full border border-line px-5 py-2.5 text-sm transition hover:border-accent hover:text-accent">
                 Thread{board.unread[focus.id] ? ` · ${board.unread[focus.id]}` : ""}
               </Link>
-              {(focus.status === "building" || focus.status === "done") && (
+              {(focus.status === "building" || focus.status === "done" || focus.role === "builder") && (
                 <Link href={`/project/${focus.id}?tab=site`} className="rounded-full border border-line px-5 py-2.5 text-sm transition hover:border-accent hover:text-accent">
                   Site
                 </Link>
@@ -231,12 +278,64 @@ function OwnerBoard({ projects, board }: { projects: Card[]; board: Board }) {
           </div>
         </div>
       </Reveal>
-      {rest.length > 0 && (
-        <>
-          <p className="mt-10 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">Your other projects</p>
-          <Grid projects={rest} board={board} />
-        </>
+      {pro && (board.money.billed || board.money.received) && (
+        <Reveal delay={0.06} className="mt-4 grid grid-cols-2 gap-3 sm:max-w-md">
+          <Stat label="Billed, to be paid" value={board.money.billed ?? "—"} />
+          <Stat label="Received" value={board.money.received ?? "—"} tone="text-leaf" />
+        </Reveal>
       )}
+    </>
+  );
+}
+
+// Inbox: every project with messages not yet read, straight into its thread.
+function Inbox({ projects, board }: { projects: Card[]; board: Board }) {
+  const unread = projects.filter((p) => board.unread[p.id] > 0);
+  if (!unread.length) return <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-leaf/40 bg-leaf/5 px-3 py-1 text-sm text-leaf">✓ All caught up. New messages on your projects show here.</p>;
+  return (
+    <ul className="mt-6 space-y-2">
+      {unread.map((p, i) => (
+        <Reveal key={p.id} delay={0.04 * i}>
+          <Link href={`/project/${p.id}?tab=thread`} className="group flex items-center gap-4 rounded-2xl border border-line bg-paper-raised p-3 transition hover:border-accent">
+            <PlanSketch sketch={board.sketches[p.id]} className="h-12 w-20 shrink-0" />
+            <span className="min-w-0 flex-1">
+              <span className="block truncate font-medium group-hover:text-accent">{projectName(p)}</span>
+              <span className="block truncate text-xs text-ink-soft">{p.owner && p.role !== "owner" ? `${p.owner.split(" ")[0]}'s design · ` : ""}{STAGES[stage(p)].label}</span>
+            </span>
+            <span className="rounded-full bg-accent px-2.5 py-0.5 font-mono text-xs text-white">{board.unread[p.id]} new</span>
+            <span aria-hidden className="text-ink-soft transition group-hover:translate-x-0.5 group-hover:text-accent">→</span>
+          </Link>
+        </Reveal>
+      ))}
+    </ul>
+  );
+}
+
+// Fees and payments: the totals for a pro, then every fee waiting on someone's tap.
+function Fees({ board, pro }: { board: Board; pro: boolean }) {
+  const due = board.waits.filter((w) => w.kind === "pay" || w.kind === "confirm");
+  return (
+    <>
+      {pro && (
+        <Reveal delay={0.04} className="mt-6 grid grid-cols-2 gap-3 sm:max-w-md">
+          <Stat label="Billed, to be paid" value={board.money.billed ?? "—"} />
+          <Stat label="Received" value={board.money.received ?? "—"} tone="text-leaf" />
+        </Reveal>
+      )}
+      {due.length ? <Waiting waits={due} all /> : <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-leaf/40 bg-leaf/5 px-3 py-1 text-sm text-leaf">✓ No fee waiting on you</p>}
+      <p className="mt-4 text-sm text-ink-soft">
+        {pro ? "Set out and bill fees by milestone on each project's Overview; the client marks them paid and you confirm." : "Fees your architect or builder bills show on the project's Overview; tap I've paid once you have."}
+      </p>
+    </>
+  );
+}
+
+// Requests from owners who'd like this pro on their project.
+function RequestsView() {
+  return (
+    <>
+      <Requests />
+      <p className="mt-6 text-sm text-ink-soft">Owners find you in Find a pro, matched by taste to the projects you&apos;ve designed in Arcon. Their requests show here, newest first.</p>
     </>
   );
 }
@@ -246,12 +345,6 @@ function OwnerBoard({ projects, board }: { projects: Card[]; board: Board }) {
 function StudioBoard({ projects, board }: { projects: Card[]; board: Board }) {
   return (
     <>
-      {(board.money.billed || board.money.received) && (
-        <Reveal delay={0.06} className="mt-4 grid grid-cols-2 gap-3 sm:max-w-md">
-          <Stat label="Billed, to be paid" value={board.money.billed ?? "—"} />
-          <Stat label="Received" value={board.money.received ?? "—"} tone="text-leaf" />
-        </Reveal>
-      )}
       <Reveal delay={0.1} className="-mx-4 mt-8 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
         <div className="grid min-w-[60rem] grid-cols-6 items-start gap-3">
           {STAGES.map((s, i) => {
@@ -292,12 +385,6 @@ function SitesBoard({ projects, board }: { projects: Card[]; board: Board }) {
   const others = projects.filter((p) => !live.some((s) => s.id === p.id));
   return (
     <>
-      {(board.money.billed || board.money.received) && (
-        <Reveal delay={0.06} className="mt-4 grid grid-cols-2 gap-3 sm:max-w-md">
-          <Stat label="Billed, to be paid" value={board.money.billed ?? "—"} />
-          <Stat label="Received" value={board.money.received ?? "—"} tone="text-leaf" />
-        </Reveal>
-      )}
       <p className="mt-8 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">Today on site</p>
       {live.length ? (
         <ul className="mt-2 space-y-2">
@@ -417,12 +504,12 @@ function Empty({ pro }: { pro: boolean }) {
 }
 
 // The header shows at once; the part that needs the signed-in user streams in behind it.
-export default function HomePage() {
+export default function HomePage({ searchParams }: PageProps<"/home">) {
   return (
     <div className="flex flex-1 flex-col">
       <SiteHeader />
       <Suspense fallback={<PageLoading label="Loading your projects" />}>
-        <HomePageBody />
+        <HomePageBody searchParams={searchParams} />
       </Suspense>
     </div>
   );

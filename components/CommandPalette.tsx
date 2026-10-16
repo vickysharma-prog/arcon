@@ -33,7 +33,7 @@ const PARTS: [string, string][] = [
   ["Files and drawings", "?step=drawings"],
 ];
 
-export function CommandPalette() {
+export function CommandPalette({ variant = "header" }: { variant?: "header" | "bar" } = {}) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [at, setAt] = useState(0);
@@ -88,19 +88,37 @@ export function CommandPalette() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Search and jump"
-        title={`Search and jump (${mac ? "⌘" : "Ctrl+"}K)`}
-        className="flex h-9 items-center gap-2 rounded-full border border-line bg-paper-raised/80 px-2.5 text-sm text-ink-soft transition hover:border-accent/60 hover:text-accent sm:px-3"
-      >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-3.5-3.5" />
-        </svg>
-        <kbd className="hidden font-mono text-[11px] lg:inline">{mac ? "⌘K" : "Ctrl K"}</kbd>
-      </button>
+      {variant === "bar" ? (
+        // the signed-in app's top bar: a search field on wide screens, an icon on a phone
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Search and jump"
+          title={`Search and jump (${mac ? "⌘" : "Ctrl+"}K)`}
+          className="shell-item flex h-9 items-center gap-2.5 rounded-full border border-line bg-paper-raised/80 px-2.5 text-sm text-ink-soft transition hover:border-accent/60 hover:text-accent sm:w-64 sm:px-3.5 lg:w-80"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden className="shrink-0">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <span className="hidden truncate sm:inline">Search projects, plans, threads…</span>
+          <kbd className="ml-auto hidden rounded border border-line px-1.5 font-mono text-[10px] sm:inline">{mac ? "⌘K" : "Ctrl K"}</kbd>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Search and jump"
+          title={`Search and jump (${mac ? "⌘" : "Ctrl+"}K)`}
+          className="flex h-9 items-center gap-2 rounded-full border border-line bg-paper-raised/80 px-2.5 text-sm text-ink-soft transition hover:border-accent/60 hover:text-accent sm:px-3"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.5-3.5" />
+          </svg>
+          <kbd className="hidden font-mono text-[11px] lg:inline">{mac ? "⌘K" : "Ctrl K"}</kbd>
+        </button>
+      )}
       {typeof document !== "undefined" &&
         createPortal(
           <AnimatePresence>

@@ -8,7 +8,8 @@ export const metadata: Metadata = { title: "Your design · Arcon" };
 
 async function Project({ params }: { params: PageProps<"/project/[id]">["params"] }) {
   const { id } = await params;
-  return <ProjectView id={id} />;
+  // keyed by the project, so moving from one project to another starts fresh rather than carrying the last one's state
+  return <ProjectView key={id} id={id} />;
 }
 
 // The header renders at once; the project streams in behind it.
