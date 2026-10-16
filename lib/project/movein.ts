@@ -33,15 +33,17 @@ export function warrantyUntil(handedOver: string | null, months: number | null):
 export type Check = { id: "built" | "snags" | "pack" | "fees" | "accept"; label: string; done: boolean; note?: string };
 
 /** The steps to moving in, each done or not, said plainly. */
-export function moveInChecks(s: { allDone: boolean; snags: { status: SnagStatus }[]; warrantyMonths: number | null; feesOpen: number; handedOver: boolean }): Check[] {
+export function moveInChecks(s: { allDone: boolean; snags: { status: SnagStatus }[]; warrantyMonths: number | null; feesOpen: number; handedOver: boolean; selfBuild?: boolean }): Check[] {
   const open = s.snags.filter((x) => x.status !== "closed").length;
-  return [
+  const steps: Check[] = [
     { id: "built", label: "Every phase finished", done: s.allDone },
     { id: "snags", label: "Walk through it and list anything to fix", done: (s.allDone && s.snags.length > 0 && open === 0) || s.handedOver, note: s.snags.length ? `${open} of ${s.snags.length} still open` : "Nothing listed yet" },
     { id: "pack", label: "Handover pack: warranty, notes and drawings", done: s.warrantyMonths !== null, note: s.warrantyMonths !== null ? `${s.warrantyMonths}-month warranty` : undefined },
     { id: "fees", label: "Fees settled", done: s.feesOpen === 0, note: s.feesOpen ? `${s.feesOpen} not received yet` : undefined },
     { id: "accept", label: "Accept the handover and move in", done: s.handedOver },
   ];
+  // building it yourself, there's no one to hand a pack to
+  return s.selfBuild ? steps.filter((c) => c.id !== "pack") : steps;
 }
 
 /** A rating is a whole number of stars, one to five. */

@@ -85,15 +85,16 @@ export async function postMessage(p: Pick<Project, "id" | "owner_id" | "title">,
   return row;
 }
 
-/** One of the project's own events (a plan chosen, a change saved, a review), posted in the thread for everyone. */
-export async function postEvent(p: Pick<Project, "id" | "owner_id" | "title">, actor: { id: string | null; name: string }, e: ThreadEvent) {
+/** One of the project's own events (a plan chosen, a change saved, a review), posted in the thread for everyone.
+ *  `quiet`: in the thread only, no bell (each finished phase of a build would otherwise ring it). */
+export async function postEvent(p: Pick<Project, "id" | "owner_id" | "title">, actor: { id: string | null; name: string }, e: ThreadEvent, quiet = false) {
   const body = eventText(e, actor.name);
   await must(
     db()
       .from("messages")
       .insert({ project_id: p.id, channel: "all", kind: "event", author_id: actor.id, author_name: actor.name, body, version: "version" in e ? e.version : null, data: e }),
   );
-  await notify(p, actor.id, "all", e.type, { by: actor.name, text: body });
+  if (!quiet) await notify(p, actor.id, "all", e.type, { by: actor.name, text: body });
 }
 
 /** The latest messages on a channel, oldest first, with short-lived links to their files. */

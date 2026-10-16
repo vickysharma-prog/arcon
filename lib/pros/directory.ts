@@ -126,7 +126,8 @@ export async function answerRequest(id: number, pro: { id: string; name: string 
     const { postEvent } = await import("../project/thread.ts");
     await postEvent(project, pro, { type: "joined", role: r.role }).catch(() => {});
   }
-  await db().from("events").insert({ user_id: r.from_id, project_id: r.project_id, kind: accept ? "accepted" : "declined", data: { by: pro.name, project: project?.title ?? null, text: accept ? `${pro.name} said yes and joined as the ${r.role}.` : `${pro.name} can't take this one on right now.` } });
+  // a yes is told once, by the "joined" above; a no is told here
+  if (!accept) await db().from("events").insert({ user_id: r.from_id, project_id: r.project_id, kind: "declined", data: { by: pro.name, project: project?.title ?? null, text: `${pro.name} can't take this one on right now.` } });
   return { projectId: r.project_id };
 }
 

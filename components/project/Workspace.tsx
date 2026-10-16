@@ -87,7 +87,8 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDon
           return false;
         }
         onProject({ ...p, ...out.project });
-        setNote({ text: out.note });
+        // a change to an approved design goes to whoever approves it, with what it does to the cost
+        setNote({ text: out.request ? `${out.note}. Sent for approval as a change (${out.request.cost}); it's built once approved.` : out.note });
         setMade((n) => Math.max(0, n + ("undo" in body ? -1 : 1)));
         setHints(null);
         okSound();

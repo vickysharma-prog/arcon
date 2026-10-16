@@ -24,7 +24,7 @@ type Data = {
   pros: Pro[];
 };
 
-const ACTION: Record<SnagAction, string> = { fix: "Mark fixed", close: "Signed off", reopen: "Not fixed yet" };
+const ACTION: Record<SnagAction, string> = { fix: "Mark fixed", close: "Sign it off", reopen: "Not fixed yet" };
 const TONE: Record<SnagStatus, string> = { open: "text-amber-600 border-amber-500/40", fixed: "text-accent border-accent/40", closed: "text-leaf border-leaf/40" };
 const WORD: Record<SnagStatus, string> = { open: "To fix", fixed: "Fixed, to check", closed: "Signed off" };
 const label = "font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft";
@@ -86,12 +86,13 @@ export function MoveIn({ projectId, onStatus, onFees }: { projectId: string; onS
         // the steps to the handover, each lit when done
         <section className="rounded-2xl border border-line bg-paper-raised p-5">
           <p className={label}>Moving in</p>
-          <ol className="mt-3 grid gap-2 sm:grid-cols-5">
+          {/* a compact checklist on a phone, a row of steps on a wider screen */}
+          <ol className={`mt-3 grid gap-1.5 sm:gap-2 ${d.checks.length === 4 ? "sm:grid-cols-4" : "sm:grid-cols-5"}`}>
             {d.checks.map((c, i) => (
-              <li key={c.id} className={`rounded-xl border p-3 text-sm ${c.done ? "border-leaf/40 bg-leaf/5" : "border-line"}`}>
-                <span className={`font-mono text-[10px] ${c.done ? "text-leaf" : "text-ink-soft"}`}>{c.done ? "✓ DONE" : `STEP ${i + 1}`}</span>
-                <span className="mt-1 block leading-snug">{c.label}</span>
-                {c.note && <span className="mt-1 block text-xs text-ink-soft">{c.note}</span>}
+              <li key={c.id} className={`flex flex-wrap items-baseline gap-x-2 rounded-xl border px-3 py-2 text-sm sm:block sm:p-3 ${c.done ? "border-leaf/40 bg-leaf/5" : "border-line"}`}>
+                <span className={`w-12 shrink-0 font-mono text-[10px] sm:w-auto ${c.done ? "text-leaf" : "text-ink-soft"}`}>{c.done ? "✓ DONE" : `STEP ${i + 1}`}</span>
+                <span className="leading-snug sm:mt-1 sm:block">{c.label}</span>
+                {c.note && <span className="text-xs text-ink-soft sm:mt-1 sm:block">{c.note}</span>}
                 {c.id === "fees" && !c.done && onFees && (
                   <button onClick={() => (tick(), onFees())} className="mt-1 text-xs text-accent hover:underline">
                     See fees
@@ -162,6 +163,7 @@ export function MoveIn({ projectId, onStatus, onFees }: { projectId: string; onS
           <p className="font-serif text-2xl">{d.inPerson ? `${d.inPerson}'s handover` : "Ready to move in?"}</p>
           <p className="mt-1 text-sm text-ink-soft">
             {d.snags.some((s) => s.status !== "closed") ? "Some snags are still open; they stay on the list after the handover, under the warranty. " : ""}
+            {d.checks.some((c) => c.id === "fees" && !c.done) ? `Fees aren't settled yet (${d.checks.find((c) => c.id === "fees")?.note}): they stay due after you move in. ` : ""}
             Accepting the handover marks the project moved in{d.pack.warranty_months ? `, and the ${d.pack.warranty_months}-month warranty starts today` : ""}.
           </p>
           <button disabled={busy} onClick={() => act({ op: "accept" }, chime)} className="glow-btn mt-4 rounded-full px-6 py-2.5 text-sm disabled:opacity-60">

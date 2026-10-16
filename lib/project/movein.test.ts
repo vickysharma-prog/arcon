@@ -56,3 +56,9 @@ test("the walk-through isn't done until someone has walked through: a finished b
   assert.equal(walk({ ...base, snags: [{ status: "closed" }] }), true);
   assert.equal(walk({ ...base, snags: [], handedOver: true }), true);
 });
+
+test("building it yourself, there's no handover pack step", () => {
+  const s = { allDone: true, snags: [], warrantyMonths: null, feesOpen: 0, handedOver: false };
+  assert.equal(moveInChecks({ ...s, selfBuild: true }).some((c) => c.id === "pack"), false);
+  assert.equal(moveInChecks(s).some((c) => c.id === "pack"), true);
+});

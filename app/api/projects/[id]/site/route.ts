@@ -100,7 +100,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
       }
       const { data: ph } = await db().from("site_phases").update(patch).eq("id", o.id).select("name, status").single();
       if (ph?.status === "done") {
-        await postEvent(p, who, { type: "site", what: "phase", name: ph.name }).catch(() => {});
+        await postEvent(p, who, { type: "site", what: "phase", name: ph.name }, true).catch(() => {});
         // The next phase starts; when none is left, the build is finished and the handover begins (moving in is
         // the client's acceptance, in the Move in section).
         const { data: rest } = await db().from("site_phases").select("id, status").eq("project_id", id).neq("status", "done").order("position").limit(1);

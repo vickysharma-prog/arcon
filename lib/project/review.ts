@@ -7,6 +7,7 @@ export type ThreadEvent =
   | { type: "chose"; plan: string }
   | { type: "changed"; version: number; note: string }
   | { type: "joined"; role: string }
+  | { type: "answered" }
   | { type: "review"; version: number }
   | { type: "approved"; version: number; note?: string | null; for?: string | null }
   | { type: "changes"; version: number; note?: string | null; for?: string | null }
@@ -25,6 +26,8 @@ export function eventText(e: ThreadEvent, who: string): string {
       return `${who} changed the design: ${e.note} (version ${e.version}).`;
     case "joined":
       return `${who} joined as the ${e.role}.`;
+    case "answered":
+      return `${who} answered the questions. The design is being made now.`;
     case "review":
       return `${who} sent version ${e.version} for review.`;
     case "approved":

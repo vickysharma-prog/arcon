@@ -55,7 +55,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
     inPerson,
     snags: list.map((s) => ({ ...s, actions: snagActions(s.status, side) })),
     pack: { warranty_months: p.warranty_months ?? null, note: p.handover_note ?? null, handed_over_at: p.handed_over_at ?? null, until: warrantyUntil(p.handed_over_at ?? null, p.warranty_months ?? null) },
-    checks: moveInChecks({ allDone, snags: list, warrantyMonths: p.warranty_months ?? null, feesOpen, handedOver: !!p.handed_over_at }),
+    checks: moveInChecks({ allDone, snags: list, warrantyMonths: p.warranty_months ?? null, feesOpen, handedOver: !!p.handed_over_at, selfBuild: !!p.self_build }),
     canAccept: decider && canAccept({ status: p.status, allDone }),
     pros,
   });
@@ -117,6 +117,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
       const isPro = people.some((x) => x.user_id === o.pro_id && (x.role === "architect" || x.role === "builder" || (x.role === "owner" && p.mode === "pro")));
       if (!raters || !isPro || p.status !== "done") return bad("Reviews come from the client once they've moved in.", 403);
       await db().from("reviews").upsert({ project_id: p.id, pro_id: o.pro_id, by_id: me, rating: o.rating, text: o.text || null }, { onConflict: "project_id,pro_id,by_id" });
+      // the pro hears about it (it shows on their profile in Find a pro)
+      await db().from("events").insert({ user_id: o.pro_id, project_id: p.id, kind: "rated", data: { by: who.name, project: p.title, text: `${who.name} gave you ${o.rating} out of 5${o.text ? `: "${o.text.slice(0, 100)}"` : "."}` } });
       break;
     }
   }

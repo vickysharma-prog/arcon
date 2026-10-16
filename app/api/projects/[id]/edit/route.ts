@@ -89,12 +89,13 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
   if (locked) {
     const now = await pendingChange({ ...p, options: project.options as typeof p.options });
     // Whoever approves the design, changing it themselves (an owner on their own), approves it as they go.
-    if (now && (await decides(p, a.role)) && !(await inPersonClient(p, a.role)) && actor.id) {
+    const own = !!now && (await decides(p, a.role)) && !(await inPersonClient(p, a.role)) && !!actor.id;
+    if (own) {
       await import("@/lib/supabase/admin").then(({ supabaseAdmin }) => supabaseAdmin().from("approvals").insert({ project_id: p.id, version, user_id: actor.id, decision: "approved", note: "Changed by the owner" }));
     } else if (now && !waiting) {
       await postEvent(p, actor, { type: "change", what: "asked", version, cost: now.text }).catch(() => {});
     }
-    return Response.json({ project, note, change, request: now ? { from: now.from, cost: now.text } : null, approved: await approvedVersion(p.id) });
+    return Response.json({ project, note, change, request: now && !own ? { from: now.from, cost: now.text } : null, approved: await approvedVersion(p.id) });
   }
   return Response.json({ project, note, change });
 }

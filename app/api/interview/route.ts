@@ -7,6 +7,7 @@ import { profileFor } from "@/lib/qloo/profile";
 import { confirmPick, resolvePicks } from "@/lib/plan-import/taste";
 import { missingForDesign } from "@/lib/interview/logic";
 import { picksOf, problems, toProject, type Answers } from "@/lib/interview/script";
+import { nameOf, postEvent } from "@/lib/project/thread";
 
 // The scripted interview's last step: the browser sends every answer, this checks them against the script,
 // confirms the three taste picks with Qloo, and creates the project ready to design. No model runs here.
@@ -55,5 +56,7 @@ export async function POST(request: Request) {
     if (!into) await deleteProject(p.id);
     return Response.json({ error: "We couldn't start your design. Please try again." }, { status: 500 });
   }
+  // the client answered a pro's project: the pro's cue to start, told in the thread and the bell
+  if (into && into.role === "client" && userId) await postEvent(p, { id: userId, name: await nameOf(userId) }, { type: "answered" }).catch(() => {});
   return Response.json({ id: p.id });
 }

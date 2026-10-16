@@ -22,13 +22,15 @@ const KINDS: Record<string, { mark: string; tone: string; to: string }> = {
   fee: { mark: "$", tone: "text-leaf bg-leaf/10", to: "?tab=overview" },
   site: { mark: "Site", tone: "text-leaf bg-leaf/10", to: "?tab=site" },
   joined: { mark: "+", tone: "text-ink-soft bg-paper", to: "?tab=thread" },
-  handover: { mark: "→", tone: "text-accent bg-accent/10", to: "?tab=thread" },
+  answered: { mark: "Ans", tone: "text-accent bg-accent/10", to: "?tab=overview" },
+  handover: { mark: "Hand", tone: "text-accent bg-accent/10", to: "?tab=thread" },
   chose: { mark: "Plan", tone: "text-accent bg-accent/10", to: "?step=plans" },
   changed: { mark: "Edit", tone: "text-accent bg-accent/10", to: "?step=walkthrough" },
   accepted: { mark: "Yes", tone: "text-leaf bg-leaf/10", to: "?tab=overview" },
   change: { mark: "Δ", tone: "text-amber-600 bg-amber-500/10", to: "?tab=thread" },
   movein: { mark: "Key", tone: "text-leaf bg-leaf/10", to: "?tab=site" },
   request: { mark: "Ask", tone: "text-accent bg-accent/10", to: "?tab=overview" },
+  rated: { mark: "★", tone: "text-amber-600 bg-amber-500/10", to: "?tab=site" },
   declined: { mark: "No", tone: "text-ink-soft bg-paper", to: "?tab=overview" },
 };
 const kindOf = (k: string) => KINDS[k] ?? { mark: "•", tone: "text-ink-soft bg-paper", to: "?tab=thread" };
