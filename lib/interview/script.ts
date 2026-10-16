@@ -33,6 +33,8 @@ export type Question = {
   optional?: boolean;
   slot?: SlotId;
   when?: (a: Answers) => boolean;
+  /** A multiple pick's choices ticked already, from earlier answers (Home office for someone who works from home). */
+  preset?: (a: Answers) => string[];
 };
 
 const w = (en: string, hi: string, hinglish: string): Words => ({ en, hi, hinglish });
@@ -92,7 +94,7 @@ export const QUESTIONS: Question[] = [
     stage: 0,
     kind: "text",
     ask: w("Which city is it in?", "यह किस शहर में है?", "Yeh kis city mein hai?"),
-    hint: w("e.g. Pune, or Austin, TX", "जैसे पुणे, या दिल्ली", "Jaise Pune, ya Austin TX"),
+    hint: w("e.g. Austin, TX, or Brooklyn, NY", "जैसे पुणे, या दिल्ली", "Jaise Pune, ya Austin TX"),
   },
 
   // The people
@@ -159,12 +161,13 @@ export const QUESTIONS: Question[] = [
     choices: [
       c("office", "Home office", "होम ऑफ़िस", "Home office"),
       c("guest", "Guest room", "गेस्ट रूम", "Guest room"),
-      c("prayer", "Prayer room", "पूजा घर", "Pooja ghar"),
       c("gym", "Gym", "जिम", "Gym"),
       c("media", "Media room", "मीडिया रूम", "Media room"),
+      c("prayer", "Prayer room", "पूजा घर", "Pooja ghar"),
       c("none", "None", "कोई नहीं", "Koi nahi"),
     ],
     when: isHome,
+    preset: (a) => (a.wfh === "yes" ? ["office"] : []),
   },
   {
     id: "kitchen",

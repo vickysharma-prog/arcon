@@ -79,6 +79,10 @@ export function Interview() {
   // Answering for a project a pro set up ("New client"): its id, and whose it is.
   const [into, setInto] = useState<{ id: string; whose: string | null } | null>(null);
   const q = next(answers);
+  // each question starts at the top: a long page of pictures shouldn't leave the next one scrolled away
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [q?.id]);
   // The pictures for the three style picks (the same ones as the quiz), fetched once.
   const [pictures, setPictures] = useState<Record<string, Picture[]>>({});
   const [own, setOwn] = useState(false);
@@ -358,7 +362,7 @@ export function Interview() {
                   )}
                   <p className="mx-auto flex w-fit items-center gap-1 font-mono text-[11px] uppercase tracking-[0.3em] text-accent">
                     <span className="text-ink-soft">&gt;</span>
-                    <span>{`${String(number).padStart(2, "0")} / ${String(total).padStart(2, "0")} · ${STAGES[q.stage]}`}</span>
+                    <span>{`${String(number).padStart(2, "0")} · ${STAGES[q.stage]}`}</span>
                     <span className="ml-1 inline-block h-3 w-1.5 animate-pulse bg-accent motion-reduce:animate-none" />
                   </p>
                   <h1 className="mx-auto mt-4 max-w-xl font-serif text-3xl leading-tight sm:text-4xl">
@@ -366,7 +370,7 @@ export function Interview() {
                   </h1>
 
                   <div className="mt-8">
-                    {(q.kind === "choice" || q.kind === "multi") && <Choices q={q} lang={lang} onAnswer={(v) => answer(q.id, v)} doneLabel={say("done")} />}
+                    {(q.kind === "choice" || q.kind === "multi") && <Choices q={q} lang={lang} start={q.preset?.(answers) ?? []} onAnswer={(v) => answer(q.id, v)} doneLabel={say("done")} />}
                     {q.kind === "size" && <SizeInput lang={lang} say={say} onAnswer={(v) => answer(q.id, v)} />}
                     {typing && (
                       <form
@@ -578,7 +582,7 @@ function Pictures({ options, hint, typeOwn, onPick, onOwn }: { options: Picture[
                 className="group block w-full overflow-hidden rounded-2xl border border-line bg-paper-raised text-left transition hover:-translate-y-0.5 hover:border-accent hover:shadow-[0_18px_44px_-22px_var(--accent)]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- Qloo's own image host, sized by CSS */}
-                <img src={o.image} alt="" className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <img src={o.image} alt="" onError={(e) => e.currentTarget.closest("li")?.setAttribute("hidden", "")} className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 <span className="block truncate p-2 text-sm font-medium">{o.name}</span>
               </button>
             </motion.li>
@@ -593,9 +597,9 @@ function Pictures({ options, hint, typeOwn, onPick, onOwn }: { options: Picture[
 }
 
 // Answers to tap. One tap answers a single choice; several can be ticked, then Done.
-function Choices({ q, lang, onAnswer, doneLabel }: { q: Question; lang: LangId; onAnswer: (v: string | string[]) => void; doneLabel: string }) {
+function Choices({ q, lang, start, onAnswer, doneLabel }: { q: Question; lang: LangId; start: string[]; onAnswer: (v: string | string[]) => void; doneLabel: string }) {
   const still = useReducedMotion();
-  const [picked, setPicked] = useState<string[]>([]);
+  const [picked, setPicked] = useState<string[]>(start);
   const multi = q.kind === "multi";
   const toggle = (value: string) => {
     tick();

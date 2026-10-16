@@ -140,7 +140,7 @@ export function Quiz() {
                       className="group block w-full overflow-hidden rounded-2xl border border-line bg-paper-raised text-left transition hover:border-accent hover:shadow-[0_18px_44px_-22px_var(--accent)] focus-visible:border-accent"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element -- Qloo's own image host, sized by CSS */}
-                      <img src={o.image} alt="" className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <img src={o.image} alt="" onError={(e) => e.currentTarget.closest("li")?.setAttribute("hidden", "")} className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       <span className="block p-2.5 text-sm font-medium">{o.name}</span>
                     </button>
                   </motion.li>
