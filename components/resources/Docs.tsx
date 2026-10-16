@@ -130,6 +130,7 @@ const SECTIONS: Section[] = [
             "Invite your architect or builder from Team, by link or QR code. Everyone talks in the project's thread.",
             "When your architect sends the design for review, approve it or ask for changes in the thread.",
             "Once building starts, follow progress, photos and spending in the Site tab, or run the build yourself.",
+            "When the build is finished, walk through it and list anything to fix in Move in; the builder fixes each one and you sign it off. Accept the handover to move in: the warranty starts that day, and you can review your architect and builder.",
           ]}
         />
       </>

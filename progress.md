@@ -2,6 +2,20 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16 (night): Loading that says what it's doing, one click into the design, and moving in (Vicky)
+
+- Opening any project showed the full "Designing <project>" engine screen while it only loaded; now it says
+  "Opening the project". The engine screen shows only while a design is really being made.
+- From the interview to a design took three buttons (Now design my space, See your design, Design my space) and two
+  design screens; now Now design my space goes straight into the design. Design with my plan does too.
+- Moving in: the last phase finishing opens the handover instead of marking it moved in. Move in (first in the Site
+  tab once built): the steps, a snag list (anyone lists, whoever runs the site fixes, whoever approves signs off or
+  sends back), the handover pack (warranty and notes), the client's acceptance (status Moved in, warranty starts),
+  then reviews of each pro, shown as stars in Find a pro and on their profile. Waiting on you: snags to fix, fixed
+  snags to check, a handover to accept. Migration 015 (snags, reviews, three project fields).
+- Checked over HTTP on a throwaway copy of the Austin test house (deleted after): every rule held (the owner can't
+  mark a snag fixed, the builder can't accept), the warranty ran from the handover, and the design locked after.
+
 ## 2026-10-16 (late): Every project path, end to end, and what it broke (Vicky)
 
 - Traced every way a project runs to move-in (owner alone; owner with architect and builder; finding a pro; a client
