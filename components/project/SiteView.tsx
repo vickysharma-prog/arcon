@@ -780,7 +780,7 @@ function Updates({ projectId, site, runs, act, busy }: { projectId: string; site
 }
 
 /** On Overview while building: how far along it is, what's happening now, and the latest photo update. */
-export function SiteCard({ projectId, onOpen }: { projectId: string; onOpen: () => void }) {
+export function SiteCard({ projectId, status, onOpen }: { projectId: string; status?: string; onOpen: () => void }) {
   const [site, setSite] = useState<Site | null>(null);
   useEffect(() => {
     fetch(`/api/projects/${projectId}/site?today=${localDay()}`)
@@ -797,14 +797,14 @@ export function SiteCard({ projectId, onOpen }: { projectId: string; onOpen: () 
       {photo && <img src={photo} alt="" className="hidden h-24 w-24 shrink-0 rounded-xl object-cover sm:block" />}
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline justify-between gap-2">
-          <span className="font-serif text-2xl">Building · {site.overall}%</span>
+          <span className="font-serif text-2xl">{status === "done" ? "Moved in" : `Building · ${site.overall}%`}</span>
           {site.alerts.length > 0 && <span className="rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs text-red-600">{site.alerts.length} to look at</span>}
         </span>
         <span className="mt-2 block h-1.5 overflow-hidden rounded-full bg-line">
           <motion.span className="block h-full bg-leaf" initial={{ width: 0 }} animate={{ width: `${site.overall}%` }} transition={{ duration: 0.9 }} />
         </span>
         <span className="mt-2 block text-sm text-ink-soft">
-          {site.current ? `Now: ${site.current.name} (${site.current.pct}%)` : "Built: the handover is next"}
+          {site.current ? `Now: ${site.current.name} (${site.current.pct}%)` : status === "done" ? "Handed over" : "Built: the handover is next"}
           {last && ` · Latest: "${last.note.slice(0, 80)}${last.note.length > 80 ? "…" : ""}"`}
         </span>
       </span>

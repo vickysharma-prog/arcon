@@ -419,7 +419,7 @@ function SitesBoard({ projects, board }: { projects: Card[]; board: Board }) {
                       <div className="h-full rounded-full bg-gradient-to-r from-leaf to-accent" style={{ width: `${s.overall}%` }} />
                     </div>
                     <p className="mt-1.5 text-xs text-ink-soft">
-                      {s.now ?? "Built: the handover is next"} · {s.onSite} on site today
+                      {s.now ?? (p.status === "done" ? "Handed over" : "Built: the handover is next")} · {s.onSite} on site today
                       {s.late > 0 && <span className="text-red-600"> · {s.late} behind</span>}
                     </p>
                   </div>

@@ -186,7 +186,7 @@ function Overview({ p, role, whose, unlocked, go, onSite, onThread, onTeam, onUn
           <Unlock p={p} role={role} onUnlocked={onUnlocked} />
         </div>
       )}
-      {(p.status === "building" || p.status === "done") && role !== "viewer" && <SiteCard projectId={p.id} onOpen={onSite} />}
+      {(p.status === "building" || p.status === "done") && role !== "viewer" && <SiteCard projectId={p.id} status={p.status} onOpen={onSite} />}
       {role === "owner" && <WhoBuilds p={p} whose={whose} onTeam={onTeam} />}
       {role !== "viewer" && <Fees projectId={p.id} location={p.site.location} />}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
