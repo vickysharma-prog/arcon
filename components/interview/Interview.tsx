@@ -2,6 +2,7 @@
 
 import { QUIZ_KEY } from "@/lib/quiz/picks";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Mark } from "@/components/Logo";
@@ -63,6 +64,16 @@ export function Interview() {
   const [finishing, setFinishing] = useState<"idle" | "working" | "failed">("idle");
   const [failure, setFailure] = useState("");
   const [projectId, setProjectId] = useState<string | null>(null);
+  const router = useRouter();
+  // Once the project is saved, straight on to its design: "Now design my space" already asked for it.
+  useEffect(() => {
+    if (!projectId) return;
+    const go = setTimeout(() => {
+      transition();
+      router.push(`/project/${projectId}?design=1`);
+    }, 1400);
+    return () => clearTimeout(go);
+  }, [projectId, router]);
   const [taste, setTaste] = useState<TasteView | null>(null);
   const spoken = useRef(new Set<string>());
   // Answering for a project a pro set up ("New client"): its id, and whose it is.
@@ -475,7 +486,7 @@ export function Interview() {
                     </div>
                   )}
                   {projectId && (
-                    <Link href={`/project/${projectId}`} onClick={() => transition()} className="glow-btn mt-8 px-8 py-3.5 text-lg">
+                    <Link href={`/project/${projectId}?design=1`} onClick={() => transition()} className="glow-btn mt-8 px-8 py-3.5 text-lg">
                       {say("see")}
                     </Link>
                   )}

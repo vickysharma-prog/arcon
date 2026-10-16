@@ -31,6 +31,7 @@ import { BudgetStep } from "./BudgetStep";
 import { ShoppingStep } from "./ShoppingStep";
 import type { Tier } from "@/lib/budget/costs";
 import { HudCard, Reveal } from "@/components/fx/Motion";
+import { PageLoading } from "@/components/fx/PageLoading";
 import { tick } from "@/components/fx/sfx";
 import { choicesOf, type Ticked } from "@/lib/green/improve";
 
@@ -108,23 +109,6 @@ export function ProjectView({ id }: { id: string }) {
     return () => window.removeEventListener("arcon:part", part);
   }, [show]);
 
-  // ...and the part on show goes back into the URL, so a link to the same part from elsewhere still lands.
-  const homeMode = !!p && ((p.role ?? "owner") !== "owner" || !!p.toured_at || p.mode === "pro") && !touring;
-  useEffect(() => {
-    if (!p) return;
-    const want = homeMode && pane ? `tab=${pane}` : `step=${step}`;
-    if (location.search === `?${want}`) return;
-    history.replaceState(history.state, "", `${location.pathname}?${want}`);
-    // the sidebar and breadcrumb follow the URL; a rewrite like this one doesn't reach them by itself
-    window.dispatchEvent(new Event("arcon:url"));
-  }, [p, homeMode, pane, step]);
-
-  // Reaching Share & export finishes the guided tour: from the next visit the project opens on its home.
-  const toured = !!p?.toured_at;
-  useEffect(() => {
-    if (step === "drawings" && p?.id && (p.role ?? "owner") === "owner" && !toured) void fetch(`/api/projects/${p.id}/tour`, { method: "POST" }).catch(() => {});
-  }, [step, p?.id, p?.role, toured]);
-
   const design = useCallback(async () => {
     setError(null);
     const started = performance.now();
@@ -144,6 +128,35 @@ export function ProjectView({ id }: { id: string }) {
       clearInterval(timer);
     }
   }, [id]);
+
+  // Straight from the interview (?design=1): "Now design my space" was the click, so the design starts on arrival
+  // instead of asking again.
+  const autoDesign = search.get("design") === "1";
+  useEffect(() => {
+    if (!autoDesign || !p || started || (p.brief && p.options?.length) || p.status === "interview") return;
+    if (!can(p.role ?? "owner", "edit") && p.role !== "client") return;
+    preload();
+    setStarted(true);
+    void design();
+  }, [autoDesign, p, started, design]);
+
+  // ...and the part on show goes back into the URL, so a link to the same part from elsewhere still lands.
+  const homeMode = !!p && ((p.role ?? "owner") !== "owner" || !!p.toured_at || p.mode === "pro") && !touring;
+  useEffect(() => {
+    if (!p) return;
+    const want = homeMode && pane ? `tab=${pane}` : `step=${step}`;
+    if (location.search === `?${want}`) return;
+    history.replaceState(history.state, "", `${location.pathname}?${want}`);
+    // the sidebar and breadcrumb follow the URL; a rewrite like this one doesn't reach them by itself
+    window.dispatchEvent(new Event("arcon:url"));
+  }, [p, homeMode, pane, step]);
+
+  // Reaching Share & export finishes the guided tour: from the next visit the project opens on its home.
+  const toured = !!p?.toured_at;
+  useEffect(() => {
+    if (step === "drawings" && p?.id && (p.role ?? "owner") === "owner" && !toured) void fetch(`/api/projects/${p.id}/tour`, { method: "POST" }).catch(() => {});
+  }, [step, p?.id, p?.role, toured]);
+
 
   useEffect(() => {
     fetch(`/api/projects/${id}`)
@@ -193,7 +206,23 @@ export function ProjectView({ id }: { id: string }) {
   const role = p?.role ?? "owner";
   const editor = can(role, "edit");
   if (p && imported && !imported.confirmed && editor)
-    return <CheckPlan id={id} imported={imported} units={p.site.units ?? "imperial"} onDone={(next) => setP((old) => keep(old, next as View))} />;
+    return (
+      <CheckPlan
+        id={id}
+        imported={imported}
+        units={p.site.units ?? "imperial"}
+        onDone={(next) => {
+          setP((old) => keep(old, next as View));
+          // "Design with my plan" was the click: no second button before the design
+          const n = next as View;
+          if (!n.brief || !n.options?.length) {
+            preload();
+            setStarted(true);
+            void design();
+          }
+        }}
+      />
+    );
 
   // A design that hasn't been made yet waits for one click: the reveal starts on the user's cue,
   // and that click is what lets the browser play its sounds.
@@ -218,7 +247,8 @@ export function ProjectView({ id }: { id: string }) {
         }}
       />
     );
-  if (!p || !p.brief || !p.options?.length) return <Processing p={p} done={work >= WORK.length} />;
+  if (!p) return <PageLoading label="Opening the project" />;
+  if (!p.brief || !p.options?.length) return <Processing p={p} done={work >= WORK.length} />;
 
   // Someone else's project reads as theirs: "Vicky's style", "Vicky's design".
   const whose = p.whose ?? null;

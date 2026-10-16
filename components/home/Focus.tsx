@@ -44,7 +44,7 @@ export function PlanOr3D({ projectId, layout, children }: { projectId: string; l
           onClick={() => (look ? (tick(), setLook(null)) : void open3d())}
           className="absolute bottom-3 right-3 z-10 rounded-full border border-line bg-paper-raised/90 px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-wider backdrop-blur transition hover:border-accent hover:text-accent"
         >
-          {busy ? "Loading…" : look ? "Back to plan" : "View in 3D"}
+          {busy ? "Loading the 3D…" : look ? "Back to plan" : "View in 3D"}
         </button>
       )}
     </div>
