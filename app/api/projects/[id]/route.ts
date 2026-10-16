@@ -19,8 +19,9 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
   ]);
   // Which pros are on it, for "Who will build this?"
   const pros = people.filter((x) => isPro(x.role)).map((x) => x.role);
-  // Everyone else on the project sees whose design it is ("Vicky's design"); the owner sees "your".
-  const whose = a.role === "owner" ? null : whoseName(a.project.designed_for, owner);
+  // Whose design it is ("Vicky's design"): everyone else sees the owner's name; an owner sees "your", except a pro on
+  // their client's project, which is the client's ("Priya's design").
+  const whose = a.role === "owner" && a.project.mode !== "pro" ? null : whoseName(a.project.designed_for, owner);
   return Response.json({ ...publicProject(a.project), role: a.role, unlocked, whose, unread, pros, studio });
 }
 

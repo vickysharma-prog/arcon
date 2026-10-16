@@ -138,11 +138,11 @@ export async function sendForReview(p: Project, actor: { id: string | null; name
 }
 
 /** The client's answer. Any one client's approval counts; it locks this version. */
-export async function decide(p: Project, actor: { id: string; name: string }, decision: "approved" | "changes", note: string | null) {
+export async function decide(p: Project, actor: { id: string; name: string }, decision: "approved" | "changes", note: string | null, inPerson: string | null = null) {
   const version = await currentVersion(p);
   await must(db().from("approvals").insert({ project_id: p.id, version, user_id: actor.id, decision, note }));
   await updateProject(p.id, { status: statusAfter(decision === "approved" ? "approve" : "changes", p.status) });
-  await postEvent(p, actor, decision === "approved" ? { type: "approved", version, note } : { type: "changes", version, note });
+  await postEvent(p, actor, decision === "approved" ? { type: "approved", version, note, for: inPerson } : { type: "changes", version, note, for: inPerson });
   return version;
 }
 
@@ -160,4 +160,10 @@ export async function decides(p: Pick<Project, "id" | "owner_id">, role: Project
   if (role === "client") return true;
   if (role !== "owner") return false;
   return !(await peopleOn(p)).some((x) => x.role === "client");
+}
+
+/** A pro's client who isn't on Arcon: the pro records their answer from a meeting. Their first name, else null. */
+export async function inPersonClient(p: Pick<Project, "id" | "owner_id" | "mode" | "designed_for">, role: ProjectRole): Promise<string | null> {
+  if (role !== "owner" || p.mode !== "pro" || !p.designed_for) return null;
+  return (await peopleOn(p)).some((x) => x.role === "client") ? null : p.designed_for.trim().split(/\s+/)[0];
 }

@@ -29,3 +29,8 @@ test("approval locks a version: a later change needs approving again", () => {
   assert.equal(statusAfter("edit", "designing"), "designing");
   assert.equal(statusAfter("edit", "building"), "building");
 });
+
+test("a client's answer given in person reads as theirs, recorded by the pro", () => {
+  assert.equal(eventText({ type: "approved", version: 2, for: "Priya" }, "Sam"), "Priya approved version 2 in person (recorded by Sam).");
+  assert.equal(eventText({ type: "changes", version: 2, note: "Bigger kitchen", for: "Priya" }, "Sam"), 'Priya asked for changes to version 2 in person (recorded by Sam). "Bigger kitchen"');
+});

@@ -2,7 +2,7 @@ import { z } from "zod";
 import { accessTo, userOf } from "@/lib/auth/request";
 import { can } from "@/lib/project/access";
 import { canSendForReview } from "@/lib/project/review";
-import { decides, hasTeamChannel, lastApproval, listMessages, markRead, nameOf, postMessage } from "@/lib/project/thread";
+import { decides, hasTeamChannel, inPersonClient, lastApproval, listMessages, markRead, nameOf, postMessage } from "@/lib/project/thread";
 
 const cookie = (r: Request) => r.headers.get("cookie");
 const Channel = z.enum(["all", "team"]);
@@ -15,7 +15,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
   const team = await hasTeamChannel(a.project, a.role);
   if (channel === "team" && !team) return Response.json({ error: "not found" }, { status: 404 });
   const me = await userOf(cookie(request));
-  const [messages, approval, decider] = await Promise.all([listMessages(a.project.id, channel), lastApproval(a.project.id), decides(a.project, a.role)]);
+  const [messages, approval, decider, inPerson] = await Promise.all([listMessages(a.project.id, channel), lastApproval(a.project.id), decides(a.project, a.role), inPersonClient(a.project, a.role)]);
   if (me) await markRead(a.project.id, me, channel);
   return Response.json({
     messages,
@@ -26,7 +26,10 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
     status: a.project.status,
     canReview: can(a.role, "review") && canSendForReview(a.project),
     canDecide: decider && a.project.status === "review",
-    approval,
+    // the client isn't on Arcon: the pro records their answer from the meeting
+    inPerson,
+    // an approval the pro recorded for an in-person client reads as the client's
+    approval: approval && a.project.mode === "pro" && approval.user_id === a.project.owner_id && a.project.designed_for ? { ...approval, by: `${a.project.designed_for} (in person)` } : approval,
   });
 }
 

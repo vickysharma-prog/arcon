@@ -25,11 +25,13 @@ const RULES: Record<ProjectRole, readonly Action[]> = {
 
 export const can = (role: ProjectRole | null | undefined, action: Action) => !!role && RULES[role].includes(action);
 
-/** Which roles a person may invite: the owner anyone, an architect only the client, builder or a viewer. */
-export function invitable(role: ProjectRole | null | undefined): MemberRole[] {
-  if (role === "owner") return [...MEMBER_ROLES];
-  if (role === "architect") return ["client", "builder", "viewer"];
-  return [];
+/**
+ * Which roles a person may invite. One client per project, and only on a pro's project: in an owner's own project
+ * the owner is the client (Vicky, 16 Oct: more people on a project only confuses it).
+ */
+export function invitable(role: ProjectRole | null | undefined, mode: "owner" | "pro" = "owner", hasClient = false): MemberRole[] {
+  const base: MemberRole[] = role === "owner" ? ["architect", "builder", "viewer"] : role === "architect" ? ["builder", "viewer"] : [];
+  return base.length && mode === "pro" && !hasClient ? ["client", ...base] : base;
 }
 
 export const ROLE_NAME: Record<ProjectRole, string> = {

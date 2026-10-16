@@ -2,7 +2,7 @@ import { z } from "zod";
 import { accessTo, userOf } from "@/lib/auth/request";
 import { runsSite, withoutCosts } from "@/lib/site/progress";
 import { siteOf, startSite } from "@/lib/site/store";
-import { decides, nameOf, peopleOn, postEvent } from "@/lib/project/thread";
+import { decides, nameOf, peopleOn, postEvent, inPersonClient } from "@/lib/project/thread";
 import { can } from "@/lib/project/access";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { updateProject } from "@/lib/project/store";
@@ -19,7 +19,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
   const me = await userOf(cookie(request));
   const p = a.project;
   const today = Day.safeParse(new URL(request.url).searchParams.get("today")).data;
-  const [site, people, approves] = await Promise.all([siteOf(p, today), peopleOn(p), decides(p, a.role)]);
+  const [site, people, approves, inPerson] = await Promise.all([siteOf(p, today), peopleOn(p), decides(p, a.role), inPersonClient(p, a.role)]);
   const runs = runsSite(a.role, p.mode, p.self_build, people.some((x) => x.role === "builder"));
   const roster = runs && me ? await db().from("crew").select("id, name, trade, phone, day_rate").eq("owner_id", me).eq("active", true).order("name").then((r) => r.data ?? []) : [];
   // What it takes to get building, for the screen before the site starts.
@@ -30,6 +30,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
     builder: people.some((x) => x.role === "builder"),
     owner: a.role === "owner",
     selfBuild: !!p.self_build,
+    inPerson,
   };
   return Response.json({ site: site && !runs ? withoutCosts(site) : site, runs, status: p.status, roster, steps });
 }

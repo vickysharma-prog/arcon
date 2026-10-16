@@ -29,7 +29,9 @@ export async function accessTo(id: string, cookieHeader: string | null, action: 
     const project = await getProject(id);
     const role = await roleFor(project, who);
     if (!role || !can(role, action)) return null;
-    if (paid && !(await unlockedFor(project))) return null;
+    // A pro's client project whose plan has lapsed stays readable for everyone (the site keeps running elsewhere);
+    // only changes wait for a plan.
+    if (paid && !(action === "view" && project.mode === "pro") && !(await unlockedFor(project))) return null;
     return { project, role };
   } catch {
     return null;

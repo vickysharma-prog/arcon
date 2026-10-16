@@ -68,7 +68,7 @@ function planLine(p: Profile): string | null {
   const name = p.role === "architect" ? "Studio" : "Build";
   if ((p.plan === "pro" || p.plan === "build") && p.plan_until && new Date(p.plan_until) > new Date()) return `${name} plan active`;
   const left = p.trial_until ? Math.ceil((new Date(p.trial_until).getTime() - Date.now()) / 86_400_000) : 0;
-  return left > 0 ? `${name} trial: ${left} day${left === 1 ? "" : "s"} left` : `Your ${name} trial has ended. Projects are read only until you pick a plan.`;
+  return left > 0 ? `${name} trial: ${left} day${left === 1 ? "" : "s"} left` : `Your ${name} trial has ended. Your projects stay open to read and sites keep running; design changes and new clients wait for a plan.`;
 }
 
 const stage = (p: Card) => stageOf(p as Parameters<typeof stageOf>[0]);

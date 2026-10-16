@@ -2,7 +2,7 @@ import { z } from "zod";
 import { accessTo, userOf } from "@/lib/auth/request";
 import { canSendForReview } from "@/lib/project/review";
 import { actorOf } from "@/lib/project/actor";
-import { decide, decides, nameOf, sendForReview } from "@/lib/project/thread";
+import { decide, decides, inPersonClient, nameOf, sendForReview } from "@/lib/project/thread";
 
 const Body = z.discriminatedUnion("action", [
   z.object({ action: z.literal("send") }),
@@ -31,6 +31,6 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
   if (a.project.status !== "review") return Response.json({ error: "There's nothing waiting for review." }, { status: 409 });
   if (!(await decides(a.project, a.role))) return Response.json({ error: "Your client approves this one." }, { status: 403 });
   const decision = body.data.action === "approve" ? "approved" : "changes";
-  const version = await decide(a.project, { id: me, name: await nameOf(me) }, decision, body.data.note || null);
+  const version = await decide(a.project, { id: me, name: await nameOf(me) }, decision, body.data.note || null, await inPersonClient(a.project, a.role));
   return Response.json({ status: decision === "approved" ? "approved" : "ready", version });
 }

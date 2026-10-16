@@ -27,7 +27,11 @@ test("only the owner approves for themselves; the architect can't approve their 
 });
 
 test("the owner may invite anyone, an architect only the client, builder or viewers, others nobody", () => {
-  assert.deepEqual(invitable("owner"), ["architect", "client", "builder", "viewer"]);
-  assert.deepEqual(invitable("architect"), ["client", "builder", "viewer"]);
+  // an owner's own project: the owner is the client, so nobody invites one
+  assert.deepEqual(invitable("owner"), ["architect", "builder", "viewer"]);
+  assert.deepEqual(invitable("architect"), ["builder", "viewer"]);
+  // a pro's project: one client, then no more
+  assert.deepEqual(invitable("owner", "pro"), ["client", "architect", "builder", "viewer"]);
+  assert.deepEqual(invitable("owner", "pro", true), ["architect", "builder", "viewer"]);
   for (const r of ["client", "builder", "viewer", null] as const) assert.deepEqual(invitable(r), []);
 });

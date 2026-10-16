@@ -23,6 +23,8 @@ type Message = {
   created_at: string;
 };
 type Thread = {
+  /** the client isn't on Arcon: the pro records their answer */
+  inPerson?: string | null;
   messages: Message[];
   me: string | null;
   canPost: boolean;
@@ -184,14 +186,14 @@ export function ThreadView({
         {t?.canDecide && channel === "all" && (
           // The review card: the client's answer, on record.
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="border-b border-accent/30 bg-accent/5 px-4 py-3">
-            <p className="font-medium">This design is waiting for your review</p>
+            <p className="font-medium">{t.inPerson ? `${t.inPerson} isn't on Arcon: record their answer from your meeting` : "This design is waiting for your review"}</p>
             <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={2000} placeholder="A note (optional): what you love, or what to change" className="mt-2 w-full rounded-xl border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-accent" />
             <div className="mt-2 flex flex-wrap gap-2">
               <button onClick={() => review("approve")} disabled={busy} className="rounded-full bg-leaf px-5 py-2 text-sm text-white disabled:opacity-60">
-                ✓ Approve
+                {t.inPerson ? `✓ ${t.inPerson} approved` : "✓ Approve"}
               </button>
               <button onClick={() => review("changes")} disabled={busy} className="rounded-full border border-line px-5 py-2 text-sm transition hover:border-accent disabled:opacity-60">
-                Ask for changes
+                {t.inPerson ? `${t.inPerson} wants changes` : "Ask for changes"}
               </button>
             </div>
           </motion.div>

@@ -146,7 +146,7 @@ export function ProjectHome({
               onStatus={onStatus}
             />
           ) : active.id === "overview" ? (
-            <Overview p={p} role={role} unlocked={unlocked} go={(s) => setStep(s)} onSite={() => showPane("site")} onThread={() => showPane("thread")} onTeam={() => setTeam(true)} onUnlocked={onUnlocked} onTour={onTour} />
+            <Overview p={p} role={role} whose={whose} unlocked={unlocked} go={(s) => setStep(s)} onSite={() => showPane("site")} onThread={() => showPane("thread")} onTeam={() => setTeam(true)} onUnlocked={onUnlocked} onTour={onTour} />
           ) : active.locked || (step === "workspace" && !unlocked) ? (
             <div className="mx-auto max-w-6xl px-4 py-8">
               <Unlock p={p} role={role} onUnlocked={onUnlocked} />
@@ -160,7 +160,7 @@ export function ProjectHome({
   );
 }
 
-function Overview({ p, role, unlocked, go, onSite, onThread, onTeam, onUnlocked, onTour }: { p: Home; role: ProjectRole; unlocked: boolean; go: (s: StepId) => void; onSite: () => void; onThread: () => void; onTeam: () => void; onUnlocked: () => void; onTour: () => void }) {
+function Overview({ p, role, whose, unlocked, go, onSite, onThread, onTeam, onUnlocked, onTour }: { p: Home; role: ProjectRole; whose: string | null; unlocked: boolean; go: (s: StepId) => void; onSite: () => void; onThread: () => void; onTeam: () => void; onUnlocked: () => void; onTour: () => void }) {
   const plan = p.chosen_option !== null ? p.options?.[p.chosen_option]?.concept?.name : null;
   const cards: { title: string; text: string; to?: StepId; action?: () => void; locked?: boolean }[] = [
     { title: "Design", text: plan ? `${plan}: style, plans and 3D` : "Style, plans and 3D", to: "brief" },
@@ -181,7 +181,7 @@ function Overview({ p, role, unlocked, go, onSite, onThread, onTeam, onUnlocked,
         </div>
       )}
       {(p.status === "building" || p.status === "done") && role !== "viewer" && <SiteCard projectId={p.id} onOpen={onSite} />}
-      {role === "owner" && <WhoBuilds p={p} onTeam={onTeam} />}
+      {role === "owner" && <WhoBuilds p={p} whose={whose} onTeam={onTeam} />}
       {role !== "viewer" && <Fees projectId={p.id} location={p.site.location} />}
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
         {cards.map((c) => (
@@ -249,7 +249,7 @@ function Unlock({ p, role, onUnlocked }: { p: Home; role: ProjectRole; onUnlocke
 
 // "Who will build this?" for an owner without an architect or builder yet: invite your own, let Arcon suggest
 // pros by taste, or not yet (hidden on this device until the next stage).
-function WhoBuilds({ p, onTeam }: { p: Home; onTeam: () => void }) {
+function WhoBuilds({ p, whose, onTeam }: { p: Home; whose: string | null; onTeam: () => void }) {
   // A pro's own client project already has its designer; it only ever needs a builder.
   const need = p.mode !== "pro" && !p.pros?.includes("architect") && stageOf(p) < 3 ? "architect" : !p.pros?.includes("builder") ? "builder" : null;
   const key = `arcon-who-${p.id}-${need}-${stageOf(p)}`;
@@ -272,7 +272,7 @@ function WhoBuilds({ p, onTeam }: { p: Home; onTeam: () => void }) {
           I have one, invite them
         </button>
         <a href={`/pros?project=${p.id}&role=${need}`} onClick={() => tick()} className="rounded-full border border-line px-5 py-2 text-sm transition hover:-translate-y-0.5 hover:border-accent hover:text-accent">
-          Suggest someone who fits my taste
+          {whose ? `Suggest someone who fits ${whose}'s taste` : "Suggest someone who fits my taste"}
         </a>
         <button
           onClick={() => {

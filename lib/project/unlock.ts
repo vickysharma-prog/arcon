@@ -12,7 +12,11 @@ export const proUntil = (p: Pick<Pro, "plan" | "plan_until" | "trial_until">) =>
   return [plan, p.trial_until].filter(Boolean).sort().at(-1) ?? null;
 };
 
-export async function unlockedFor(p: Pick<Project, "id" | "owner_id" | "unlocked_at">): Promise<boolean> {
+/**
+ * A pro's own client project runs on their plan or trial. An owner's project opens by paying for it, or when a pro on it
+ * has a paid plan; a trial alone doesn't open someone else's project (Vicky, 16 Oct).
+ */
+export async function unlockedFor(p: Pick<Project, "id" | "owner_id" | "unlocked_at" | "mode">): Promise<boolean> {
   if (p.unlocked_at) return true;
   const db = supabaseAdmin();
   const { data: members } = await db.from("project_members").select("user_id").eq("project_id", p.id).in("role", ["architect", "builder"]);
@@ -20,7 +24,8 @@ export async function unlockedFor(p: Pick<Project, "id" | "owner_id" | "unlocked
   if (!ids.length) return false;
   const { data } = await db.from("profiles").select("plan, plan_until, trial_until, demo").in("user_id", ids);
   const pros = (data ?? []) as Pro[];
-  return isUnlocked(p, pros.map(proUntil), Date.now(), pros.some((x) => x.demo));
+  const until = p.mode === "pro" ? pros.map(proUntil) : pros.map((x) => (x.plan === "pro" || x.plan === "build" ? x.plan_until : null));
+  return isUnlocked(p, until, Date.now(), pros.some((x) => x.demo));
 }
 
 /** Unlock a project by paying for it once. ponytail: free until PayPal checkout lands (R5); then only the webhook calls this. */

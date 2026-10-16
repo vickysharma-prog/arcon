@@ -8,8 +8,8 @@ export type ThreadEvent =
   | { type: "changed"; version: number; note: string }
   | { type: "joined"; role: string }
   | { type: "review"; version: number }
-  | { type: "approved"; version: number; note?: string | null }
-  | { type: "changes"; version: number; note?: string | null }
+  | { type: "approved"; version: number; note?: string | null; for?: string | null }
+  | { type: "changes"; version: number; note?: string | null; for?: string | null }
   | { type: "fee"; action: "added" | "bill" | "paid" | "received"; label: string; amount: string }
   | { type: "handover"; to: string }
   | { type: "site"; what: "started" | "phase" | "update" | "finished"; name?: string; pct?: number; note?: string };
@@ -26,9 +26,10 @@ export function eventText(e: ThreadEvent, who: string): string {
     case "review":
       return `${who} sent version ${e.version} for review.`;
     case "approved":
-      return `${who} approved version ${e.version}.${e.note ? ` "${e.note}"` : ""}`;
+      // `for`: a client who isn't on Arcon, whose answer the pro records from their meeting
+      return e.for ? `${e.for} approved version ${e.version} in person (recorded by ${who}).${e.note ? ` "${e.note}"` : ""}` : `${who} approved version ${e.version}.${e.note ? ` "${e.note}"` : ""}`;
     case "changes":
-      return `${who} asked for changes to version ${e.version}.${e.note ? ` "${e.note}"` : ""}`;
+      return e.for ? `${e.for} asked for changes to version ${e.version} in person (recorded by ${who}).${e.note ? ` "${e.note}"` : ""}` : `${who} asked for changes to version ${e.version}.${e.note ? ` "${e.note}"` : ""}`;
     case "fee":
       return e.action === "added"
         ? `${who} set out the fees: ${e.label} (${e.amount}).`

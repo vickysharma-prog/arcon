@@ -142,7 +142,7 @@ export function SiteView({ projectId, onStatus, onPlans, onTeam }: { projectId: 
 
 type Act = (body: Record<string, unknown>, sound?: boolean) => Promise<boolean>;
 
-type Steps = { chosen: boolean; canSend: boolean; approves: boolean; builder: boolean; owner: boolean; selfBuild: boolean };
+type Steps = { chosen: boolean; canSend: boolean; approves: boolean; builder: boolean; owner: boolean; selfBuild: boolean; inPerson?: string | null };
 
 /** Before the site starts: the three steps to get building, each with what to do next. */
 function NotStarted({ data, act, busy, error, review, onPlans, onTeam }: { data: Data; act: Act; busy: boolean; error: string | null; review: (action: "send" | "approve") => void; onPlans?: () => void; onTeam?: () => void }) {
@@ -171,7 +171,7 @@ function NotStarted({ data, act, busy, error, review, onPlans, onTeam }: { data:
         status === "review" ? (
           s.approves ? (
             <button onClick={() => review("approve")} disabled={busy} className={btn}>
-              Approve this design
+              {s.inPerson ? `${s.inPerson} approved it (in person)` : "Approve this design"}
             </button>
           ) : (
             <p className="text-sm text-ink-soft">Waiting for the client to approve it in the thread.</p>
