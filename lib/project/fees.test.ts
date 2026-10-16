@@ -41,3 +41,10 @@ test("money reads the local way", () => {
   assert.equal(money(250000, "INR"), "₹2,50,000");
   assert.equal(money(4000, "USD"), "$4,000");
 });
+
+test("a builder is paid by stage of the build, an architect by stage of the design; both add up", () => {
+  const b = standardSplit(450001, "builder");
+  assert.deepEqual(b.map((p) => p.label), ["Deposit", "Foundations and structure", "Electrical and plumbing", "Finishes", "Handover"]);
+  assert.equal(b.reduce((n, p) => n + p.amount, 0), 450001);
+  assert.equal(standardSplit(100, "architect")[0].label, "Design");
+});

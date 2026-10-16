@@ -6,7 +6,7 @@ import { actionsFor, sideOf, type FeeAction, type FeeStatus } from "../project/f
 /** `created_by`: the pro who set the milestone out; only they bill it and confirm it. */
 export type FeeRow = { id: number; project_id: string; label: string; amount: number; currency: string; status: FeeStatus; billed_at: string | null; created_by?: string | null };
 export type LedgerProject = { id: string; name: string; role: string; mode: "owner" | "pro" };
-export type LedgerLine = FeeRow & { project: string; side: "in" | "out"; overdue: boolean; waiting: number | null; next: string; actions: FeeAction[] };
+export type LedgerLine = FeeRow & { project: string; side: "in" | "out"; overdue: boolean; waiting: number | null; next: string; actions: FeeAction[]; to?: string | null };
 export type LedgerTotals = { currency: string; planned: number; billed: number; toConfirm: number; received: number; overdue: number };
 
 /** Billed this many days ago and still not paid: overdue. */

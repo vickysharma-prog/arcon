@@ -40,7 +40,12 @@ export async function sitesRunBy(projects: (LedgerProject & { location?: string 
 export async function feeLedger(projects: LedgerProject[], me: string) {
   const ids = projects.map((p) => p.id);
   const rows = ids.length ? await must<FeeRow[]>(db().from("milestones").select("id, project_id, label, amount, currency, status, billed_at, created_by").in("project_id", ids).order("position")) : [];
-  return ledger(rows, projects, Date.now(), me);
+  const out = ledger(rows, projects, Date.now(), me);
+  // who each fee is paid to, for the one paying
+  const pros = [...new Set(rows.map((r) => r.created_by).filter((x): x is string => !!x))];
+  const names = pros.length ? await must<{ user_id: string; name: string; company: string | null }[]>(db().from("profiles").select("user_id, name, company").in("user_id", pros)) : [];
+  const to = new Map(names.map((n) => [n.user_id, n.company ?? n.name]));
+  return { ...out, lines: out.lines.map((l) => ({ ...l, to: l.created_by ? (to.get(l.created_by) ?? null) : null })) };
 }
 
 /** The crew this person employs, across the sites they run, for the week `today` is in. */

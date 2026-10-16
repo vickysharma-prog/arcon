@@ -27,13 +27,30 @@ export function actionsFor(status: FeeStatus, side: FeeSide): FeeAction[] {
   return (["bill", "paid", "received"] as const).filter((a) => step(status, a, side));
 }
 
-/** A common split of a total fee: design, approval, handover. Rounds so the parts add up to the total. */
-export function standardSplit(total: number): { label: string; amount: number }[] {
-  const parts = [
+export type ProKind = "architect" | "builder";
+
+/** How each kind of pro is usually paid: an architect by design stage, a builder by stage of the build. */
+export const SPLITS: Record<ProKind, { label: string; share: number }[]> = {
+  architect: [
     { label: "Design", share: 0.3 },
     { label: "Approval of the final design", share: 0.4 },
     { label: "Handover", share: 0.3 },
-  ];
+  ],
+  builder: [
+    { label: "Deposit", share: 0.1 },
+    { label: "Foundations and structure", share: 0.3 },
+    { label: "Electrical and plumbing", share: 0.2 },
+    { label: "Finishes", share: 0.3 },
+    { label: "Handover", share: 0.1 },
+  ],
+};
+
+/** The split said in words: "deposit (10%), foundations and structure (30%)...". */
+export const splitWords = (kind: ProKind) => SPLITS[kind].map((p) => `${p.label.toLowerCase()} (${Math.round(p.share * 100)}%)`).join(", ");
+
+/** A common split of a total fee for this kind of pro. Rounds so the parts add up to the total. */
+export function standardSplit(total: number, kind: ProKind = "architect"): { label: string; amount: number }[] {
+  const parts = SPLITS[kind];
   const out = parts.map((p) => ({ label: p.label, amount: Math.round(total * p.share) }));
   out[out.length - 1].amount += Math.round(total) - out.reduce((s, p) => s + p.amount, 0);
   return out;

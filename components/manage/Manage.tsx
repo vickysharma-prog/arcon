@@ -111,6 +111,7 @@ export function FeeLedger({ lines, totals, pro }: { lines: LedgerLine[]; totals:
                     {l.project}
                   </Link>
                   <span className={`ml-2 font-mono text-[10px] ${l.side === "in" ? "text-leaf" : "text-accent"}`}>{l.side === "in" ? "IN" : "OUT"}</span>
+                  {l.side === "out" && l.to && <span className="block text-xs text-ink-soft">to {l.to}</span>}
                 </td>
                 <td className="px-4 py-3">{l.label}</td>
                 <td className="px-4 py-3 text-right font-mono">{money(l.amount, l.currency)}</td>

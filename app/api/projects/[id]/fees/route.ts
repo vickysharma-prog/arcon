@@ -12,11 +12,19 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
   if (!a || a.role === "viewer") return Response.json({ error: "not found" }, { status: 404 });
   const side = sideOf(a.role, a.project.mode);
   const me = await userOf(cookie(request));
-  let q = supabaseAdmin().from("milestones").select("id, label, amount, currency, status, billed_at, claimed_at, received_at").eq("project_id", a.project.id).order("position");
+  let q = supabaseAdmin().from("milestones").select("id, label, amount, currency, status, billed_at, claimed_at, received_at, created_by").eq("project_id", a.project.id).order("position");
   // a pro sees the fees they set out (another pro on the project bills separately); the one paying sees them all
   if (side === "pro") q = q.eq("created_by", me ?? "");
   const { data } = await q;
-  return Response.json({ milestones: (data ?? []).map((m) => ({ ...m, amount: Number(m.amount) })), side });
+  const rows = (data ?? []) as { created_by: string; amount: number }[];
+  // who each fee is paid to (a studio's or company's name, else the person's), for the one paying
+  const ids = [...new Set([...rows.map((m) => m.created_by), ...(me ? [me] : [])])];
+  const { data: names } = await supabaseAdmin().from("profiles").select("user_id, name, company, role").in("user_id", ids);
+  const people = (names ?? []) as { user_id: string; name: string; company: string | null; role: string }[];
+  const to = new Map(people.map((n) => [n.user_id, n.company ?? n.name]));
+  // the kind of pro asking decides how a total is split (a builder by stage of the build)
+  const kind = side === "pro" ? (people.find((n) => n.user_id === me)?.role === "builder" ? "builder" : "architect") : null;
+  return Response.json({ milestones: rows.map(({ created_by, ...m }) => ({ ...m, amount: Number(m.amount), to: to.get(created_by) ?? null })), side, kind });
 }
 
 const Add = z.object({
