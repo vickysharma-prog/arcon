@@ -16,7 +16,8 @@ const linkOf = (token: string) => `${window.location.origin}/join/${token}`;
 const initials = (m: Member) => (m.name ?? m.email ?? "?").split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join("");
 
 // The team on a project: who is on it, and invite links with a QR code. Opened from the profile menu.
-export function TeamPanel({ id, onClose }: { id: string; onClose: () => void }) {
+/** `want`: the role this was opened for ("Invite my builder"), selected if it can be invited. */
+export function TeamPanel({ id, onClose, want }: { id: string; onClose: () => void; want?: MemberRole }) {
   const [team, setTeam] = useState<Team | null>(null);
   const [role, setRole] = useState<MemberRole | null>(null);
   const [fresh, setFresh] = useState<{ token: string; qr: string } | null>(null);
@@ -32,7 +33,7 @@ export function TeamPanel({ id, onClose }: { id: string; onClose: () => void }) 
         .then((res) => (res.ok ? (res.json() as Promise<Team>) : Promise.reject()))
         .then((t) => {
           setTeam(t);
-          setRole((r) => r ?? t.invitable.find((x) => x === "client") ?? t.invitable[0] ?? null);
+          setRole((r) => r ?? t.invitable.find((x) => x === want) ?? t.invitable.find((x) => x === "client") ?? t.invitable[0] ?? null);
         })
         .catch(() => setError("Couldn't load the team.")),
     [id],

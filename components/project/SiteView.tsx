@@ -114,7 +114,7 @@ export function SiteView({ projectId, onStatus, onPlans, onTeam }: { projectId: 
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-16">
-      <Header site={site} />
+      <Header site={site} status={data.status} />
       <div className="mt-4 flex flex-wrap gap-1.5">
         {shown.map(([id, label]) => (
           <button
@@ -265,7 +265,7 @@ function NotStarted({ data, act, busy, error, review, onPlans, onTeam }: { data:
   );
 }
 
-function Header({ site }: { site: Site }) {
+function Header({ site, status }: { site: Site; status?: string }) {
   const m = site.money;
   return (
     <section className="grid gap-3 sm:grid-cols-3">
@@ -276,7 +276,7 @@ function Header({ site }: { site: Site }) {
       </div>
       <div className="rounded-2xl border border-line bg-paper-raised p-4">
         <p className="text-xs uppercase tracking-widest text-ink-soft">Now</p>
-        <p className="mt-1 font-serif text-2xl leading-tight">{site.current?.name ?? "Handed over"}</p>
+        <p className="mt-1 font-serif text-2xl leading-tight">{site.current?.name ?? (status === "done" ? "Handed over" : "Built: the handover is next")}</p>
         {site.current && (
           <p className="text-sm text-ink-soft">
             {site.current.pct}% · {short(site.current.start_date)} to {short(site.current.end_date)}
@@ -794,7 +794,7 @@ export function SiteCard({ projectId, onOpen }: { projectId: string; onOpen: () 
           <motion.span className="block h-full bg-leaf" initial={{ width: 0 }} animate={{ width: `${site.overall}%` }} transition={{ duration: 0.9 }} />
         </span>
         <span className="mt-2 block text-sm text-ink-soft">
-          {site.current ? `Now: ${site.current.name} (${site.current.pct}%)` : "Handed over"}
+          {site.current ? `Now: ${site.current.name} (${site.current.pct}%)` : "Built: the handover is next"}
           {last && ` · Latest: "${last.note.slice(0, 80)}${last.note.length > 80 ? "…" : ""}"`}
         </span>
       </span>

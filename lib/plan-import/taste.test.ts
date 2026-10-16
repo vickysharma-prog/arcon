@@ -48,3 +48,9 @@ test("picks are checked again on the server: all three, right kind, same entity"
   await assert.rejects(resolvePicks([picks[0], { ...picks[1], id: "ace-hotel", name: "Ace Hotel" }, picks[2]], find), /Pick it again/, "a place sent as the brand");
   await assert.rejects(resolvePicks([picks[0], picks[1], { ...picks[2], id: "made-up" }], find), /Pick it again/);
 });
+
+test("a place in the project's city comes before one of the same name elsewhere", () => {
+  const found = [e("Hotel Bel-Air", "place", { entity_id: "far", properties: { address: "Paris, France" } }), e("Hotel Bel-Air", "place", { entity_id: "near", properties: { address: "701 Stone Canyon Rd, Los Angeles, CA" } })];
+  assert.equal(matchesFor("place", "Hotel Bel-Air", found, "Los Angeles, CA")[0].entityId, "near");
+  assert.equal(matchesFor("place", "Hotel Bel-Air", found)[0].entityId, "far");
+});

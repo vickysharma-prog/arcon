@@ -9,8 +9,12 @@ export async function GET(request: Request) {
   const slot = slotOf(url.searchParams.get("slot") ?? "");
   const q = (url.searchParams.get("q") ?? "").trim().slice(0, 80);
   if (!slot || q.length < 2) return Response.json({ error: "Say a name." }, { status: 400 });
+  // the project's city: a place by that name there comes first ("Hotel Bel-Air" means the one in Los Angeles)
+  const near = (url.searchParams.get("near") ?? "").trim().slice(0, 80);
   try {
-    const matches = matchesFor(slot.id, q, await search(q, 10, slot.types.join(",")));
+    const types = slot.types.join(",");
+    const [plain, local] = await Promise.all([search(q, 10, types), slot.id === "place" && near && !q.toLowerCase().includes(near.split(",")[0].toLowerCase()) ? search(`${q} ${near.split(",")[0]}`, 10, types) : []]);
+    const matches = matchesFor(slot.id, q, [...local, ...plain.filter((e) => !local.some((l) => l.entity_id === e.entity_id))], near);
     return Response.json({ matches, hint: matches.length ? null : vagueHint(slot.id) });
   } catch {
     return Response.json({ error: "Couldn't look that up just now. Try again in a moment." }, { status: 502 });

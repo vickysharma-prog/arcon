@@ -142,3 +142,11 @@ export async function proProfile(userId: string) {
   const done = work.get(userId) ?? [];
   return { ...data, rating: ratings.get(userId) ?? null, said: (said ?? []) as { rating: number; text: string; created_at: string }[], projects: done.length, styles: [...new Set(done.map((w) => w.brief?.name).filter((n): n is string => !!n))].slice(0, 6) };
 }
+
+/** The request a pro has open on this project, to answer from the project itself. */
+export async function openRequest(projectId: string, proId: string): Promise<{ id: number; role: ProRole; from: string; message: string | null } | null> {
+  const { data } = await db().from("pro_requests").select("id, role, message, from_id").eq("project_id", projectId).eq("pro_id", proId).eq("status", "pending").maybeSingle();
+  if (!data) return null;
+  const { data: who } = await db().from("profiles").select("name").eq("user_id", data.from_id).maybeSingle();
+  return { id: data.id as number, role: data.role as ProRole, from: (who?.name as string | undefined) ?? "The owner", message: (data.message as string | null) ?? null };
+}

@@ -40,12 +40,15 @@ export function closeness(query: string, e: Entity): number {
 export const CLOSE = 0.75;
 
 /** Up to three matches of the right kind whose names are what the user typed, best first. */
-export function matchesFor(slot: SlotId, query: string, found: Entity[]): Candidate[] {
+/** `near`: the project's city; for places, ones whose address is in it come first. */
+export function matchesFor(slot: SlotId, query: string, found: Entity[], near = ""): Candidate[] {
   const types: readonly string[] = slotOf(slot)!.types;
+  const city = near.split(",")[0].trim().toLowerCase();
+  const local = (e: Entity) => (city && slot === "place" && JSON.stringify(e.properties ?? {}).toLowerCase().includes(city) ? 1 : 0);
   return found
     .filter((e) => e.types?.some((t) => types.includes(t)) && closeness(query, e) >= CLOSE)
-    .map((e, i) => ({ e, i, c: closeness(query, e) }))
-    .sort((p, q) => q.c - p.c || p.i - q.i)
+    .map((e, i) => ({ e, i, c: closeness(query, e), l: local(e) }))
+    .sort((p, q) => q.l - p.l || q.c - p.c || p.i - q.i)
     .slice(0, 3)
     .map(({ e }) => toCandidate(e));
 }

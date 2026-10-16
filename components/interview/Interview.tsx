@@ -92,7 +92,13 @@ export function Interview() {
   useEffect(() => setOwn(false), [q?.id]);
   const say = (k: keyof typeof SAY) => SAY[k][lang];
 
+  // Answers so far live in this browser tab, so a reload (or a phone that drops the page) picks up where it was.
+  const keep = `arcon-answers-${typeof location === "undefined" ? "" : (new URLSearchParams(location.search).get("project") ?? "new")}`;
   useEffect(() => {
+    try {
+      const was = JSON.parse(sessionStorage.getItem(keep) ?? "null") as Answers | null;
+      if (was && typeof was === "object") setAnswers((a) => ({ ...was, ...a }));
+    } catch {}
     try {
       const saved = localStorage.getItem(LANG_KEY);
       if (saved) setLang(langOf(saved).id);
@@ -118,6 +124,18 @@ export function Interview() {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    try {
+      if (Object.keys(answers).length) sessionStorage.setItem(keep, JSON.stringify(answers));
+    } catch {}
+  }, [answers, keep]);
+  // once the project is saved, the answers are in it
+  useEffect(() => {
+    try {
+      if (projectId) sessionStorage.removeItem(keep);
+    } catch {}
+  }, [projectId, keep]);
 
   const answer = useCallback(
     (id: string, value: Answer) => {
@@ -390,7 +408,7 @@ export function Interview() {
                     )}
                     {q.kind === "taste" && own && (
                       <div className="mx-auto mt-4 max-w-lg">
-                        <TasteLookup q={q} text={draft} say={say} onAnswer={(v) => answer(q.id, v)} />
+                        <TasteLookup near={typeof answers.city === "string" ? answers.city : undefined} q={q} text={draft} say={say} onAnswer={(v) => answer(q.id, v)} />
                       </div>
                     )}
                     {q.optional && (
@@ -665,7 +683,7 @@ function SizeInput({ lang, say, onAnswer }: { lang: LangId; say: (k: keyof typeo
 }
 
 // A taste answer: what they type is matched in Qloo as they type, and they confirm the match with a tap.
-function TasteLookup({ q, text, say, onAnswer }: { q: Question; text: string; say: (k: keyof typeof SAY) => string; onAnswer: (v: TastePick) => void }) {
+function TasteLookup({ q, text, near, say, onAnswer }: { q: Question; text: string; near?: string; say: (k: keyof typeof SAY) => string; onAnswer: (v: TastePick) => void }) {
   const [look, setLook] = useState<Look | null>(null);
   const [chosen, setChosen] = useState<Candidate | null>(null);
   const query = text.trim();
@@ -675,7 +693,7 @@ function TasteLookup({ q, text, say, onAnswer }: { q: Question; text: string; sa
     if (query.length < 2) return;
     let live = true;
     const t = setTimeout(async () => {
-      const res = await fetch(`/api/taste?slot=${q.slot}&q=${encodeURIComponent(query)}`).catch(() => null);
+      const res = await fetch(`/api/taste?slot=${q.slot}&q=${encodeURIComponent(query)}${near ? `&near=${encodeURIComponent(near)}` : ""}`).catch(() => null);
       const body: Look = res ? await res.json().catch(() => ({ error: "Couldn't look that up." })) : { error: "Couldn't look that up. Check your connection." };
       if (!live) return;
       setLook(body);
@@ -685,7 +703,7 @@ function TasteLookup({ q, text, say, onAnswer }: { q: Question; text: string; sa
       live = false;
       clearTimeout(t);
     };
-  }, [query, q.slot]);
+  }, [query, q.slot, near]);
 
   const describe = (c: Candidate) => [c.kind, c.detail].filter(Boolean).join(" · ");
   if (query.length < 2) return null;
@@ -715,6 +733,11 @@ function TasteLookup({ q, text, say, onAnswer }: { q: Question; text: string; sa
               </button>
             ))}
         </div>
+      )}
+      {chosen && (
+        <button type="button" onClick={() => (setChosen(null), setLook({ matches: [], hint: "Add the city or street to the name, then it can find the right one." } as Look))} className="mt-2 text-xs text-ink-soft underline-offset-2 hover:text-accent hover:underline">
+          None of these
+        </button>
       )}
     </div>
   );

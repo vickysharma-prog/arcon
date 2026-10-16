@@ -21,6 +21,7 @@ import { PageLoading } from "@/components/fx/PageLoading";
 import { Decode } from "@/components/fx/Decode";
 import { ROLE_NAME, type ProjectRole } from "@/lib/project/access";
 import { boardFor, type Board } from "@/lib/home/board";
+import { requestsFor } from "@/lib/pros/directory";
 import { statusLine, type Wait } from "@/lib/home/waiting";
 import { projectName, SPACE } from "@/lib/home/names";
 import { PlanSketch } from "@/components/home/PlanSketch";
@@ -93,6 +94,9 @@ async function HomePageBody({ searchParams }: { searchParams: Promise<Record<str
     projects.map((p) => ({ id: p.id, name: projectName(p), role: p.role, mode: p.mode, status: p.status, chosen_option: p.chosen_option, space_type: p.space_type, site: p.site })),
     today,
   );
+  // a pro asked to join a project answers first: it leads what's waiting
+  if (profile.role === "architect" || profile.role === "builder")
+    board.waits.unshift(...(await requestsFor(userId)).map((r) => ({ projectId: r.project_id, kind: "request" as const, text: `${r.from} asked you to join ${r.title ?? "their project"} as the ${r.role}`, href: `/project/${r.project_id}` })));
   // the running of the business: fees for anyone with them; crew, deliveries and money for the sites they run
   const mine = projects.map((p) => ({ id: p.id, name: projectName(p), role: p.role, mode: p.mode as "owner" | "pro", location: p.site?.location ?? null }));
   const sites = view === "crew" || view === "deliveries" || view === "money" ? await sitesRunBy(mine) : [];
@@ -174,6 +178,7 @@ async function HomePageBody({ searchParams }: { searchParams: Promise<Record<str
 
 // What's waiting on this person, most urgent first.
 const KIND: Record<Wait["kind"], { mark: string; tone: string }> = {
+  request: { mark: "Asked", tone: "text-accent border-accent/40 bg-accent/5" },
   review: { mark: "Review", tone: "text-accent border-accent/40 bg-accent/5" },
   change: { mark: "Change", tone: "text-amber-600 border-amber-500/40 bg-amber-500/5" },
   handover: { mark: "Move in", tone: "text-leaf border-leaf/40 bg-leaf/5" },
@@ -262,7 +267,7 @@ function Cockpit({ projects, board, pro }: { projects: Card[]; board: Board; pro
               <div className="mt-4">
                 <p className="flex items-baseline justify-between text-xs text-ink-soft">
                   <span>
-                    {site.now ?? "Handed over"} · {site.onSite} on site today
+                    {site.now ?? (focus.status === "done" ? "Handed over" : "Built: the handover is next")} · {site.onSite} on site today
                     {site.late > 0 && <span className="text-red-600"> · {site.late} behind</span>}
                   </span>
                   <span className="font-serif text-xl text-ink">{site.overall}%</span>
@@ -274,7 +279,7 @@ function Cockpit({ projects, board, pro }: { projects: Card[]; board: Board; pro
             )}
             <p className="mt-5 rounded-2xl border border-accent/30 bg-accent/5 px-4 py-3">
               <span className="font-mono text-[10px] uppercase tracking-[0.25em] text-accent">Next</span>
-              <span className="mt-0.5 block">{nextLine(focus as Parameters<typeof nextLine>[0], focus.role)}</span>
+              <span className="mt-0.5 block">{site && site.overall >= 100 && focus.status === "building" ? (focus.role === "builder" ? "Built. Fix any snags and hand over the pack; the client accepts the handover." : "Built. Walk through it, list anything to fix, then accept the handover.") : nextLine(focus as Parameters<typeof nextLine>[0], focus.role)}</span>
             </p>
             <div className="mt-5 grid grid-cols-2 gap-4">
               {board.focus?.estimate && (
@@ -416,7 +421,7 @@ function SitesBoard({ projects, board }: { projects: Card[]; board: Board }) {
                       <div className="h-full rounded-full bg-gradient-to-r from-leaf to-accent" style={{ width: `${s.overall}%` }} />
                     </div>
                     <p className="mt-1.5 text-xs text-ink-soft">
-                      {s.now ?? "Handed over"} · {s.onSite} on site today
+                      {s.now ?? "Built: the handover is next"} · {s.onSite} on site today
                       {s.late > 0 && <span className="text-red-600"> · {s.late} behind</span>}
                     </p>
                   </div>

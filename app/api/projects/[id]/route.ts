@@ -1,3 +1,5 @@
+import { supabaseAdmin } from "@/lib/supabase/admin";
+import { openRequest } from "@/lib/pros/directory";
 import { accessTo, publicProject, userOf } from "@/lib/auth/request";
 import { peopleOn, unreadCount } from "@/lib/project/thread";
 import { isPro } from "@/lib/project/access";
@@ -22,7 +24,10 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
   // Whose design it is ("Vicky's design"): everyone else sees the owner's name; an owner sees "your", except a pro on
   // their client's project, which is the client's ("Priya's design").
   const whose = a.role === "owner" && a.project.mode !== "pro" ? null : whoseName(a.project.designed_for, owner);
-  return Response.json({ ...publicProject(a.project), role: a.role, unlocked, whose, unread, pros, studio });
+  // a pro's own project: what kind of pro owns it; and a pro who's been asked to join sees the request here
+  const ownerKind = a.project.mode === "pro" && a.project.owner_id ? ((await supabaseAdmin().from("profiles").select("role").eq("user_id", a.project.owner_id).maybeSingle()).data?.role ?? null) : null;
+  const asked = a.role === "viewer" && me ? await openRequest(a.project.id, me) : null;
+  return Response.json({ ...publicProject(a.project), role: a.role, unlocked, whose, unread, pros, studio, ownerKind, request: asked });
 }
 
 // Deletes the project for everyone on it. Only its owner may.

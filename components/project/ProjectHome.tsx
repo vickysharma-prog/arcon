@@ -10,7 +10,7 @@ import { ThreadView, type Room } from "./ThreadView";
 import { Fees } from "./Fees";
 import { SiteCard, SiteView } from "./SiteView";
 import type { Layout } from "@/lib/layout/schema";
-import { ROLE_NAME, can, type ProjectRole } from "@/lib/project/access";
+import { ROLE_NAME, can, type MemberRole, type ProjectRole } from "@/lib/project/access";
 import { nextLine, STAGES, stageOf, tabsFor, unlockPrice, type Tab } from "@/lib/project/stage";
 import { ok, tick } from "@/components/fx/sfx";
 
@@ -26,6 +26,10 @@ type Home = {
   mode?: "owner" | "pro";
   studio?: { id: string; name: string; logo_url: string | null } | null;
   options?: Layout[] | null;
+  /** a pro's own project: what kind of pro owns it (a builder's design-and-build needs no other builder) */
+  ownerKind?: string | null;
+  /** a pro who's been asked to join: the request to answer here */
+  request?: { id: number; role: "architect" | "builder"; from: string; message: string | null } | null;
   site: { location?: string; units?: "imperial" | "metric" };
 };
 
@@ -63,10 +67,12 @@ export function ProjectHome({
   const active: Tab = pane ? (tabs.find((t) => t.id === pane) ?? tabs[0]) : (tabs.find((t) => t.steps.includes(step)) ?? tabs[0]);
   const stage = stageOf(p);
   const label = (s: string) => (s === "brief" ? (whose ? `${whose}'s style` : "Style") : s === "walkthrough" ? "3D" : (STEPS.find((x) => x.id === s)?.label ?? s));
-  const [team, setTeam] = useState(false);
+  // the Team panel, open for a role ("builder") or just open
+  const [team, setTeam] = useState<MemberRole | boolean>(false);
 
   return (
     <div className="flex flex-1 flex-col">
+      {p.request && <AskedToJoin request={p.request} title={p.title} />}
       <header className="mx-auto w-full max-w-6xl px-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -135,7 +141,7 @@ export function ProjectHome({
       {/* No exit animation: the 3D's room labels are separate React roots and break if kept alive while leaving. */}
       <motion.div key={pane ?? step} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="flex-1 pt-4">
           {active.id === "site" ? (
-            <SiteView projectId={p.id} onStatus={onStatus} onPlans={() => setStep("plans")} onTeam={() => setTeam(true)} />
+            <SiteView projectId={p.id} onStatus={onStatus} onPlans={() => setStep("plans")} onTeam={() => setTeam("builder")} />
           ) : active.id === "thread" ? (
             <ThreadView
               key={discuss?.id ?? "thread"}
@@ -146,7 +152,7 @@ export function ProjectHome({
               onStatus={onStatus}
             />
           ) : active.id === "overview" ? (
-            <Overview p={p} role={role} whose={whose} unlocked={unlocked} go={(s) => setStep(s)} onSite={() => showPane("site")} onThread={() => showPane("thread")} onTeam={() => setTeam(true)} onUnlocked={onUnlocked} onTour={onTour} />
+            <Overview p={p} role={role} whose={whose} unlocked={unlocked} go={(s) => setStep(s)} onSite={() => showPane("site")} onThread={() => showPane("thread")} onTeam={(r?: MemberRole) => setTeam(r ?? true)} onUnlocked={onUnlocked} onTour={onTour} />
           ) : active.locked || (step === "workspace" && !unlocked) ? (
             <div className="mx-auto max-w-6xl px-4 py-8">
               <Unlock p={p} role={role} onUnlocked={onUnlocked} />
@@ -155,12 +161,12 @@ export function ProjectHome({
             body(step)
           )}
       </motion.div>
-      {typeof document !== "undefined" && createPortal(<AnimatePresence>{team && <TeamPanel id={p.id} onClose={() => setTeam(false)} />}</AnimatePresence>, document.body)}
+      {typeof document !== "undefined" && createPortal(<AnimatePresence>{team && <TeamPanel id={p.id} want={typeof team === "string" ? team : undefined} onClose={() => setTeam(false)} />}</AnimatePresence>, document.body)}
     </div>
   );
 }
 
-function Overview({ p, role, whose, unlocked, go, onSite, onThread, onTeam, onUnlocked, onTour }: { p: Home; role: ProjectRole; whose: string | null; unlocked: boolean; go: (s: StepId) => void; onSite: () => void; onThread: () => void; onTeam: () => void; onUnlocked: () => void; onTour: () => void }) {
+function Overview({ p, role, whose, unlocked, go, onSite, onThread, onTeam, onUnlocked, onTour }: { p: Home; role: ProjectRole; whose: string | null; unlocked: boolean; go: (s: StepId) => void; onSite: () => void; onThread: () => void; onTeam: (role?: MemberRole) => void; onUnlocked: () => void; onTour: () => void }) {
   const plan = p.chosen_option !== null ? p.options?.[p.chosen_option]?.concept?.name : null;
   const cards: { title: string; text: string; to?: StepId; action?: () => void; locked?: boolean }[] = [
     { title: "Design", text: plan ? `${plan}: style, plans and 3D` : "Style, plans and 3D", to: "brief" },
@@ -251,9 +257,9 @@ export function Unlock({ p, role, onUnlocked, lead }: { p: Pick<Home, "id" | "sp
 
 // "Who will build this?" for an owner without an architect or builder yet: invite your own, let Arcon suggest
 // pros by taste, or not yet (hidden on this device until the next stage).
-function WhoBuilds({ p, whose, onTeam }: { p: Home; whose: string | null; onTeam: () => void }) {
-  // A pro's own client project already has its designer; it only ever needs a builder.
-  const need = p.mode !== "pro" && !p.pros?.includes("architect") && stageOf(p) < 3 ? "architect" : !p.pros?.includes("builder") ? "builder" : null;
+function WhoBuilds({ p, whose, onTeam }: { p: Home; whose: string | null; onTeam: (role: MemberRole) => void }) {
+  // A pro's own client project already has its designer; a builder's own (design-and-build) needs no one else.
+  const need = p.mode === "pro" && p.ownerKind === "builder" ? null : p.mode !== "pro" && !p.pros?.includes("architect") && stageOf(p) < 3 ? "architect" : !p.pros?.includes("builder") ? "builder" : null;
   const key = `arcon-who-${p.id}-${need}-${stageOf(p)}`;
   const [hidden, setHidden] = useState(() => {
     try {
@@ -270,7 +276,7 @@ function WhoBuilds({ p, whose, onTeam }: { p: Home; whose: string | null; onTeam
         {need === "architect" ? "Bring in an architect or interior designer to refine the plan and see it through." : "Bring in a builder to price it, plan the site and build it."}
       </p>
       <div className="mt-4 flex flex-wrap gap-2">
-        <button onClick={() => (tick(), onTeam())} className="glow-btn rounded-full px-5 py-2 text-sm">
+        <button onClick={() => (tick(), onTeam(need))} className="glow-btn rounded-full px-5 py-2 text-sm">
           I have one, invite them
         </button>
         <a href={`/pros?project=${p.id}&role=${need}`} onClick={() => tick()} className="rounded-full border border-line px-5 py-2 text-sm transition hover:-translate-y-0.5 hover:border-accent hover:text-accent">
@@ -288,6 +294,42 @@ function WhoBuilds({ p, whose, onTeam }: { p: Home; whose: string | null; onTeam
         >
           Not yet
         </button>
+      </div>
+    </section>
+  );
+}
+
+// A pro asked to join looks at the design here, then answers right on it.
+function AskedToJoin({ request, title }: { request: NonNullable<Home["request"]>; title: string | null }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function answer(accept: boolean) {
+    tick();
+    setBusy(true);
+    setError(null);
+    const res = await fetch(`/api/pros/requests/${request.id}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ accept }) });
+    setBusy(false);
+    if (!res.ok) return setError((await res.json().catch(() => ({}))).error ?? "That didn't go through.");
+    ok();
+    window.location.assign(accept ? window.location.pathname : "/home?view=requests");
+  }
+  return (
+    <section className="mx-auto mb-4 w-full max-w-6xl px-4">
+      <div className="rounded-2xl border border-accent/40 bg-accent/5 p-4">
+        <p className="font-medium">
+          {request.from} asked you to join {title ?? "this project"} as the {request.role}
+        </p>
+        {request.message && <p className="mt-1 text-sm text-ink-soft">&ldquo;{request.message}&rdquo;</p>}
+        <p className="mt-1 text-xs text-ink-soft">Look around the design first; you join only if you say yes.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button onClick={() => answer(true)} disabled={busy} className="glow-btn rounded-full px-5 py-2 text-sm disabled:opacity-60">
+            Accept
+          </button>
+          <button onClick={() => answer(false)} disabled={busy} className="rounded-full border border-line px-5 py-2 text-sm transition hover:border-accent disabled:opacity-60">
+            Decline
+          </button>
+        </div>
+        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       </div>
     </section>
   );

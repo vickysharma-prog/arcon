@@ -1,7 +1,7 @@
 // "Waiting on you": what each person needs to do next across their projects, from facts the home page already has.
 // Most urgent first: a review to answer, changes asked, money to pay or confirm, work running late, then messages.
 
-export type Wait = { projectId: string; kind: "review" | "change" | "handover" | "snags" | "changes" | "choose" | "pay" | "confirm" | "late" | "messages"; text: string; href: string };
+export type Wait = { projectId: string; kind: "request" | "review" | "change" | "handover" | "snags" | "changes" | "choose" | "pay" | "confirm" | "late" | "messages"; text: string; href: string };
 
 export type WaitInput = {
   id: string;
@@ -26,7 +26,7 @@ export type WaitInput = {
   fees: { label: string; status: string; amount: string }[];
 };
 
-const ORDER: Wait["kind"][] = ["review", "change", "handover", "snags", "changes", "pay", "confirm", "late", "choose", "messages"];
+const ORDER: Wait["kind"][] = ["request", "review", "change", "handover", "snags", "changes", "pay", "confirm", "late", "choose", "messages"];
 
 export function waitsFor(projects: WaitInput[]): Wait[] {
   const out: Wait[] = [];

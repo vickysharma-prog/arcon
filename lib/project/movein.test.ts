@@ -48,3 +48,11 @@ test("ratings are one to five whole stars, and read plainly", () => {
   assert.equal(ratingLine([5, 4, 5]), "★ 4.7 · 3 reviews");
   assert.equal(ratingLine([]), null);
 });
+
+test("the walk-through isn't done until someone has walked through: a finished build with no snags listed waits", () => {
+  const base = { allDone: true, warrantyMonths: null, feesOpen: 0, handedOver: false };
+  const walk = (s: Parameters<typeof moveInChecks>[0]) => moveInChecks(s).find((c) => c.id === "snags")!.done;
+  assert.equal(walk({ ...base, snags: [] }), false);
+  assert.equal(walk({ ...base, snags: [{ status: "closed" }] }), true);
+  assert.equal(walk({ ...base, snags: [], handedOver: true }), true);
+});
