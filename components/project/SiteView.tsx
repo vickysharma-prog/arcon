@@ -89,13 +89,19 @@ export function SiteView({ projectId, onStatus, onPlans, onTeam }: { projectId: 
   );
 
   /** Send the design for review, or approve it, from the site's first screen (the thread shows it too). */
-  const review = async (action: "send" | "approve") => {
+  // "both": an owner on their own sends it and approves it in one go; there's no one else to ask
+  const review = async (action: "send" | "approve" | "both") => {
     setBusy(true);
     setError(null);
-    const res = await fetch(`/api/projects/${projectId}/review`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action }) });
+    for (const step of action === "both" ? (["send", "approve"] as const) : [action]) {
+      const res = await fetch(`/api/projects/${projectId}/review`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: step }) });
+      if (!res.ok) {
+        setError((await res.json().catch(() => ({}))).error ?? "That didn't go through.");
+        break;
+      }
+      if (step === (action === "both" ? "approve" : action)) ok();
+    }
     setBusy(false);
-    if (!res.ok) setError((await res.json().catch(() => ({}))).error ?? "That didn't go through.");
-    else ok();
     await load();
   };
 
@@ -144,6 +150,10 @@ export function SiteView({ projectId, onStatus, onPlans, onTeam }: { projectId: 
         {at === "materials" && <Materials site={site} runs={runs} act={act} busy={busy} />}
         {at === "updates" && <Updates projectId={projectId} site={site} runs={runs} act={act} busy={busy} />}
       </motion.div>
+      {/* a save can take a few seconds: say so where it's seen */}
+      <p aria-live="polite" className={`pointer-events-none fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full bg-btn px-4 py-2 text-sm text-btn-ink shadow-lg transition ${busy ? "opacity-100" : "opacity-0"}`}>
+        {busy ? "Saving…" : ""}
+      </p>
     </main>
   );
 }
@@ -153,7 +163,7 @@ type Act = (body: Record<string, unknown>, sound?: boolean) => Promise<boolean>;
 type Steps = { chosen: boolean; canSend: boolean; approves: boolean; builder: boolean; owner: boolean; selfBuild: boolean; inPerson?: string | null };
 
 /** Before the site starts: the three steps to get building, each with what to do next. */
-function NotStarted({ data, act, busy, error, review, onPlans, onTeam }: { data: Data; act: Act; busy: boolean; error: string | null; review: (action: "send" | "approve") => void; onPlans?: () => void; onTeam?: () => void }) {
+function NotStarted({ data, act, busy, error, review, onPlans, onTeam }: { data: Data; act: Act; busy: boolean; error: string | null; review: (action: "send" | "approve" | "both") => void; onPlans?: () => void; onTeam?: () => void }) {
   const [start, setStart] = useState(localDay());
   const { runs, status, steps: s } = data;
   const approved = status === "approved" || status === "building" || status === "done";
@@ -185,8 +195,8 @@ function NotStarted({ data, act, busy, error, review, onPlans, onTeam }: { data:
             <p className="text-sm text-ink-soft">Waiting for the client to approve it in the thread.</p>
           )
         ) : !sent && s.canSend ? (
-          <button onClick={() => review("send")} disabled={busy} className={btn}>
-            Send for review
+          <button onClick={() => review(s.approves && !s.inPerson ? "both" : "send")} disabled={busy} className={btn}>
+            {s.approves && !s.inPerson ? "Approve this design" : "Send for review"}
           </button>
         ) : (
           <p className="text-sm text-ink-soft">The design is being finished; it comes for review in the thread.</p>

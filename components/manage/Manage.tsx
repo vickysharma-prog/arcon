@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Reveal } from "@/components/fx/Motion";
 import { ok, tick } from "@/components/fx/sfx";
@@ -28,6 +28,8 @@ function useAct() {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // the button stays busy until the new figures are on screen, not just until the save
+  const [refreshing, refresh] = useTransition();
   // one or more posts in order; stops at the first that fails
   const act = async (key: string, ...calls: [url: string, body: unknown][]) => {
     tick();
@@ -40,11 +42,13 @@ function useAct() {
         return setError((await res?.json().catch(() => null))?.error ?? "That didn't go through. Try again.");
       }
     }
-    setBusy(null);
     ok();
-    router.refresh();
+    refresh(() => {
+      router.refresh();
+      setBusy(null);
+    });
   };
-  return { act, busy, error };
+  return { act, busy: busy ?? (refreshing ? "refresh" : null), error };
 }
 
 const Problem = ({ text }: { text: string | null }) => (text ? <p className="mt-3 text-sm text-red-600">{text}</p> : null);
