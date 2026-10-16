@@ -59,7 +59,8 @@ last commit 110212a is live, 348 unit tests pass, tsc and the build are clean, a
 
 ## What's left, in order (deadline 30 Oct 11:45pm ET = 31 Oct about 9:15am IST)
 
-1. **Vicky's changes to the home pages** (she will give them at the start of the next session).
+1. **The app frame and sidebar** (built 16 Oct evening, two local commits not pushed): Vicky to review; then check
+   phone width, dark mode and a guest on a project, push, run live checks, add a live check for /api/shell.
 2. **US demo world** (part of R5; judges are American, Jason Calacanis leads): a family house in Los Angeles in
    review, a café in New York with the neighbourhood read, an architect's studio in Austin with three clients, a
    builder's live site; fees in dollars. Then the judge demo: /demo with role cards and a role switcher bar.

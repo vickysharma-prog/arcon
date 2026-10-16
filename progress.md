@@ -2,6 +2,20 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16 (evening): The app frame with a sidebar, the bell, and running the business (Vicky)
+
+- Signed-in pages now sit in one frame: a sidebar with the role's tools, the project in front of you opening out into
+  its parts, and every project; the page on the right. Folds to an icon rail with Ctrl+B; a drawer on phones.
+  Search moved to the top right. Home opens on the project last opened. Moved home, project, account and /pros into
+  the app/(app) route group (URLs unchanged); its layout shows the sidebar only with a signed-in cookie.
+- The project page and the sidebar agree on the part on show through the URL (?step=, ?tab=); a part clicked on the
+  project already open is also sent to the page directly, because a URL the page rewrote itself doesn't reach it.
+- The bell: opening it no longer marks everything read; each one is marked read when opened or ticked.
+- New views: Fee ledger, Crew & wages, Materials & deliveries, Site money (lib/manage, with tests).
+- Checked locally as the architect (tree, rail, Ctrl+K, tabs with sidebar clicks, fee ledger) and the builder (crew,
+  site money); every view as each role returns 200. Not yet: phone width, dark mode, a guest on a project.
+- Two local commits, not pushed until Vicky has looked.
+
 ## 2026-10-16: One owner role (Vicky)
 
 - Homeowners and business owners were the same person in Arcon: someone designing their own space. Vicky named the
