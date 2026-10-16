@@ -119,3 +119,13 @@ test("a new build doesn't count floors, wiring and baths twice", () => {
   assert.equal(e.byCategory.bath, undefined);
   assert.ok(e.byCategory.construction! > 0 && e.byCategory.kitchen! > 0);
 });
+
+test("every screen starts a project's cost at the same quality: what they told us, else their taste, else mid", async () => {
+  const { projectTier, toldTier, isNewBuild } = await import("./costs.ts");
+  assert.equal(projectTier({ interview: { budget: { level: "premium" } } }, "luxury"), "premium");
+  assert.equal(projectTier({ interview: {} }, "luxury"), "luxury");
+  assert.equal(projectTier({ interview: null }), "mid");
+  assert.equal(toldTier({ interview: { budget: { level: "nonsense" } } }), null);
+  assert.ok(isNewBuild({ interview: { project: { newBuild: true } } }));
+  assert.ok(!isNewBuild({}));
+});

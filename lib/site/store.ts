@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "../supabase/admin.ts";
 import { timeline } from "../budget/timeline.ts";
-import { estimate, marketOf, TIERS, type Tier } from "../budget/costs.ts";
+import { estimate, isNewBuild, marketOf, projectTier, type Tier } from "../budget/costs.ts";
 import { latestVersion, updateProject, type Project } from "../project/store.ts";
 import { seedMaterials, seedPhases, isoDay } from "./plan.ts";
 import { alertsFor, labourCost, overallPct, currentPhase, type MaterialRow, type PhaseRow, type TaskRow } from "./progress.ts";
@@ -15,11 +15,8 @@ async function must<T>(p: PromiseLike<{ data: T | null; error: { message: string
   return data as T;
 }
 
-export const tierOf = (p: Project): Tier => {
-  const level = (p.interview?.budget as { level?: string } | undefined)?.level;
-  return (TIERS as readonly string[]).includes(level ?? "") ? (level as Tier) : "mid";
-};
-export const newBuildOf = (p: Project) => !!(p.interview?.project as { newBuild?: boolean } | undefined)?.newBuild;
+export const tierOf = (p: Project): Tier => projectTier(p);
+export const newBuildOf = (p: Project) => isNewBuild(p);
 
 /** The approved design: the latest saved version, else the chosen plan. */
 export async function approvedLayout(p: Project) {

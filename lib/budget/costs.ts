@@ -124,3 +124,19 @@ export function estimate(layout: Layout, tier: Tier, market: Market, newBuild = 
 export function money(v: number, m: Market): string {
   return new Intl.NumberFormat(m.locale, { style: "currency", currency: m.currency, notation: "compact", maximumFractionDigits: 1 }).format(v);
 }
+
+// One answer to "at what quality, and is it a new build?" for every screen that shows a cost (budget, Make changes,
+// exports, the site, change requests, the home card), so the same project never shows two prices.
+type Said = { interview?: Record<string, unknown> | null };
+
+/** The quality they chose in the interview, if they did. */
+export const toldTier = (p: Said): Tier | null => {
+  const level = (p.interview?.budget as { level?: string } | undefined)?.level;
+  return (TIERS as readonly string[]).includes(level ?? "") ? (level as Tier) : null;
+};
+
+/** The quality a cost starts at: what they told us, else what their taste suggests, else mid-range. */
+export const projectTier = (p: Said, tasteTier: Tier | null = null): Tier => toldTier(p) ?? tasteTier ?? "mid";
+
+/** A new build (the building itself is in the cost) or a fit-out of what's there. */
+export const isNewBuild = (p: Said) => (p.interview?.project as { newBuild?: boolean } | undefined)?.newBuild === true;

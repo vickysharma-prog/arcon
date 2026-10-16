@@ -8,7 +8,7 @@ import { PlanSvg } from "@/components/plan/PlanSvg";
 import { CountUp, Scanning } from "@/components/fx/Motion";
 import { ok as okSound, tick } from "@/components/fx/sfx";
 import type { Layout, Space } from "@/lib/layout/schema";
-import { estimate, marketOf, money } from "@/lib/budget/costs";
+import { estimate, marketOf, money, isNewBuild, projectTier } from "@/lib/budget/costs";
 import { timeline } from "@/lib/budget/timeline";
 import type { Tier } from "@/lib/budget/costs";
 import { scoreWith, choicesOf, type Ticked } from "@/lib/green/improve";
@@ -142,8 +142,8 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDon
 
   // The numbers along the bottom, worked out from the plan as it is now.
   const market = marketOf(p.site.location);
-  const newBuild = (p.interview?.project as { newBuild?: boolean } | undefined)?.newBuild === true;
-  const active: Tier = tier ?? "mid";
+  const newBuild = isNewBuild(p);
+  const active: Tier = tier ?? projectTier(p);
   const brief = p.brief as Brief | null;
   const cost = useMemo(() => (layout ? estimate(layout, active, market, newBuild, p.site.location) : null), [layout, active, market, newBuild, p.site.location]);
   const weeks = useMemo(() => (layout ? timeline(layout, active, newBuild).weeks : 0), [layout, active, newBuild]);

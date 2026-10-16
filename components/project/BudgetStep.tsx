@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { Bar, CountUp, HudCard, Reveal, Scanning } from "@/components/fx/Motion";
 import { tick } from "@/components/fx/sfx";
 import type { Layout } from "@/lib/layout/schema";
-import { CATEGORY_NAMES, estimate, knownMarket, marketOf, MARKETS, money, TIER_NAMES, TIERS, type Category, type Tier } from "@/lib/budget/costs";
+import { CATEGORY_NAMES, estimate, knownMarket, marketOf, MARKETS, money, TIER_NAMES, TIERS, type Category, type Tier, isNewBuild, projectTier } from "@/lib/budget/costs";
 import type { PriceSignal } from "@/lib/budget/tier";
 import type { Brief } from "@/lib/design/brief";
 import type { Profile } from "@/lib/qloo/taste";
@@ -46,9 +46,9 @@ export function BudgetStep({ tier, onTier, id, layout, location, interview, brie
   }, [id]);
 
   const market = MARKETS.find((m) => m.id === marketId) ?? marketOf(location);
-  const newBuild = (interview?.project as { newBuild?: boolean } | undefined)?.newBuild === true;
+  const newBuild = isNewBuild({ interview });
   const said = Object.values((interview?.budget ?? {}) as Record<string, unknown>).filter((v) => typeof v === "string" || typeof v === "number");
-  const active = tier ?? taste?.tier ?? "mid";
+  const active = tier ?? projectTier({ interview }, taste?.tier ?? null);
   // The region (London, Mumbai, the US Northeast) counts only when costing the site's own market.
   const e = useMemo(() => estimate(layout, active, market, newBuild, marketId ? null : location), [layout, active, market, newBuild, marketId, location]);
   const cats = (Object.entries(e.byCategory) as [Category, number][]).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
