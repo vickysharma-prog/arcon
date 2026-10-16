@@ -64,11 +64,13 @@ last commit 110212a is live, 348 unit tests pass, tsc and the build are clean, a
 
 ## Resume here (next session, first thing)
 
-The end-to-end run in Chrome is done (Journeys 1 to 8, 17 Oct): `private/e2e-run.md` holds every step and two fix
-lists (worst first). Next: fix them in that order, Vicky's no-arrows rule included, then re-run the journeys that
-changed. 15 local commits are not
-pushed yet (the sidebar, management views, flow fixes, change requests, move-in): push only after Vicky approves,
-then run the live checks and add live checks for /api/shell, the new views and /api/projects/[id]/movein.
+The fix lists from the end-to-end run (`private/e2e-run.md`) are fixed and pushed (17 Oct), and the live site is
+deployed from them. Next, first thing: re-run the journeys that changed in Chrome on the local build (1, 3, 4, 5, 7)
+and note the results in e2e-run.md, then add live checks for /api/shell, the management views and
+/api/projects/[id]/movein to scripts/live-check.ts.
+
+Still open from the run: US demo pros with work (data in the live database: Vicky decides), and the site materials
+list in m² and kg on US projects (needs the quantities converted, not just the labels).
 
 ## What's left, in order (deadline 30 Oct 11:45pm ET = 31 Oct about 9:15am IST)
 

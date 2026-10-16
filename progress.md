@@ -2,6 +2,26 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-17: Every fix from the end-to-end run, pushed and deployed
+
+- Tour paywall, one estimate everywhere, fees say who they're to and a builder is paid by stage of the build.
+- Join requests answered on the project and first in Waiting on you; "Built: the handover is next" until accepted;
+  the site ends at the build and Move in takes the walk-round and keys; Team opens on the asked role; a builder's
+  own project doesn't ask for a builder; labels name the trade; no second pro of the owner's own trade.
+- Interview survives a reload, places are searched in the project's city with "None of these", magazines and
+  clothing-only labels aren't offered as brands, no growing question total, Home office preset, US examples first,
+  the cookie notice sits above the answers, broken pictures are left out.
+- Make changes: a new room or a bigger one takes space from the rooms on its floor, then grows into the garden,
+  never past the plot (99 of 102 resizes now work, the rest say why); no duplicate names on rename; a home gets
+  exactly the bedrooms asked for, a "Guest room" and a study only for someone who works from home.
+- Style name keeps the word shown at the reveal; "places like you" leaves out campsites, parks and resorts.
+- Notifications: one per join, phases quiet, the architect told when the client has answered, the pro told about a
+  review. Review card shows the plan; a change to an approved design says it went for approval; an owner alone
+  approves in one step; accepting with fees unpaid warns; Move in is a short checklist on a phone.
+- No arrows on any button; Saving on site buttons; units follow the city; an Unlocked moment; the client sees the
+  reveal; direct links skip the opening.
+- Next: re-run the changed journeys in Chrome; live checks for the new views.
+
 ## 2026-10-16 (late night): End-to-end run in Chrome, Journeys 1 and 2 (Vicky)
 
 - Ran a new visitor's whole project by hand in Chrome (guest → interview → design → sign in → unlock → change →
