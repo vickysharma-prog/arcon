@@ -155,7 +155,7 @@ export function Quiz() {
                 }}
                 className="mt-5 text-sm text-ink-soft hover:text-ink"
               >
-                ← Back
+                Back
               </button>
             )}
           </motion.section>

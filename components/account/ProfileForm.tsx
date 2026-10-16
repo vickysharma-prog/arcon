@@ -206,7 +206,7 @@ export function ProfileForm({ initial, email, next, editing }: { initial: Profil
               </p>
             )}
             <button type="submit" disabled={busy || !d.role} className="glow-btn mt-8 rounded-full px-7 py-3 disabled:opacity-60">
-              {busy ? "Saving…" : editing ? "Save changes" : "Continue →"}
+              {busy ? "Saving…" : editing ? "Save changes" : "Continue"}
             </button>
           </motion.form>
         )}

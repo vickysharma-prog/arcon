@@ -164,7 +164,7 @@ async function HomePageBody({ searchParams }: { searchParams: Promise<Record<str
               <p className="mt-10 flex items-baseline justify-between font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">
                 Recent
                 <Link href="/home?view=all" className="normal-case tracking-normal text-accent hover:underline">
-                  All {projects.length} →
+                  All {projects.length}
                 </Link>
               </p>
               <Grid projects={projects.slice(1, 4)} board={board} />
@@ -200,7 +200,7 @@ function Waiting({ waits, all = false }: { waits: Wait[]; all?: boolean }) {
         Waiting on you · {waits.length}
         {shown.length < waits.length && (
           <Link href="/home?view=waiting" className="normal-case tracking-normal text-accent hover:underline">
-            See all →
+            See all
           </Link>
         )}
       </p>
@@ -210,7 +210,6 @@ function Waiting({ waits, all = false }: { waits: Wait[]; all?: boolean }) {
             <Link href={w.href} className="group flex items-center gap-3 py-2.5 text-sm">
               <span className={`w-20 shrink-0 rounded-full border px-2 py-0.5 text-center font-mono text-[10px] uppercase tracking-wider ${KIND[w.kind].tone}`}>{KIND[w.kind].mark}</span>
               <span className="min-w-0 flex-1 truncate group-hover:text-accent">{w.text}</span>
-              <span aria-hidden className="text-ink-soft transition group-hover:translate-x-0.5 group-hover:text-accent">→</span>
             </Link>
           </li>
         ))}
@@ -340,7 +339,6 @@ function Inbox({ projects, board }: { projects: Card[]; board: Board }) {
               <span className="block truncate text-xs text-ink-soft">{p.owner && p.role !== "owner" ? `${p.owner.split(" ")[0]}'s design · ` : ""}{STAGES[stage(p)].label}</span>
             </span>
             <span className="rounded-full bg-accent px-2.5 py-0.5 font-mono text-xs text-white">{board.unread[p.id]} new</span>
-            <span aria-hidden className="text-ink-soft transition group-hover:translate-x-0.5 group-hover:text-accent">→</span>
           </Link>
         </Reveal>
       ))}

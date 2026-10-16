@@ -209,7 +209,7 @@ export function SignIn({ next, signup }: { next: string; signup: boolean }) {
               </>
             ) : (
               <button onClick={() => switchTo("signin")} className="text-accent hover:underline">
-                ← Back to sign in
+                Back to sign in
               </button>
             )}
           </p>

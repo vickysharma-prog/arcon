@@ -191,7 +191,7 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDon
         </AnimatePresence>
         {/* every change is saved as it's made; this is the clear way out to see it */}
         <button type="button" disabled={!!busy} onClick={() => onDone(made)} className="glow-btn px-5 py-2.5 disabled:opacity-50">
-          Save &amp; walk through it →
+          Save &amp; walk through it
         </button>
         </div>
       </div>
@@ -215,7 +215,7 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDon
                 className="h-11 min-w-0 flex-1 rounded-full border border-line bg-paper px-4 outline-none focus:border-accent"
               />
               <button type="submit" disabled={!text.trim() || !!busy} className="glow-btn h-11 px-4 disabled:opacity-40">
-                →
+                Change it
               </button>
             </form>
             <div className="mt-3 flex flex-wrap gap-1.5">

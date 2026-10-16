@@ -108,7 +108,7 @@ function Form({ onClose }: { onClose: () => void }) {
               </button>
             </div>
             <a href={`/project/${sent.id}`} className="mt-4 inline-block text-sm text-accent hover:underline">
-              Open the project →
+              Open the project
             </a>
           </div>
         ) : (

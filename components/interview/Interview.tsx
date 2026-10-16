@@ -46,7 +46,7 @@ const SAY = {
   found: { en: "We found", hi: "हमें मिला", hinglish: "Humein mila" },
   thatsIt: { en: "Yes, that's it", hi: "हाँ, यही", hinglish: "Haan, yehi" },
   notIt: { en: "Not it?", hi: "यह नहीं?", hinglish: "Yeh nahi?" },
-  see: { en: "See your design →", hi: "अपना डिज़ाइन देखें →", hinglish: "Apna design dekho →" },
+  see: { en: "See your design", hi: "अपना डिज़ाइन देखें", hinglish: "Apna design dekho" },
   retry: { en: "Try again", hi: "फिर से कोशिश करें", hinglish: "Phir try karo" },
 } satisfies Record<string, Record<LangId, string>>;
 
@@ -300,7 +300,7 @@ export function Interview() {
           <div className="flex items-center gap-2">
             {!into && (
               <Link href="/start/plan" className="hidden rounded-full border border-accent/40 bg-paper-raised px-3 py-1.5 text-sm text-accent transition hover:border-accent sm:inline-block">
-                {say("havePlan")} →
+                {say("havePlan")}
               </Link>
             )}
             <button type="button" onClick={voice.toggle} aria-pressed={voice.on} aria-label={voice.on ? "Voice on" : "Voice off"} className="rounded-full border border-line bg-paper-raised px-3 py-1.5 text-sm text-ink-soft transition hover:border-accent hover:text-ink">
@@ -389,7 +389,7 @@ export function Interview() {
                         />
                         {q.kind === "text" && (
                           <button type="submit" disabled={!draft.trim()} className="glow-btn h-12 shrink-0 px-5 disabled:opacity-40">
-                            →
+                            {say("done")}
                           </button>
                         )}
                       </form>
@@ -413,7 +413,7 @@ export function Interview() {
                     )}
                     {q.optional && (
                       <button type="button" onClick={() => answer(q.id, "")} className="mt-4 rounded-full px-4 py-1.5 text-sm text-ink-soft transition hover:text-accent">
-                        {say("skip")} →
+                        {say("skip")}
                       </button>
                     )}
                     {nudge && <p className="mt-4 text-sm text-accent">{say("tapOne")}</p>}
@@ -422,7 +422,7 @@ export function Interview() {
                   <div className="mt-10 flex items-center justify-center gap-4">
                     {history.length > 0 && (
                       <button type="button" onClick={back} className="rounded-full px-3 py-1.5 text-sm text-ink-soft transition hover:text-ink">
-                        ← {say("back")}
+                        {say("back")}
                       </button>
                     )}
                     {listen.supported && (
@@ -480,7 +480,7 @@ export function Interview() {
                     </div>
                   )}
                   <button type="button" onClick={designNow} disabled={!taste?.family} className="glow-btn mt-8 px-8 py-3.5 text-lg disabled:opacity-50">
-                    {say("designNow")} →
+                    {say("designNow")}
                   </button>
                 </motion.div>
               ) : (
@@ -499,7 +499,7 @@ export function Interview() {
                         {say("retry")}
                       </button>
                       <button type="button" onClick={back} className="rounded-full px-3 py-1.5 text-ink-soft hover:text-ink">
-                        ← {say("back")}
+                        {say("back")}
                       </button>
                     </div>
                   )}
@@ -586,7 +586,7 @@ function Pictures({ options, hint, typeOwn, onPick, onOwn }: { options: Picture[
         </ul>
       )}
       <button type="button" onClick={onOwn} className="mt-4 rounded-full border border-line px-4 py-1.5 text-sm text-ink-soft transition hover:border-accent hover:text-accent">
-        {typeOwn} →
+        {typeOwn}
       </button>
     </div>
   );
@@ -639,7 +639,7 @@ function Choices({ q, lang, onAnswer, doneLabel }: { q: Question; lang: LangId; 
       })}
       {multi && (
         <button type="button" disabled={!picked.length} onClick={() => onAnswer(picked)} className="rounded-full bg-btn px-4 py-1.5 text-sm text-btn-ink transition hover:opacity-90 disabled:opacity-40">
-          {doneLabel} →
+          {doneLabel}
         </button>
       )}
     </div>
@@ -672,7 +672,7 @@ function SizeInput({ lang, say, onAnswer }: { lang: LangId; say: (k: keyof typeo
           ))}
         </div>
         <button type="button" disabled={!ok} onClick={() => onAnswer({ width: Number(w), depth: Number(d), unit })} className="rounded-full bg-btn px-4 py-2 text-sm text-btn-ink transition hover:opacity-90 disabled:opacity-40">
-          {say("done")} →
+          {say("done")}
         </button>
       </div>
       <button type="button" onClick={() => onAnswer({ typical: true })} className="rounded-full border border-line bg-paper px-4 py-1.5 text-sm transition-colors hover:border-accent hover:text-accent">
@@ -718,7 +718,7 @@ function TasteLookup({ q, text, near, say, onAnswer }: { q: Question; text: stri
           <strong>{chosen.name}</strong>
           <span className="text-ink-soft">({describe(chosen)})</span>
           <button type="button" onClick={() => onAnswer({ slot: q.slot!, id: chosen.entityId, name: chosen.name })} className="rounded-full bg-btn px-4 py-1.5 text-btn-ink transition hover:opacity-90">
-            {say("thatsIt")} →
+            {say("thatsIt")}
           </button>
         </div>
       )}

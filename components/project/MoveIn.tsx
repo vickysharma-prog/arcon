@@ -94,7 +94,7 @@ export function MoveIn({ projectId, onStatus, onFees }: { projectId: string; onS
                 {c.note && <span className="mt-1 block text-xs text-ink-soft">{c.note}</span>}
                 {c.id === "fees" && !c.done && onFees && (
                   <button onClick={() => (tick(), onFees())} className="mt-1 text-xs text-accent hover:underline">
-                    See fees →
+                    See fees
                   </button>
                 )}
               </li>
@@ -257,7 +257,7 @@ function Review({ pro, busy, act }: { pro: Pro; busy: boolean; act: (b: Record<s
   return (
     <div className="rounded-xl border border-line p-4">
       <p className="font-medium">
-        {pro.name} <span className="text-sm font-normal text-ink-soft">· {pro.role === "owner" ? "your pro" : pro.role}</span>
+        {pro.name} <span className="text-sm font-normal text-ink-soft">· {pro.role}</span>
       </p>
       <div className="mt-2 flex gap-1" role="radiogroup" aria-label={`Rate ${pro.name}`}>
         {[1, 2, 3, 4, 5].map((n) => (

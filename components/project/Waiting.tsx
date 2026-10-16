@@ -42,7 +42,7 @@ export function Waiting({ id, whose, role }: { id: string; whose: string | null;
       </p>
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <a href={`/start?project=${id}`} onClick={() => transition()} className="glow-btn rounded-full px-7 py-3">
-          {role === "client" ? "Start answering →" : "Fill it in together now"}
+          {role === "client" ? "Start answering" : "Fill it in together now"}
         </a>
         {can(role, "invite") && (
           <button onClick={makeLink} disabled={busy} className="rounded-full border border-line px-7 py-3 transition hover:-translate-y-0.5 hover:border-accent hover:text-accent disabled:opacity-60">

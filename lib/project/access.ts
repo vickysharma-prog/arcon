@@ -29,8 +29,9 @@ export const can = (role: ProjectRole | null | undefined, action: Action) => !!r
  * Which roles a person may invite. One client per project, and only on a pro's project: in an owner's own project
  * the owner is the client (Vicky, 16 Oct: more people on a project only confuses it).
  */
-export function invitable(role: ProjectRole | null | undefined, mode: "owner" | "pro" = "owner", hasClient = false): MemberRole[] {
-  const base: MemberRole[] = role === "owner" ? ["architect", "builder", "viewer"] : role === "architect" ? ["builder", "viewer"] : [];
+/** `ownerKind`: on a pro's own project, what the owner is; they don't invite a second one of themselves. */
+export function invitable(role: ProjectRole | null | undefined, mode: "owner" | "pro" = "owner", hasClient = false, ownerKind: string | null = null): MemberRole[] {
+  const base: MemberRole[] = (role === "owner" ? (["architect", "builder", "viewer"] as MemberRole[]) : role === "architect" ? (["builder", "viewer"] as MemberRole[]) : []).filter((r) => !(mode === "pro" && r === ownerKind));
   return base.length && mode === "pro" && !hasClient ? ["client", ...base] : base;
 }
 

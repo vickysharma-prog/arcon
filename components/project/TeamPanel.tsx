@@ -120,9 +120,9 @@ export function TeamPanel({ id, onClose, want }: { id: string; onClose: () => vo
                       {m.name ?? m.email}
                       {m.user_id === team.me && <span className="text-ink-soft"> (you)</span>}
                     </p>
-                    <p className="truncate text-xs text-ink-soft">{[m.kind && ROLE_SHORT[m.kind], m.company, m.email].filter(Boolean).join(" · ")}</p>
+                    <p className="truncate text-xs text-ink-soft">{[m.kind && m.kind !== "owner" && ROLE_SHORT[m.kind], m.company, m.email].filter(Boolean).join(" · ")}</p>
                   </div>
-                  <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs text-accent">{ROLE_NAME[m.role]}</span>
+                  <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs text-accent">{m.role === "owner" && (m.kind === "architect" || m.kind === "builder") ? ROLE_NAME[m.kind] : ROLE_NAME[m.role]}</span>
                   {team.role === "owner" && m.role === "architect" && team.me && (
                     <button
                       onClick={() => (handing === m.user_id ? handOver(m.user_id) : (tick(), setHanding(m.user_id)))}

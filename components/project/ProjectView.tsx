@@ -282,10 +282,10 @@ export function ProjectView({ id }: { id: string }) {
           </p>
           <div className="flex items-center gap-2">
             <button type="button" onClick={() => setStep("workspace")} className="rounded-full px-3 py-1.5 text-sm text-ink-soft transition hover:text-ink">
-              ← Back to Make changes
+              Back to Make changes
             </button>
             <button type="button" onClick={() => setStep("drawings")} className="rounded-full border border-accent/50 px-4 py-1.5 text-sm text-accent transition hover:bg-accent hover:text-btn-ink">
-              Done? Share &amp; export →
+              Done? Share &amp; export
             </button>
           </div>
         </div>
@@ -393,7 +393,7 @@ export function ProjectView({ id }: { id: string }) {
             }}
             className="rounded-full border border-accent/50 px-4 py-1.5 text-sm text-accent transition hover:bg-accent hover:text-btn-ink"
           >
-            Go to project home →
+            Go to project home
           </button>
         </div>
       )}

@@ -23,7 +23,7 @@ export function JoinButton({ token }: { token: string }) {
   return (
     <>
       <button onClick={join} disabled={busy} className="glow-btn mt-8 rounded-full px-7 py-3 disabled:opacity-60">
-        {busy ? "Joining…" : "Join the project →"}
+        {busy ? "Joining…" : "Join the project"}
       </button>
       {error && (
         <p role="alert" className="mt-4 text-sm text-red-600">

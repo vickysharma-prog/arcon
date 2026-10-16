@@ -43,7 +43,9 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
   // the pros the client can review: the architect and builder on it, or the pro whose project it is
   const raters = a.role === "client" || (a.role === "owner" && p.mode === "owner");
   const proIds = people.filter((x) => x.role === "architect" || x.role === "builder" || (x.role === "owner" && p.mode === "pro")).map((x) => ({ id: x.user_id, role: x.role }));
-  const pros = raters && p.status === "done" ? await Promise.all(proIds.map(async (x) => ({ ...x, name: await nameOf(x.id), review: (mine.data ?? []).find((r) => r.pro_id === x.id) ?? null }))) : [];
+  // a pro who owns the project is reviewed as what they are: the architect or the builder
+  const trade = async (x: { id: string; role: string }) => (x.role === "owner" ? ((await supabaseAdmin().from("profiles").select("role").eq("user_id", x.id).maybeSingle()).data?.role ?? "architect") : x.role);
+  const pros = raters && p.status === "done" ? await Promise.all(proIds.map(async (x) => ({ ...x, role: await trade(x), name: await nameOf(x.id), review: (mine.data ?? []).find((r) => r.pro_id === x.id) ?? null }))) : [];
   const side = { runs, decides: decider };
   return Response.json({
     status: p.status,
