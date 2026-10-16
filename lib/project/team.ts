@@ -49,7 +49,13 @@ export async function teamOf(p: Pick<Project, "id" | "owner_id">): Promise<{ mem
 const newToken = () => [...crypto.getRandomValues(new Uint8Array(32))].map((b) => b.toString(16).padStart(2, "0")).join("");
 
 export async function createInvite(projectId: string, by: { userId: string; role: ProjectRole }, role: MemberRole): Promise<OpenInvite> {
-  if (!invitable(by.role).includes(role)) throw new Error("You can't invite that role.");
+  // the rules depend on the project: one client, and only on a pro's project (lib/project/access.ts invitable)
+  const [{ mode }, clients, links] = await Promise.all([
+    must<{ mode: "owner" | "pro" }>(db().from("projects").select("mode").eq("id", projectId).single()),
+    must<{ user_id: string }[]>(db().from("project_members").select("user_id").eq("project_id", projectId).eq("role", "client")),
+    must<{ token: string }[]>(db().from("invites").select("token").eq("project_id", projectId).eq("role", "client").is("used_by", null).eq("revoked", false).gt("expires_at", new Date().toISOString())),
+  ]);
+  if (!invitable(by.role, mode, clients.length + links.length > 0).includes(role)) throw new Error("You can't invite that role.");
   return must<OpenInvite>(
     db().from("invites").insert({ token: newToken(), project_id: projectId, role, created_by: by.userId, expires_at: new Date(Date.now() + WEEK).toISOString() }).select("token, role, expires_at, created_at").single(),
   );
