@@ -58,9 +58,12 @@ export function labourCost(rows: { present: boolean; hours: number; day_rate: nu
   return Math.round(rows.filter((r) => r.present).reduce((s, r) => s + (r.day_rate * r.hours) / 8, 0));
 }
 
-/** Who runs the site: the builder on it, or the pro who owns the project (a builder's own design-and-build job). */
-/** Who runs the site: the builder, the pro who owns the project, or an owner managing the build themselves. */
-export const runsSite = (role: string, mode: "owner" | "pro", selfBuild = false) => role === "builder" || (role === "owner" && (mode === "pro" || selfBuild));
+/**
+ * Who runs the site, one side only: the builder when there is one; otherwise the pro who owns the project (a builder's
+ * own design-and-build job, or an architect building it for their client), or an owner managing the build themselves.
+ */
+export const runsSite = (role: string, mode: "owner" | "pro", selfBuild = false, hasBuilder = false) =>
+  role === "builder" || (role === "owner" && ((mode === "pro" && !hasBuilder) || selfBuild));
 
 type Costed = {
   crew: { day_rate?: number }[];

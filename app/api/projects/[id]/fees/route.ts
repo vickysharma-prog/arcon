@@ -10,8 +10,13 @@ const cookie = (r: Request) => r.headers.get("cookie");
 export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id]/fees">) {
   const a = await accessTo((await ctx.params).id, cookie(request));
   if (!a || a.role === "viewer") return Response.json({ error: "not found" }, { status: 404 });
-  const { data } = await supabaseAdmin().from("milestones").select("id, label, amount, currency, status, billed_at, claimed_at, received_at").eq("project_id", a.project.id).order("position");
-  return Response.json({ milestones: (data ?? []).map((m) => ({ ...m, amount: Number(m.amount) })), side: sideOf(a.role, a.project.mode) });
+  const side = sideOf(a.role, a.project.mode);
+  const me = await userOf(cookie(request));
+  let q = supabaseAdmin().from("milestones").select("id, label, amount, currency, status, billed_at, claimed_at, received_at").eq("project_id", a.project.id).order("position");
+  // a pro sees the fees they set out (another pro on the project bills separately); the one paying sees them all
+  if (side === "pro") q = q.eq("created_by", me ?? "");
+  const { data } = await q;
+  return Response.json({ milestones: (data ?? []).map((m) => ({ ...m, amount: Number(m.amount) })), side });
 }
 
 const Add = z.object({

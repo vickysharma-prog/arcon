@@ -18,14 +18,10 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
   if (!a || a.role === "viewer") return Response.json({ error: "not found" }, { status: 404 });
   const me = await userOf(cookie(request));
   const p = a.project;
-  const runs = runsSite(a.role, p.mode, p.self_build);
   const today = Day.safeParse(new URL(request.url).searchParams.get("today")).data;
-  const [site, roster, people, approves] = await Promise.all([
-    siteOf(p, today),
-    runs && me ? db().from("crew").select("id, name, trade, phone, day_rate").eq("owner_id", me).eq("active", true).order("name").then((r) => r.data ?? []) : [],
-    peopleOn(p),
-    decides(p, a.role),
-  ]);
+  const [site, people, approves] = await Promise.all([siteOf(p, today), peopleOn(p), decides(p, a.role)]);
+  const runs = runsSite(a.role, p.mode, p.self_build, people.some((x) => x.role === "builder"));
+  const roster = runs && me ? await db().from("crew").select("id, name, trade, phone, day_rate").eq("owner_id", me).eq("active", true).order("name").then((r) => r.data ?? []) : [];
   // What it takes to get building, for the screen before the site starts.
   const steps = {
     chosen: p.chosen_option !== null,
@@ -74,7 +70,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
     await updateProject(id, { self_build: o.on });
     return Response.json({ ok: true });
   }
-  if (!runsSite(a.role, p.mode, p.self_build)) return bad("Only the builder runs the site.", 403);
+  const builder = !!(await db().from("project_members").select("user_id").eq("project_id", id).eq("role", "builder").limit(1).maybeSingle()).data;
+  if (!runsSite(a.role, p.mode, p.self_build, builder)) return bad("Only the builder runs the site.", 403);
   const who = { id: me, name: await nameOf(me) };
   // Every row a request names must belong to this project (or, for crew, to this builder).
   const ours = async (table: string, rowId: number) => !!(await db().from(table).select("id").eq("id", rowId).eq("project_id", id).maybeSingle()).data;

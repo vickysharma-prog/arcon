@@ -23,14 +23,16 @@ export type RunSite = { id: string; name: string; location: string | null; curre
 export async function sitesRunBy(projects: (LedgerProject & { location?: string | null })[]): Promise<RunSite[]> {
   const ids = projects.map((p) => p.id);
   if (!ids.length) return [];
-  const [rows, started] = await Promise.all([
+  const [rows, started, builders] = await Promise.all([
     must<{ id: string; self_build: boolean | null }[]>(db().from("projects").select("id, self_build").in("id", ids)),
     must<{ project_id: string }[]>(db().from("site_phases").select("project_id").in("project_id", ids)),
+    must<{ project_id: string }[]>(db().from("project_members").select("project_id").in("project_id", ids).eq("role", "builder")),
   ]);
   const self = new Map(rows.map((r) => [r.id, !!r.self_build]));
   const live = new Set(started.map((s) => s.project_id));
+  const built = new Set(builders.map((b) => b.project_id));
   return projects
-    .filter((p) => live.has(p.id) && runsSite(p.role, p.mode, self.get(p.id)))
+    .filter((p) => live.has(p.id) && runsSite(p.role, p.mode, self.get(p.id), built.has(p.id)))
     .map((p) => ({ id: p.id, name: p.name, location: p.location ?? null, currency: marketOf(p.location).currency }));
 }
 

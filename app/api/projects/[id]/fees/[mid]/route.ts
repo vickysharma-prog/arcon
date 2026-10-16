@@ -18,9 +18,12 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
   const body = Body.safeParse(await request.json().catch(() => null));
   if (!body.success || !/^\d+$/.test(mid)) return Response.json({ error: "That wasn't understood." }, { status: 400 });
   const db = supabaseAdmin();
-  const { data: m } = await db.from("milestones").select("id, label, amount, currency, status").eq("id", Number(mid)).eq("project_id", id).maybeSingle();
+  const { data: m } = await db.from("milestones").select("id, label, amount, currency, status, created_by").eq("id", Number(mid)).eq("project_id", id).maybeSingle();
   if (!m) return Response.json({ error: "not found" }, { status: 404 });
-  const next = step(m.status as FeeStatus, body.data.action, sideOf(a.role, a.project.mode));
+  const side = sideOf(a.role, a.project.mode);
+  // only the pro who set a fee out bills it and confirms it
+  if (side === "pro" && m.created_by !== me) return Response.json({ error: "That fee is another pro's to bill." }, { status: 403 });
+  const next = step(m.status as FeeStatus, body.data.action, side);
   if (!next) return Response.json({ error: "That step isn't yours to take, or it's already done." }, { status: 409 });
   // Only move it if it is still where we read it, so two clicks can't both count.
   const { data: moved } = await db
@@ -38,7 +41,8 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
 export async function DELETE(request: Request, ctx: RouteContext<"/api/projects/[id]/fees/[mid]">) {
   const { id, mid } = await ctx.params;
   const a = await accessTo(id, request.headers.get("cookie"));
-  if (!a || sideOf(a.role, a.project.mode) !== "pro" || !/^\d+$/.test(mid)) return Response.json({ error: "not found" }, { status: 404 });
-  await supabaseAdmin().from("milestones").delete().eq("id", Number(mid)).eq("project_id", id).eq("status", "planned");
+  const me = await userOf(request.headers.get("cookie"));
+  if (!a || !me || sideOf(a.role, a.project.mode) !== "pro" || !/^\d+$/.test(mid)) return Response.json({ error: "not found" }, { status: 404 });
+  await supabaseAdmin().from("milestones").delete().eq("id", Number(mid)).eq("project_id", id).eq("status", "planned").eq("created_by", me);
   return Response.json({ ok: true });
 }

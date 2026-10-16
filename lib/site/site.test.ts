@@ -79,6 +79,9 @@ test("the builder runs the site; an owner only in pro mode or when managing the 
   assert.ok(runsSite("owner", "pro"));
   assert.ok(!runsSite("client", "owner", true));
   assert.ok(!runsSite("architect", "pro", true));
+  // one side runs a site: in a pro's project, the builder once there is one
+  assert.ok(!runsSite("owner", "pro", false, true));
+  assert.ok(runsSite("builder", "pro", false, true));
 });
 
 test("the client sees the budget and progress, not the builder's own costs", () => {
