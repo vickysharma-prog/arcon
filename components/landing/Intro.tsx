@@ -11,8 +11,9 @@ const REPLAY = "arcon:intro-replay";
 /** Fired as the intro leaves, so the page can start its own animations in view of the visitor. */
 export const INTRO_DONE = "arcon:intro-done";
 
-// Runs before the overlay is painted: a visitor who saw the intro this session, or asks for less motion, skips it.
-const SKIP = `try{if(sessionStorage.getItem("${SEEN}")||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("intro-seen")}catch(e){}`;
+// Runs before the overlay is painted: a visitor who saw the intro this session, or asks for less motion, skips it,
+// and so does anyone arriving by a direct link (an invite, a shared project): the opening belongs to the landing page.
+const SKIP = `try{if(location.pathname!=="/"||sessionStorage.getItem("${SEEN}")||matchMedia("(prefers-reduced-motion: reduce)").matches)document.documentElement.classList.add("intro-seen")}catch(e){}`;
 
 /** The boot sound, timed to the animation: a data burst as the seeds start, a sweep as they fill, a chord on the name. */
 function boot() {

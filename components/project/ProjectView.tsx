@@ -138,7 +138,9 @@ export function ProjectView({ id }: { id: string }) {
     if (!can(p.role ?? "owner", "edit") && p.role !== "client") return;
     preload();
     setStarted(true);
-    void design();
+    // the client who answered everything sees their style and the plans revealed, as an owner does
+    const client = p.role === "client";
+    void design().then(() => client && setStep("brief"));
   }, [autoDesign, p, started, design]);
 
   // ...and the part on show goes back into the URL, so a link to the same part from elsewhere still lands.

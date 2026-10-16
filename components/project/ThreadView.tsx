@@ -189,6 +189,17 @@ export function ThreadView({
           // The review card: the client's answer, on record.
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="border-b border-accent/30 bg-accent/5 px-4 py-3">
             <p className="font-medium">{t.inPerson ? `${t.inPerson} isn't on Arcon: record their answer from your meeting` : "This design is waiting for your review"}</p>
+            {/* what's being approved: the plan itself, every floor */}
+            {layout && (
+              <div className="mt-2 flex gap-2 overflow-x-auto">
+                {layout.floors.map((f) => (
+                  <figure key={f.level} className="shrink-0 rounded-xl border border-line bg-paper p-1.5">
+                    <PlanSvg layout={layout} level={f.level} units={units} className="h-36 w-auto" />
+                    {layout.floors.length > 1 && <figcaption className="text-center text-[11px] text-ink-soft">{f.level === 0 ? "Ground" : "Upstairs"}</figcaption>}
+                  </figure>
+                ))}
+              </div>
+            )}
             <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={2000} placeholder="A note (optional): what you love, or what to change" className="mt-2 w-full rounded-xl border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-accent" />
             <div className="mt-2 flex flex-wrap gap-2">
               <button onClick={() => review("approve")} disabled={busy} className="rounded-full bg-leaf px-5 py-2 text-sm text-white disabled:opacity-60">
