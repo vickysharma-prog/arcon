@@ -21,9 +21,10 @@ export function dayIn(tz: string | undefined, d = new Date()) {
   }
 }
 
-/** The site's phases: everything after design, shifted so the first one starts on `start`. */
+/** The site's phases: everything after design, shifted so the first one starts on `start`. The walk-round, fixes and
+ *  keys are Move in's (snags, the pack, the client's acceptance), so the site ends when the building is done. */
 export function seedPhases(t: Timeline, start: Date): SeedPhase[] {
-  const site = t.phases.filter((p) => p.id !== "design");
+  const site = t.phases.filter((p) => p.id !== "design" && p.id !== "handover");
   const offset = Math.min(...site.map((p) => p.start));
   return site.map((p, i) => {
     const from = new Date(start.getTime() + (p.start - offset) * 7 * day);

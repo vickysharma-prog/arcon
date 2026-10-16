@@ -177,7 +177,7 @@ export function ThreadView({
           ) : (
             <p className="text-sm font-medium">Everyone on the project</p>
           )}
-          {t?.approval && <p className="text-sm text-leaf">✓ Version {t.approval.version} approved by {t.approval.by.split(" ")[0]} · {time(t.approval.created_at)}</p>}
+          {t?.approval && <p className="text-sm text-leaf">✓ Approved by {t.approval.by.split(" ")[0]} · {time(t.approval.created_at)}</p>}
           {t?.canReview && channel === "all" && (
             <button onClick={() => review("send")} disabled={busy} className="glow-btn rounded-full px-4 py-1.5 text-sm disabled:opacity-60">
               Send for review

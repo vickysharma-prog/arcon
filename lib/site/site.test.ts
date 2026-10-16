@@ -17,7 +17,8 @@ test("site phases follow the design's timeline, start on the chosen day and skip
   assert.equal(phases[0].start, "2026-11-02");
   assert.ok(phases.every((p) => p.end >= p.start));
   assert.deepEqual(phases.map((p) => p.position), phases.map((_, i) => i));
-  assert.equal(phases.at(-1)!.key, "handover");
+  assert.ok(!phases.some((p) => p.key === "handover"), "the handover is Move in's, not a site phase");
+  assert.equal(phases.at(-1)!.key, "plants");
 });
 
 test("materials are taken off the plan, with costs from the budget", () => {

@@ -12,7 +12,7 @@ import { SiteCard, SiteView } from "./SiteView";
 import type { Layout } from "@/lib/layout/schema";
 import { ROLE_NAME, can, type MemberRole, type ProjectRole } from "@/lib/project/access";
 import { nextLine, STAGES, stageOf, tabsFor, unlockPrice, type Tab } from "@/lib/project/stage";
-import { ok, tick } from "@/components/fx/sfx";
+import { chime, ok, tick } from "@/components/fx/sfx";
 
 type Home = {
   id: string;
@@ -221,6 +221,7 @@ function Overview({ p, role, whose, unlocked, go, onSite, onThread, onTeam, onUn
 export function Unlock({ p, role, onUnlocked, lead }: { p: Pick<Home, "id" | "space_type">; role: ProjectRole; onUnlocked: () => void; lead?: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
   const price = unlockPrice(p.space_type);
   async function unlock() {
     setBusy(true);
@@ -228,9 +229,18 @@ export function Unlock({ p, role, onUnlocked, lead }: { p: Pick<Home, "id" | "sp
     const res = await fetch(`/api/projects/${p.id}/unlock`, { method: "POST" });
     setBusy(false);
     if (!res.ok) return setError((await res.json().catch(() => ({}))).error ?? "Couldn't unlock. Please try again.");
-    ok();
-    onUnlocked();
+    chime();
+    // a moment to see it worked, then the project opens up
+    setDone(true);
+    setTimeout(onUnlocked, 1600);
   }
+  if (done)
+    return (
+      <motion.section initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="rounded-2xl border border-leaf/40 bg-leaf/5 p-5" role="status">
+        <p className="font-serif text-2xl text-leaf">✓ Unlocked</p>
+        <p className="mt-1 text-sm text-ink-soft">Everything is open: the walk inside, the budget, the shopping list, Make changes, every download and your team.</p>
+      </motion.section>
+    );
   return (
     <section className="rounded-2xl border border-line bg-paper-raised p-5">
       <p className="font-serif text-2xl">Unlock this project</p>
