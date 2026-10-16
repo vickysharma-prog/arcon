@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { MockLanguageModelV4 } from "ai/test";
-import { generateProgram, optionsFor, templateFor, toProgram } from "./program.ts";
+import { fitNeeds, generateProgram, optionsFor, templateFor, toProgram } from "./program.ts";
 import type { Project } from "../project/store.ts";
 
 const reply = (body: unknown) =>
@@ -78,4 +78,21 @@ test("the draft schema has no integer types, which Gemini rejects", async () => 
   const json = JSON.stringify(z.toJSONSchema(z.object({ rooms: z.array(z.object({ floor: z.number().min(0).max(1) })) })));
   assert.ok(!json.includes("9007199254740991"));
   assert.equal(mod.toProgram("house", 2, [{ name: "A", kind: "bedroom", area: 10, zone: "private", floor: 0.6 }]).rooms[0].floor, 1);
+});
+
+test("a home's rooms match the answers: two bedrooms and a guest room, no study unless someone works from home", () => {
+  const p = fitNeeds(templateFor("house", 2), { needs: { bedrooms: 2, rooms: ["guest"] }, people: { worksFromHome: false } });
+  const kinds = (k: string) => p.rooms.filter((r) => r.kind === k);
+  assert.equal(kinds("bedroom").length, 2);
+  assert.deepEqual(kinds("guest-room").map((r) => r.name), ["Guest room"]);
+  assert.equal(kinds("office").length, 0);
+  assert.ok(kinds("bedroom").some((r) => r.name === "Primary bedroom"), "the biggest bedroom stays the primary");
+  assert.equal(new Set(p.rooms.map((r) => r.id)).size, p.rooms.length);
+  // more bedrooms than the template, an office for someone working from home
+  const big = fitNeeds(templateFor("house", 2), { needs: { bedrooms: 5 }, people: { worksFromHome: true } });
+  assert.equal(big.rooms.filter((r) => r.kind === "bedroom").length, 5);
+  assert.equal(big.rooms.filter((r) => r.kind === "office").length, 1);
+  assert.ok(optionsFor(p, { width: 14, depth: 12 }, {}, 1), "the fitted house still lays out");
+  // a café is left alone
+  assert.deepEqual(fitNeeds(templateFor("cafe", 1), { needs: { bedrooms: 2 } }), templateFor("cafe", 1));
 });

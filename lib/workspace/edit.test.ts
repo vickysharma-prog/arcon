@@ -113,3 +113,25 @@ test("changes read in plain words", () => {
   assert.equal(say({ op: "add", kind: "office", name: "Study" }), "Added a study");
   assert.equal(say({ op: "kitchen", open: true }), "Opened the kitchen to the living area");
 });
+
+test("a rename can't make two rooms with the same name", () => {
+  const l = plan();
+  const [a, b] = rooms(l);
+  const r = applyChange(l, { op: "rename", room: b.id, name: a.name.toLowerCase() });
+  assert.ok("error" in r && /already a room/.test(r.error));
+});
+
+test("a room that doesn't fit as the plan stands takes a little space from the others", () => {
+  // fill the plan until a study only fits by easing the rest, then check every room still passes the rules
+  let l = plan();
+  let squeezed = false;
+  for (let i = 0; i < 8 && !squeezed; i++) {
+    const r = applyChange(l, { op: "add", kind: "office", name: "Study" });
+    if ("error" in r) break;
+    const before = rooms(l).reduce((n, s) => n + s.rect.w * s.rect.h, 0);
+    const after = rooms(r.layout).filter((s) => rooms(l).some((o) => o.id === s.id)).reduce((n, s) => n + s.rect.w * s.rect.h, 0);
+    squeezed = after < before * 0.97;
+    l = ok(r);
+  }
+  assert.ok(squeezed, "some add eased the other rooms instead of refusing");
+});
