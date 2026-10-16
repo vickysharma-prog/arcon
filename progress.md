@@ -2,6 +2,16 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-16 (late night): End-to-end run in Chrome, Journeys 1 and 2 (Vicky)
+
+- Ran a new visitor's whole project by hand in Chrome (guest → interview → design → sign in → unlock → change →
+  approve → builder by invite → site, crew, materials, fees → move in → review), then an owner finding a builder
+  through Suggest someone (the builder's bell, Requests, accept, his workspace). Every step and every bell noted in
+  private/e2e-run.md, with a fix list, worst first (paywall leaks in the tour, builder fees using the architect's
+  split, request notifications with no accept, "Handed over" before the handover, the home estimate for new builds).
+- Stopped for the session limit before Journeys 3 to 8 (architect with a client by link and in person, builder
+  design-and-build, café, self-build, phone). Resume from private/e2e-run.md.
+
 ## 2026-10-16 (night): Loading that says what it's doing, one click into the design, and moving in (Vicky)
 
 - Opening any project showed the full "Designing <project>" engine screen while it only loaded; now it says
