@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { isUnlocked, nextLine, stageOf, STAGES, tabsFor, unlockPrice, whoseName } from "./stage.ts";
+import { isUnlocked, nextLine, stageOf, STAGES, tabsFor, unlockPrice, whoseName, lockedSteps } from "./stage.ts";
 
 const at = (status: Parameters<typeof stageOf>[0]["status"], chosen: number | null = 0) => ({ status, chosen_option: chosen });
 
@@ -54,4 +54,11 @@ test("a shared design is named for whoever it was designed for, else its owner",
   assert.equal(whoseName("Priya Shah", "Ana Studio"), "Priya");
   assert.equal(whoseName(null, "Vicky Sharma"), "Vicky");
   assert.equal(whoseName("", null), null);
+});
+
+test("a project not yet unlocked keeps the budget, shopping, changes and exports locked, in the tour too", () => {
+  assert.deepEqual(lockedSteps(false).sort(), ["budget", "drawings", "shop", "workspace"]);
+  assert.deepEqual(lockedSteps(true), []);
+  // style, plans and the 3D from outside are the free preview
+  for (const free of ["brief", "plans", "walkthrough"]) assert.ok(!lockedSteps(false).includes(free), free);
 });

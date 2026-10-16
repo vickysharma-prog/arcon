@@ -73,8 +73,9 @@ export function tabsFor(role: ProjectRole, unlocked: boolean): Tab[] {
   return tabs;
 }
 
-/** Inside the Design tab, what still needs unlocking: walking inside the 3D and making changes. */
-export const lockedSteps = (unlocked: boolean): string[] => (unlocked ? [] : ["workspace"]);
+/** The steps that wait for unlocking, in the guided tour and on the project home alike: the budget, the shopping list,
+ *  making changes and the exports. Style, the three plans and the 3D from outside stay free. */
+export const lockedSteps = (unlocked: boolean): string[] => (unlocked ? [] : ["budget", "shop", "workspace", "drawings"]);
 
 /** The one-time price to unlock a project: businesses get more (neighbourhood read, more rooms), so pay more. */
 export const unlockPrice = (spaceType: string | null | undefined) => (["cafe", "office", "shop", "hotel"].includes(spaceType ?? "") ? 299 : 149);

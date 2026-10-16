@@ -211,7 +211,8 @@ function Overview({ p, role, whose, unlocked, go, onSite, onThread, onTeam, onUn
 }
 
 // The unlock card. ponytail: unlocking is free until PayPal checkout lands (R5); the button says so plainly.
-function Unlock({ p, role, onUnlocked }: { p: Home; role: ProjectRole; onUnlocked: () => void }) {
+// `lead`: what the step behind it opens, when it stands in for one step of the guided tour.
+export function Unlock({ p, role, onUnlocked, lead }: { p: Pick<Home, "id" | "space_type">; role: ProjectRole; onUnlocked: () => void; lead?: string }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const price = unlockPrice(p.space_type);
@@ -227,6 +228,7 @@ function Unlock({ p, role, onUnlocked }: { p: Home; role: ProjectRole; onUnlocke
   return (
     <section className="rounded-2xl border border-line bg-paper-raised p-5">
       <p className="font-serif text-2xl">Unlock this project</p>
+      {lead && <p className="mt-1 font-medium">{lead}</p>}
       <p className="mt-1 text-sm text-ink-soft">
         You&apos;re seeing the preview: your style, the three plans and the 3D from outside. Unlocking opens the walk inside, the budget, the shopping list, Make
         changes, every download and inviting your architect or builder. One payment of ${price} for this project.

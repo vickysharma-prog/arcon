@@ -15,7 +15,8 @@ import type { Project } from "@/lib/project/store";
 import { canLeave, isStep, STEPS, type StepId } from "./steps";
 import { can, ROLE_NAME, type ProjectRole } from "@/lib/project/access";
 import { Workspace } from "./Workspace";
-import { ProjectHome } from "./ProjectHome";
+import { ProjectHome, Unlock } from "./ProjectHome";
+import { lockedSteps } from "@/lib/project/stage";
 import { Waiting } from "./Waiting";
 import { ExportStep } from "./ExportStep";
 import { WalkthroughStep } from "./WalkthroughStep";
@@ -259,7 +260,20 @@ export function ProjectView({ id }: { id: string }) {
   const next = steps[steps.findIndex((s) => s.id === step) + 1]?.id ?? null;
   // One step's screen, shown in the guided tour or inside a tab of the project home.
   const d = p as View & { brief: Brief; options: Layout[] };
-  const body = (s: StepId, guided: boolean) => (
+  // What a locked project's steps open, said on the unlock card that stands in for them (the paywall: style, plans and
+  // the 3D from outside are free; the rest opens with unlocking).
+  const LOCKED: Partial<Record<StepId, string>> = {
+    budget: "The budget opens here: what your design costs, room by room, in your currency.",
+    shop: "The shopping list opens here: pieces from brands in your taste, and stores near you.",
+    workspace: "Make changes opens here: change rooms by tapping or typing, and the plan, 3D and budget follow.",
+    drawings: "Share and export opens here: the drawings pack (PDF and CAD), sketches and the walkthrough video.",
+  };
+  const body = (s: StepId, guided: boolean) =>
+    lockedSteps(!!(p as View).unlocked).includes(s) && LOCKED[s] ? (
+      <div className="mx-auto w-full max-w-3xl px-4 py-6">
+        <Unlock p={p as View} role={role} lead={LOCKED[s]} onUnlocked={() => setP((old) => (old ? { ...old, unlocked: true } : old))} />
+      </div>
+    ) : (
     <>
           {edited > 0 && (s === "walkthrough" || s === "budget" || s === "shop") && (
         <div className="mx-auto mb-3 flex w-full max-w-6xl flex-wrap items-center justify-between gap-2 px-4">
@@ -336,7 +350,7 @@ export function ProjectView({ id }: { id: string }) {
           }}
         />}
     </>
-  );
+    );
 
   if (home)
     return (
