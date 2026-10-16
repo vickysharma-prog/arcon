@@ -34,8 +34,8 @@ for (const p of ["/", "/login"]) {
   const r = await get(p);
   check(`page ${p}`, r.status === 200, String(r.status));
 }
-const home = await get("/home", "builder");
-check("builder's home loads", home.status === 200 && String(home.body).includes("Today on site"));
+const home = await get("/home?view=today", "builder");
+check("builder's Today on site loads", home.status === 200 && String(home.body).includes("Today on site"));
 
 // The site: the builder sees the costs, the client the budget only (15 Oct)
 const asBuilder = await get(`/api/projects/${BUILDING}/site`, "builder");
@@ -119,6 +119,18 @@ for (const [who, title] of [["owner", "My spaces"], ["architect", "Studio"], ["b
 }
 const pal = await get("/api/palette", "owner");
 check("command box lists projects", pal.status === 200 && (pal.body.projects ?? []).length > 0, `${(pal.body.projects ?? []).length} projects`);
+
+// The app frame, the business views and moving in
+const shell = await get("/api/shell", "builder");
+check("sidebar data for a builder", shell.status === 200 && shell.body.shell?.role === "builder" && Array.isArray(shell.body.shell?.projects), `${(shell.body.shell?.projects ?? []).length} projects`);
+for (const [view, title] of [["fees", "Fees &amp; payments"], ["crew", "Crew"], ["deliveries", "Materials"], ["money", "Site money"]] as const) {
+  const v = await get(`/home?view=${view}`, "builder");
+  check(`builder's ${view} view`, v.status === 200 && String(v.body).includes(title));
+}
+const moveIn = await get(`/api/projects/${BUILDING}/movein`, "owner");
+check("move-in steps for the owner", moveIn.status === 200 && Array.isArray(moveIn.body.checks) && moveIn.body.checks.length >= 4, `${(moveIn.body.checks ?? []).length} steps`);
+const stranger = await get(`/api/projects/${BUILDING}/movein`);
+check("a stranger can't read the move-in", stranger.status >= 400);
 
 console.log(failed ? `${failed} failed` : "all live checks passed");
 process.exit(failed ? 1 : 0);

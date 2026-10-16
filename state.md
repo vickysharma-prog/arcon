@@ -65,7 +65,7 @@ last commit 110212a is live, 348 unit tests pass, tsc and the build are clean, a
 ## Resume here (next session, first thing)
 
 The fix lists from the end-to-end run (`private/e2e-run.md`) are fixed and pushed (17 Oct), and the live site is
-deployed from them. Next, first thing: re-run the journeys that changed in Chrome on the local build (1, 3, 4, 5, 7)
+deployed from them (live checks all pass). Next, first thing: re-run the journeys that changed in Chrome on the local build (1, 3, 4, 5, 7)
 and note the results in e2e-run.md, then add live checks for /api/shell, the management views and
 /api/projects/[id]/movein to scripts/live-check.ts.
 
@@ -74,8 +74,12 @@ list in m² and kg on US projects (needs the quantities converted, not just the 
 
 ## What's left, in order (deadline 30 Oct 11:45pm ET = 31 Oct about 9:15am IST)
 
-1. **The app frame and sidebar** (built 16 Oct evening, two local commits not pushed): Vicky to review; then check
-   phone width, dark mode and a guest on a project, push, run live checks, add a live check for /api/shell.
+0. **RE-CHECK, FIRST THING (Vicky, 17 Oct):** everything from the run is fixed, pushed and live (all live checks pass,
+   including new ones for /api/shell, the business views and move-in). Re-run in Chrome on the local build, by
+   hand, every journey in private/e2e-run.md (1 to 8, phone width too) and note each result there. Fix anything that
+   breaks before new work.
+1. **The app frame and sidebar** (pushed and live 17 Oct): Vicky to review on live; check phone width, dark mode and
+   a guest on a project during the re-check.
 1b. **From the flow audit** (private/flows-audit.md): the builder's quote, fees from the site's phases, the
    architect's site visits. (Move-in flow done 16 Oct night.)
 2. **US demo world** (part of R5; judges are American, Jason Calacanis leads): a family house in Los Angeles in
