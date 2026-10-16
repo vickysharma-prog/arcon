@@ -2,6 +2,8 @@ import { generateText, Output, type LanguageModel } from "ai";
 import { z } from "zod";
 import { VOICE_RULES } from "../voice.ts";
 import type { Project } from "../project/store.ts";
+import { styleOf } from "../three/materials.ts";
+import { STYLE_NAME } from "../quiz/picks.ts";
 
 const Hex = z.string().regex(/^#[0-9a-fA-F]{6}$/);
 
@@ -38,6 +40,17 @@ export function keepHonest(brief: Brief, allowed: string[]): Brief {
   };
 }
 
+/** The style the client was shown at the reveal ("Modern"), from the same taste. */
+export const revealedStyle = (p: Pick<Project, "taste">): string => STYLE_NAME[styleOf(p.taste, "").style];
+
+/** The style name keeps the revealed style's word, so the reveal and the export never disagree: "Eclectic Industrial"
+ *  for someone shown "Modern" becomes "Eclectic Modern". */
+export function keepStyle(name: string, family: string): string {
+  if (name.toLowerCase().includes(family.toLowerCase())) return name;
+  const first = name.trim().split(/\s+/)[0];
+  return first && first.toLowerCase() !== family.toLowerCase() ? `${first} ${family}` : family;
+}
+
 export function briefPrompt(p: Project): string {
   const style = (p.taste?.tags ?? [])
     .slice(0, 15)
@@ -60,7 +73,7 @@ Home brands matched to their taste:
 ${brands || "- none"}
 
 Rules:
-- Make the style name from two of the strongest decor, ambience, aesthetic or style signals above, in plain words ("post industrial" and "eclectic" make "Eclectic Industrial"), so the client can see where it came from.
+- The client was shown their style as "${revealedStyle(p)}". The style name keeps that word and adds one of the strongest decor, ambience or aesthetic signals above in plain words (for "Industrial" and "eclectic": "Eclectic Industrial"), so it matches what they saw and they can see where it came from.
 - Build every choice from the signals above. In each "from", list only names that appear in "Things they love" or the brand list, copied exactly.
 - Be concrete: "smoked oak floors", "brass wall lights", not "natural materials".
 - Every room gets living plants; pick plants that suit the city's climate and the style.
@@ -71,5 +84,5 @@ ${VOICE_RULES}`;
 
 export async function generateBrief(p: Project, model: LanguageModel): Promise<Brief> {
   const { output } = await generateText({ model, output: Output.object({ schema: Brief }), prompt: briefPrompt(p) });
-  return keepHonest(output, allowedSources(p));
+  return { ...keepHonest(output, allowedSources(p)), name: keepStyle(output.name, revealedStyle(p)) };
 }

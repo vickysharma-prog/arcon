@@ -52,3 +52,14 @@ test("a neighbourhood steps out to its city, never to a country alone", async ()
   assert.deepEqual(placesToTry("Pune"), ["Pune"]);
   assert.deepEqual(placesToTry("Bandra West, Mumbai, Maharashtra, India"), ["Bandra West, Mumbai, Maharashtra, India", "Mumbai, Maharashtra, India", "Maharashtra, India"]);
 });
+
+test("places that share your look are rooms to learn from, not campsites, parks or resorts", async () => {
+  const { isRoomPlace } = await import("./api.ts");
+  const at = (name: string, category?: string): Entity => ({ entity_id: name, name, types: ["urn:entity:place"], tags: category ? [tag(`urn:tag:category:place:${category}`)] : [] });
+  assert.equal(isRoomPlace(at("Ace Hotel", "hotel")), true);
+  assert.equal(isRoomPlace(at("Park Hyatt", "hotel")), true);
+  assert.equal(isRoomPlace(at("A café")), true);
+  assert.equal(isRoomPlace(at("Tung Lung Chau", "campground")), false);
+  assert.equal(isRoomPlace(at("Seaside Beach Resort")), false);
+  assert.equal(isRoomPlace(at("Hyde", "park")), false);
+});

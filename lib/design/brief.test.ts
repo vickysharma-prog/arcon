@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { MockLanguageModelV4 } from "ai/test";
-import { allowedSources, Brief, briefPrompt, generateBrief, keepHonest } from "./brief.ts";
+import { allowedSources, Brief, briefPrompt, generateBrief, keepHonest, keepStyle } from "./brief.ts";
 import type { Project } from "../project/store.ts";
 
 const project: Project = {
@@ -66,7 +66,7 @@ test("a model reply is parsed, validated and cleaned", async () => {
     }),
   });
   const b = await generateBrief(project, model);
-  assert.equal(b.name, "Warm Vintage");
+  assert.equal(b.name, "Warm Classic", "the model's name keeps the style shown at the reveal");
   assert.deepEqual(b.materials[1].from, []);
 });
 
@@ -80,4 +80,11 @@ test("a reply that breaks the schema is rejected", async () => {
     }),
   });
   await assert.rejects(generateBrief(project, model));
+});
+
+test("the style name keeps the style shown at the reveal", () => {
+  assert.equal(keepStyle("Eclectic Industrial", "Modern"), "Eclectic Modern");
+  assert.equal(keepStyle("Warm Modern Minimal", "Modern"), "Warm Modern Minimal");
+  assert.equal(keepStyle("Modernist", "Modern"), "Modernist");
+  assert.equal(keepStyle("", "Classic"), "Classic");
 });

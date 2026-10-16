@@ -49,16 +49,24 @@ export async function entitiesById(ids: string[]): Promise<Entity[]> {
   return d.results ?? [];
 }
 
+const CATEGORY = "urn:tag:category:place:";
+// Places whose look is the outdoors or a holiday, not a room: nothing to borrow for a home or a shop.
+const OUTDOORS = /camp|park|beach|trail|resort|marina|golf|ski|zoo|garden|lake|forest|mountain|island/;
+
+/** A place whose rooms you could learn from: not a campsite, a park or a resort. A place with no category is kept. */
+export const isRoomPlace = (e: Entity) => !(e.tags ?? []).map(tagId).some((t) => t.startsWith(CATEGORY) && OUTDOORS.test(t.slice(CATEGORY.length))) && !/\b(campsite|campground|camping|resort)\b/i.test(e.name);
+
 /** Places with a photo that share these decor tags and suit this taste: hotels, cafés and bars that look the part. */
 export async function kindredPlaces(likedIds: string[], decorTags: string[], take = 6): Promise<Entity[]> {
   if (!likedIds.length || !decorTags.length) return [];
-  return insights({
+  const found = await insights({
     "filter.type": "urn:entity:place",
     "filter.tags": decorTags.join(","),
     "filter.exists": "properties.image",
     "signal.interests.entities": likedIds.join(","),
-    take,
+    take: take * 3,
   });
+  return found.filter(isRoomPlace).slice(0, take);
 }
 
 // Home and design brands matched to a set of liked entities, with why each one was picked.
