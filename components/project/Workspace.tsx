@@ -108,7 +108,7 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDon
     (c: Change) => {
       if (!layout) return;
       tick();
-      const out = applyChange(layout, c);
+      const out = applyChange(layout, c, { width: p.site.width ?? 0, depth: p.site.depth ?? 0 });
       if ("error" in out) {
         setNote({ text: out.error, bad: true });
         return;

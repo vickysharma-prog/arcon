@@ -74,7 +74,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
     }
   }
 
-  const out = applyChange(current, change);
+  const out = applyChange(current, change, { width: p.site.width ?? 0, depth: p.site.depth ?? 0 });
   if ("error" in out) return Response.json({ error: out.error, change }, { status: 422 });
   // The plan as chosen is the first version, so the first change can always be undone.
   if (!(await latestVersion(p.id))) await saveVersion(p.id, current, "Chose this plan");

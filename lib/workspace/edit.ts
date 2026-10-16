@@ -1,4 +1,4 @@
-import type { Floor, Layout, Program, ProgramRoom } from "../layout/schema.ts";
+import type { Floor, Layout, Program, ProgramRoom, Shell } from "../layout/schema.ts";
 import { CONCEPT_IDS, placeConcept, type ConceptId } from "../layout/concepts.ts";
 import { programOf } from "../plan-import/read.ts";
 import { applyEdits, ZONES } from "../plan-import/edits.ts";
@@ -105,8 +105,24 @@ function rowsOf(layout: Layout): Record<string, "front" | "back"> {
   return out;
 }
 
-/** The plan after one change, or a plain reason it can't be done. */
-export function applyChange(layout: Layout, change: Change): Edited {
+/**
+ * The plan after one change, or a plain reason it can't be done. `lot`: the whole plot. The building is sized to its
+ * rooms and the rest is garden, so a room that can't grow or fit inside lets the building grow a little into the
+ * garden, as an architect would, before it's refused.
+ */
+export function applyChange(layout: Layout, change: Change, lot?: Shell | null): Edited {
+  const out = applyWithin(layout, change);
+  if (!("error" in out) || !lot?.width || !lot.depth || (change.op !== "resize" && change.op !== "add") || (change.op === "resize" && change.by < 1)) return out;
+  for (const g of [1.08, 1.16, 1.25]) {
+    const shell = { width: Math.min(lot.width, +(layout.shell.width * Math.sqrt(g)).toFixed(1)), depth: Math.min(lot.depth, +(layout.shell.depth * Math.sqrt(g)).toFixed(1)) };
+    if (shell.width <= layout.shell.width && shell.depth <= layout.shell.depth) break;
+    const grown = applyWithin({ ...layout, shell: { ...layout.shell, ...shell } }, change);
+    if (!("error" in grown)) return grown;
+  }
+  return out;
+}
+
+function applyWithin(layout: Layout, change: Change): Edited {
   if (change.op === "rename") {
     const name = change.name.trim().slice(0, 40);
     if (!name) return { error: "Give the room a name." };
@@ -155,17 +171,18 @@ function resize(layout: Layout, change: Extract<Change, { op: "resize" }>, conce
   const before = areaOf(layout, room.id);
   const grow = change.by > 1;
   const tries: Program[] = [];
-  for (const k of [1, 1.6, 2.4]) {
+  for (const k of [1, 1.6, 2.4, 3.5]) {
     const by = Math.pow(change.by, k);
     // The room alone; the room with every other room easing back; the room with only its neighbours in the same
-    // zone and floor easing back (an open band of living, dining and kitchen shares one width).
-    for (const [others, mates] of [[1, false], [1 / Math.sqrt(by), false], [1 / by, true]] as const) {
+    // zone and floor easing back (an open band of living, dining and kitchen shares one width); the room with
+    // every room on its floor giving way, which is what an architect does when the floor is full.
+    for (const [others, mates] of [[1, "all"], [1 / Math.sqrt(by), "all"], [1 / by, "zone"], [1 / by, "floor"], [1 / (by * by), "floor"]] as const) {
       tries.push({
         ...base,
         rooms: base.rooms.map((r) =>
           r.id === room.id
             ? { ...r, area: Math.min(80, Math.max(2, r.area * by)) }
-            : !mates || (r.zone === room.zone && r.floor === room.floor)
+            : mates === "all" || (r.floor === room.floor && (mates === "floor" || r.zone === room.zone))
               ? { ...r, area: Math.max(2, r.area * others) }
               : r,
         ),

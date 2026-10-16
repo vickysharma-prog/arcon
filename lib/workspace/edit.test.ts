@@ -135,3 +135,15 @@ test("a room that doesn't fit as the plan stands takes a little space from the o
   }
   assert.ok(squeezed, "some add eased the other rooms instead of refusing");
 });
+
+test("a full building lets a room grow into the garden, never past the plot", () => {
+  const l = plan("house", "great-room");
+  const kitchen = rooms(l).find((r) => r.kind === "kitchen")!.id;
+  const lot = DEFAULT_SHELLS.house;
+  const r = ok(applyChange(l, { op: "resize", room: kitchen, by: 1.25 }, lot));
+  assert.ok(area(r, kitchen) > area(l, kitchen) * 1.03);
+  assert.ok(r.shell.width <= lot.width && r.shell.depth <= lot.depth);
+  // smaller never grows the building
+  const s = applyChange(l, { op: "resize", room: kitchen, by: 0.8 }, lot);
+  if ("layout" in s) assert.deepEqual([s.layout.shell.width, s.layout.shell.depth], [l.shell.width, l.shell.depth]);
+});
