@@ -15,14 +15,14 @@ async function must<T>(p: PromiseLike<{ data: T | null; error: { message: string
   return data as T;
 }
 
-const tierOf = (p: Project): Tier => {
+export const tierOf = (p: Project): Tier => {
   const level = (p.interview?.budget as { level?: string } | undefined)?.level;
   return (TIERS as readonly string[]).includes(level ?? "") ? (level as Tier) : "mid";
 };
-const newBuildOf = (p: Project) => !!(p.interview?.project as { newBuild?: boolean } | undefined)?.newBuild;
+export const newBuildOf = (p: Project) => !!(p.interview?.project as { newBuild?: boolean } | undefined)?.newBuild;
 
 /** The approved design: the latest saved version, else the chosen plan. */
-async function approvedLayout(p: Project) {
+export async function approvedLayout(p: Project) {
   const v = await latestVersion(p.id);
   return v?.layout ?? (p.chosen_option !== null ? p.options?.[p.chosen_option] : null) ?? null;
 }

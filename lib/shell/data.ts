@@ -2,6 +2,7 @@ import { getProfile, projectsOf } from "../account/profile.ts";
 import { memberProjects } from "../project/team.ts";
 import { requestsFor } from "../pros/directory.ts";
 import { boardFor } from "../home/board.ts";
+import { sitesRunBy } from "../manage/data.ts";
 import { projectName } from "../home/names.ts";
 import { stageOf } from "../project/stage.ts";
 import type { ProjectRole } from "../project/access.ts";
@@ -24,7 +25,7 @@ export type ShellProject = {
   unread: number;
   owner: string | null;
 };
-export type Shell = { me: string; role: Role; counts: { waits: number; requests: number; live: number; fees: number; unread: number }; projects: ShellProject[] };
+export type Shell = { me: string; role: Role; counts: { waits: number; requests: number; live: number; fees: number; unread: number; runs: number }; projects: ShellProject[] };
 
 export async function shellFor(userId: string, day?: string): Promise<Shell | null> {
   const profile = await getProfile(userId);
@@ -32,13 +33,17 @@ export async function shellFor(userId: string, day?: string): Promise<Shell | nu
   const pro = profile.role === "architect" || profile.role === "builder";
   const [own, shared, requests] = await Promise.all([projectsOf(userId), memberProjects(userId), pro ? requestsFor(userId) : []]);
   const all = [...own.map((p) => ({ ...p, role: "owner" as ProjectRole, owner: null as string | null })), ...shared].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 60);
-  const board = await boardFor(
+  const [board, runs] = await Promise.all([
+    boardFor(
     userId,
     all.map((p) => ({ id: p.id, name: projectName(p), role: p.role, mode: p.mode, status: p.status, chosen_option: p.chosen_option, space_type: p.space_type, site: p.site })),
     day,
     new Date(),
     true,
-  );
+    ),
+    // owners only: whether they run a build themselves (builders always get the site tools)
+    profile.role === "owner" ? sitesRunBy(all.map((p) => ({ id: p.id, name: projectName(p), role: p.role, mode: p.mode as "owner" | "pro" }))) : [],
+  ]);
   return {
     me: userId,
     role: profile.role,
@@ -48,6 +53,7 @@ export async function shellFor(userId: string, day?: string): Promise<Shell | nu
       live: board.sites.length,
       fees: board.waits.filter((w) => w.kind === "pay" || w.kind === "confirm").length,
       unread: Object.values(board.unread).reduce((n, u) => n + u, 0),
+      runs: runs.length,
     },
     projects: all.map((p) => ({
       id: p.id,

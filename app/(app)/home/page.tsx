@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SiteHeader } from "@/components/SiteHeader";
 import { HOME_TITLE } from "@/lib/shell/nav";
+import { crewOf, deliveriesOf, feeLedger, moneyOf, sitesRunBy } from "@/lib/manage/data";
+import { CrewBoard, Deliveries, FeeLedger, SiteMoney } from "@/components/manage/Manage";
 import { Reveal } from "@/components/fx/Motion";
 import { currentUser } from "@/lib/auth/server";
 import { getProfile, projectsOf, type Profile, type ProjectCard } from "@/lib/account/profile";
@@ -33,7 +35,18 @@ export const metadata: Metadata = { title: "Your projects · Arcon" };
 
 const YOUR: Record<string, string> = { house: "Your house", apartment: "Your home", studio: "Your studio", cafe: "Your café", office: "Your office", shop: "Your shop", hotel: "Your hotel" };
 const BUSINESS = ["cafe", "office", "shop", "hotel"];
-const VIEWS = { waiting: "Waiting on you", inbox: "Inbox", all: "All projects", pipeline: "Pipeline", today: "Today on site", requests: "Requests", fees: "Fees and payments" } as const;
+const VIEWS = {
+  waiting: "Waiting on you",
+  inbox: "Inbox",
+  all: "All projects",
+  pipeline: "Pipeline",
+  today: "Today on site",
+  requests: "Requests",
+  fees: "Fee ledger",
+  crew: "Crew & wages",
+  deliveries: "Materials & deliveries",
+  money: "Site money",
+} as const;
 type View = keyof typeof VIEWS;
 const isView = (v: string | undefined): v is View => !!v && v in VIEWS;
 
@@ -74,17 +87,27 @@ async function HomePageBody({ searchParams }: { searchParams: Promise<Record<str
   // the project asked for (the one last opened) leads, so the board works out its estimate and opening day
   const asked = projects.findIndex((p) => p.id === one("p"));
   if (asked > 0) projects.unshift(...projects.splice(asked, 1));
+  const today = dayIn((await cookies()).get("arcon_tz")?.value);
   const board = await boardFor(
     userId,
     projects.map((p) => ({ id: p.id, name: projectName(p), role: p.role, mode: p.mode, status: p.status, chosen_option: p.chosen_option, space_type: p.space_type, site: p.site })),
-    dayIn((await cookies()).get("arcon_tz")?.value),
+    today,
   );
+  // the running of the business: fees for anyone with them; crew, deliveries and money for the sites they run
+  const mine = projects.map((p) => ({ id: p.id, name: projectName(p), role: p.role, mode: p.mode as "owner" | "pro", location: p.site?.location ?? null }));
+  const sites = view === "crew" || view === "deliveries" || view === "money" ? await sitesRunBy(mine) : [];
+  const [fees, crew, deliveries, siteMoney] = await Promise.all([
+    view === "fees" ? feeLedger(mine) : null,
+    view === "crew" ? crewOf(userId, sites, today) : null,
+    view === "deliveries" ? deliveriesOf(sites, today) : null,
+    view === "money" ? moneyOf(sites) : null,
+  ]);
   const role = profile.role;
   const pro = role === "architect" || role === "builder";
   const plan = planLine(profile);
   const line = statusLine(projects.map((p) => STAGES[stage(p)].label), board.waits.length);
 
-  const title = view ? (view === "fees" && role === "owner" ? "Payments" : view === "all" && role === "owner" ? "All my spaces" : VIEWS[view]) : HOME_TITLE[role];
+  const title = view ? (view === "fees" && role === "owner" ? "Payments" : view === "fees" && role === "builder" ? "Fees & payments" : view === "all" && role === "owner" ? "All my spaces" : VIEWS[view]) : HOME_TITLE[role];
 
   return (
     <main className="relative mx-auto w-full max-w-6xl flex-1 px-4 pb-12 pt-2 sm:px-8">
@@ -120,8 +143,14 @@ async function HomePageBody({ searchParams }: { searchParams: Promise<Record<str
         <SitesBoard projects={projects} board={board} />
       ) : view === "requests" ? (
         <RequestsView />
-      ) : view === "fees" ? (
-        <Fees board={board} pro={pro} />
+      ) : fees ? (
+        <FeeLedger lines={fees.lines} totals={fees.totals} pro={pro} />
+      ) : crew ? (
+        <CrewBoard lines={crew.lines} sites={sites} today={today} currency={sites[0]?.currency ?? "USD"} onSite={crew.onSite} earned={crew.earned} />
+      ) : deliveries ? (
+        <Deliveries {...deliveries} currency={Object.fromEntries(sites.map((s) => [s.id, s.currency]))} />
+      ) : siteMoney ? (
+        <SiteMoney sites={siteMoney} />
       ) : (
         <>
           <Cockpit projects={projects} board={board} pro={pro} />
@@ -308,25 +337,6 @@ function Inbox({ projects, board }: { projects: Card[]; board: Board }) {
         </Reveal>
       ))}
     </ul>
-  );
-}
-
-// Fees and payments: the totals for a pro, then every fee waiting on someone's tap.
-function Fees({ board, pro }: { board: Board; pro: boolean }) {
-  const due = board.waits.filter((w) => w.kind === "pay" || w.kind === "confirm");
-  return (
-    <>
-      {pro && (
-        <Reveal delay={0.04} className="mt-6 grid grid-cols-2 gap-3 sm:max-w-md">
-          <Stat label="Billed, to be paid" value={board.money.billed ?? "—"} />
-          <Stat label="Received" value={board.money.received ?? "—"} tone="text-leaf" />
-        </Reveal>
-      )}
-      {due.length ? <Waiting waits={due} all /> : <p className="mt-6 inline-flex items-center gap-2 rounded-full border border-leaf/40 bg-leaf/5 px-3 py-1 text-sm text-leaf">✓ No fee waiting on you</p>}
-      <p className="mt-4 text-sm text-ink-soft">
-        {pro ? "Set out and bill fees by milestone on each project's Overview; the client marks them paid and you confirm." : "Fees your architect or builder bills show on the project's Overview; tap I've paid once you have."}
-      </p>
-    </>
   );
 }
 

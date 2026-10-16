@@ -32,6 +32,15 @@ test("every role's tools have unique ids, so one is lit at a time", () => {
   }
 });
 
+test("whoever runs a site gets the crew, deliveries and site money; other owners don't", () => {
+  for (const id of ["crew", "deliveries", "money"]) {
+    assert.ok(ids(roleTools("builder", counts)).includes(id), id);
+    assert.ok(!ids(roleTools("owner", counts)).includes(id), id);
+    assert.ok(ids(roleTools("owner", { ...counts, runs: 1 })).includes(id), id);
+    assert.ok(!ids(roleTools("architect", counts)).includes(id), id);
+  }
+});
+
 test("the home link keeps the project last opened", () => {
   assert.equal(roleTools("owner", counts, "abc")[0].href, "/home?p=abc");
   assert.equal(roleTools("owner", counts)[0].href, "/home");

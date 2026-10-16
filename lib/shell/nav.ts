@@ -12,7 +12,8 @@ export type NavItem = { id: string; label: string; href: string; icon: Icon; cou
 
 export const HOME_TITLE: Record<Role, string> = { owner: "My spaces", architect: "Studio", builder: "Sites" };
 
-export type Counts = { waits: number; requests: number; live: number; fees: number; unread: number };
+/** `runs`: how many started sites this person runs (a builder, or an owner building it themselves). */
+export type Counts = { waits: number; requests: number; live: number; fees: number; unread: number; runs?: number };
 export type NavGroup = { title: string | null; items: NavItem[] };
 
 /**
@@ -32,23 +33,30 @@ export function roleGroups(role: Role, c: Counts, focus: string | null = null, m
     ...(me ? [{ id: "profile", label: "Public profile", href: `/pros/${me}`, icon: "pro" as const }] : []),
     { id: "brand", label, href: "/account", icon: "style" },
   ];
+  // running a site: the crew's week, what's on order, and what each site has cost
+  const site: NavItem[] = [
+    { id: "crew", label: "Crew & wages", href: "/home?view=crew", icon: "team" },
+    { id: "deliveries", label: "Materials & deliveries", href: "/home?view=deliveries", icon: "shop" },
+    { id: "money", label: "Site money", href: "/home?view=money", icon: "budget" },
+  ];
   if (role === "architect")
     return [
       { title: null, items: [home, waiting, inbox] },
       { title: "Clients", items: [{ id: "pipeline", label: "Pipeline", href: "/home?view=pipeline", icon: "board" }, requests, all] },
-      { title: "Money", items: [money("Fees")] },
+      { title: "Money", items: [money("Fee ledger")] },
       { title: "Studio", items: [...shown("Studio branding"), upload] },
     ];
   if (role === "builder")
     return [
       { title: null, items: [home, { id: "today", label: "Today on site", href: "/home?view=today", icon: "today", count: c.live }, waiting, inbox] },
-      { title: "Work", items: [requests, all] },
-      { title: "Money", items: [money("Payments")] },
+      { title: "Site work", items: [site[0], site[1], requests, all] },
+      { title: "Money", items: [site[2], money("Fees & payments")] },
       { title: "Company", items: [...shown("Company branding"), upload] },
     ];
   return [
     { title: null, items: [home, waiting, inbox] },
     { title: "Spaces", items: [all, money("Payments")] },
+    ...(c.runs ? [{ title: "Your build", items: site }] : []),
     { title: "Create", items: [upload, { id: "quiz", label: "Find your style", href: "/quiz", icon: "quiz" }] },
     { title: "People", items: [{ id: "pros", label: "Find a pro", href: "/pros", icon: "pro" }] },
   ];
