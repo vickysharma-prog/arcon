@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const KEY = "arcon_cookie_notice";
@@ -10,9 +9,9 @@ const KEY = "arcon_cookie_notice";
 export function CookieNotice() {
   const [show, setShow] = useState(false);
   // the interview's answers sit at the bottom of the screen, so there it shows at the top
-  const path = usePathname() ?? "";
-  const top = path.startsWith("/start") || path.startsWith("/quiz");
+  const [top, setTop] = useState(false);
   useEffect(() => {
+    setTop(/^\/(start|quiz)/.test(location.pathname));
     try {
       setShow(localStorage.getItem(KEY) !== "seen");
     } catch {
