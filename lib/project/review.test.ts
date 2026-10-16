@@ -20,11 +20,11 @@ test("review only once a plan is chosen, and not twice", () => {
   assert.equal(canSendForReview({ status: "approved", chosen_option: 1 }), false);
 });
 
-test("approval locks a version: a later change needs approving again", () => {
+test("a change in review goes back to design; a change to an approved design waits as a change request", () => {
   assert.equal(statusAfter("send", "ready"), "review");
   assert.equal(statusAfter("approve", "review"), "approved");
   assert.equal(statusAfter("changes", "review"), "ready");
-  assert.equal(statusAfter("edit", "approved"), "ready");
+  assert.equal(statusAfter("edit", "approved"), "approved");
   assert.equal(statusAfter("edit", "review"), "ready");
   assert.equal(statusAfter("edit", "designing"), "designing");
   assert.equal(statusAfter("edit", "building"), "building");

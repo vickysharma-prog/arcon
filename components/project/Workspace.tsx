@@ -28,6 +28,7 @@ const HouseScene = dynamic(() => import("@/components/three/HouseScene"), {
 
 type Brief = Parameters<typeof look>[0] & { plants?: { name: string }[] };
 type Project = {
+  status?: string;
   id: string;
   space_type: string | null;
   site: { width?: number; depth?: number; location?: string };
@@ -166,6 +167,12 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDon
         <div>
           <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent">Workspace</p>
           <h1 className="mt-1 font-serif text-4xl">Make it yours</h1>
+          {(p.status === "approved" || p.status === "building") && (
+            <p className="mt-2 max-w-xl rounded-xl border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-sm">
+              This design is approved. Changes you make here become a <strong>change request</strong>, with what they do to the cost, and wait in the thread
+              for approval; until then the approved version is what gets built.
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-3">
         <AnimatePresence mode="wait">

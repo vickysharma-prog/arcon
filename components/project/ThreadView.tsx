@@ -23,6 +23,8 @@ type Message = {
   created_at: string;
 };
 type Thread = {
+  /** a change to the approved design, waiting for approval */
+  change?: { from: number; to: number; notes: string[]; cost: string; canDecide: boolean } | null;
   /** the client isn't on Arcon: the pro records their answer */
   inPerson?: string | null;
   messages: Message[];
@@ -36,7 +38,7 @@ type Thread = {
 };
 export type Room = { id: string; name: string; level: number };
 
-const ICON: Record<string, string> = { chose: "◧", changed: "✎", joined: "＋", review: "⧉", approved: "✓", changes: "↺", fee: "¤" };
+const ICON: Record<string, string> = { chose: "◧", changed: "✎", joined: "＋", review: "⧉", approved: "✓", changes: "↺", fee: "¤", change: "Δ", site: "⌂", handover: "→" };
 
 const time = (iso: string) => {
   const d = new Date(iso);
@@ -143,7 +145,7 @@ export function ThreadView({
     void load();
   }
 
-  async function review(action: "send" | "approve" | "changes") {
+  async function review(action: "send" | "approve" | "changes" | "change-approve" | "change-decline") {
     setBusy(true);
     setError(null);
     const res = await fetch(`/api/projects/${projectId}/review`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(action === "send" ? { action } : { action, note: note.trim() || undefined }) });
@@ -196,6 +198,36 @@ export function ThreadView({
                 {t.inPerson ? `${t.inPerson} wants changes` : "Ask for changes"}
               </button>
             </div>
+          </motion.div>
+        )}
+
+        {t?.change && channel === "all" && (
+          // A change to the approved design: what changed, what it costs, and the answer, on record.
+          <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} className="border-b border-amber-500/40 bg-amber-500/5 px-4 py-3">
+            <p className="flex flex-wrap items-baseline justify-between gap-2 font-medium">
+              <span>Change to the approved design</span>
+              <span className="font-mono text-sm text-amber-700">{t.change.cost}</span>
+            </p>
+            <ul className="mt-1 list-inside list-disc text-sm text-ink-soft">
+              {t.change.notes.slice(-5).map((n, i) => (
+                <li key={i}>{n}</li>
+              ))}
+            </ul>
+            {t.change.canDecide ? (
+              <>
+                <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2} maxLength={2000} placeholder="A note (optional)" className="mt-2 w-full rounded-xl border border-line bg-paper px-3 py-2 text-sm outline-none focus:border-accent" />
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button onClick={() => review("change-approve")} disabled={busy} className="rounded-full bg-leaf px-5 py-2 text-sm text-white disabled:opacity-60">
+                    {t.inPerson ? `✓ ${t.inPerson} approved the change` : "✓ Approve the change"}
+                  </button>
+                  <button onClick={() => review("change-decline")} disabled={busy} className="rounded-full border border-line px-5 py-2 text-sm transition hover:border-accent disabled:opacity-60">
+                    {t.inPerson ? `${t.inPerson} said no` : "Decline, keep it as approved"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="mt-1 text-xs text-ink-soft">Waiting for approval. Until then, the approved version (v{t.change.from}) is what gets built.</p>
+            )}
           </motion.div>
         )}
 

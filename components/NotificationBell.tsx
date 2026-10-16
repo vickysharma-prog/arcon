@@ -26,6 +26,7 @@ const KINDS: Record<string, { mark: string; tone: string; to: string }> = {
   chose: { mark: "Plan", tone: "text-accent bg-accent/10", to: "?step=plans" },
   changed: { mark: "Edit", tone: "text-accent bg-accent/10", to: "?step=walkthrough" },
   accepted: { mark: "Yes", tone: "text-leaf bg-leaf/10", to: "?tab=overview" },
+  change: { mark: "Δ", tone: "text-amber-600 bg-amber-500/10", to: "?tab=thread" },
   declined: { mark: "No", tone: "text-ink-soft bg-paper", to: "?tab=overview" },
 };
 const kindOf = (k: string) => KINDS[k] ?? { mark: "•", tone: "text-ink-soft bg-paper", to: "?tab=thread" };

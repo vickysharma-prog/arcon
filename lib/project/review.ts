@@ -12,6 +12,7 @@ export type ThreadEvent =
   | { type: "changes"; version: number; note?: string | null; for?: string | null }
   | { type: "fee"; action: "added" | "bill" | "paid" | "received"; label: string; amount: string }
   | { type: "handover"; to: string }
+  | { type: "change"; what: "asked" | "approved" | "declined"; version: number; cost?: string; note?: string | null; for?: string | null }
   | { type: "site"; what: "started" | "phase" | "update" | "finished"; name?: string; pct?: number; note?: string };
 
 /** One line for the thread: "Priya approved version 3." */
@@ -46,6 +47,14 @@ export function eventText(e: ThreadEvent, who: string): string {
           : e.what === "finished"
             ? `${who} finished the build. Time to move in.`
             : `Site update from ${who}${e.name ? ` (${e.name}${e.pct !== undefined ? `, ${e.pct}%` : ""})` : ""}: ${e.note}`;
+    case "change": {
+      const by = e.for ? `${e.for} (in person, recorded by ${who})` : who;
+      return e.what === "asked"
+        ? `${who} asked to change the approved design (version ${e.version}, ${e.cost ?? "cost to come"}). It needs approving before it's built.`
+        : e.what === "approved"
+          ? `${by} approved the change: version ${e.version} is what gets built (${e.cost ?? "same cost"}).${e.note ? ` "${e.note}"` : ""}`
+          : `${by} declined the change; the design is back as approved (version ${e.version}).${e.note ? ` "${e.note}"` : ""}`;
+    }
     case "handover":
       return `${who} handed the project over to ${e.to}, who now runs it. ${who} stays on as the client.`;
   }
@@ -54,10 +63,11 @@ export function eventText(e: ThreadEvent, who: string): string {
 /** A design can go for review once a plan is chosen and it isn't already in review, approved or being built. */
 export const canSendForReview = (p: { status: Status; chosen_option: number | null }) => p.chosen_option !== null && (p.status === "designing" || p.status === "ready");
 
-/** Where the project goes after each review step. A change after review or approval needs approving again. */
+/** Where the project goes after each review step. A change during review goes back to design; a change to an
+ *  approved design stays approved and waits as a change request (lib/project/change.ts). */
 export function statusAfter(step: "send" | "approve" | "changes" | "edit", now: Status): Status {
   if (step === "send") return "review";
   if (step === "approve") return "approved";
   if (step === "changes") return "ready";
-  return now === "review" || now === "approved" ? "ready" : now;
+  return now === "review" ? "ready" : now;
 }
