@@ -64,8 +64,9 @@ last commit 110212a is live, 348 unit tests pass, tsc and the build are clean, a
 
 ## Resume here (next session, first thing)
 
-The end-to-end run in Chrome stopped after Journeys 1 and 2: read `private/e2e-run.md` ("Where this run stopped"),
-run Journeys 3 to 8 the same way, then work through its fix list (worst first) with Vicky. 15 local commits are not
+The end-to-end run in Chrome is done (Journeys 1 to 8, 17 Oct): `private/e2e-run.md` holds every step and two fix
+lists (worst first). Next: fix them in that order, Vicky's no-arrows rule included, then re-run the journeys that
+changed. 15 local commits are not
 pushed yet (the sidebar, management views, flow fixes, change requests, move-in): push only after Vicky approves,
 then run the live checks and add live checks for /api/shell, the new views and /api/projects/[id]/movein.
 
