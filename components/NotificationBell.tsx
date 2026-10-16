@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { tick, transition } from "./fx/sfx";
+import { openPart } from "./shell/part";
 
 type Event = { id: number; project_id: string | null; kind: string; data: { by?: string; text?: string; project?: string | null; room?: string | null }; read: boolean; created_at: string };
 
@@ -85,10 +86,7 @@ export function NotificationBell() {
     markRead([e.id]);
     setOpen(false);
     if (!e.project_id) return router.push("/home");
-    const href = `/project/${e.project_id}${kindOf(e.kind).to}`;
-    router.push(href);
-    // already on that project: tell its page which part to show
-    if (location.pathname === `/project/${e.project_id}`) window.dispatchEvent(new CustomEvent("arcon:part", { detail: kindOf(e.kind).to.slice(1) }));
+    openPart(router, `/project/${e.project_id}${kindOf(e.kind).to}`);
   };
 
   if (!events) return null;

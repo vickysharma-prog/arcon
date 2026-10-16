@@ -6,7 +6,8 @@ import { labourCost } from "../site/progress.ts";
 export type CrewMember = { id: number; name: string; trade: string | null; phone: string | null; day_rate: number };
 export type Link = { project_id: string; crew_id: number };
 export type Attendance = { project_id: string; crew_id: number; day: string; present: boolean; hours: number };
-export type CrewLine = CrewMember & { sites: string[]; today: { project_id: string; present: boolean } | null; days: number; hours: number; earned: number };
+/** `here`: the sites they're marked on today; `marked`: whether anyone marked them at all today (on or off). */
+export type CrewLine = CrewMember & { sites: string[]; here: string[]; marked: boolean; days: number; hours: number; earned: number };
 
 const at = (d: string) => new Date(`${d}T00:00:00Z`);
 
@@ -22,17 +23,27 @@ export function crewWeek(crew: CrewMember[], links: Link[], attendance: Attendan
   const lines = crew.map((c) => {
     const mine = attendance.filter((a) => a.crew_id === c.id);
     const thisWeek = mine.filter((a) => week.has(a.day) && a.present);
-    const t = mine.find((a) => a.day === today && a.present) ?? mine.find((a) => a.day === today) ?? null;
+    const todays = mine.filter((a) => a.day === today);
     return {
       ...c,
       sites: links.filter((l) => l.crew_id === c.id).map((l) => l.project_id),
-      today: t ? { project_id: t.project_id, present: t.present } : null,
+      here: todays.filter((a) => a.present).map((a) => a.project_id),
+      marked: todays.length > 0,
       days: new Set(thisWeek.map((a) => a.day)).size,
       hours: thisWeek.reduce((s, a) => s + Number(a.hours), 0),
       earned: labourCost(thisWeek.map((a) => ({ present: true, hours: Number(a.hours), day_rate: c.day_rate }))),
     };
   });
   // on site today first, then by name
-  lines.sort((a, b) => Number(!!b.today?.present) - Number(!!a.today?.present) || a.name.localeCompare(b.name));
-  return { lines, onSite: lines.filter((l) => l.today?.present).length, earned: lines.reduce((s, l) => s + l.earned, 0) };
+  lines.sort((a, b) => Number(b.here.length > 0) - Number(a.here.length > 0) || a.name.localeCompare(b.name));
+  return { lines, onSite: lines.filter((l) => l.here.length).length, earned: lines.reduce((s, l) => s + l.earned, 0) };
+}
+
+/**
+ * The attendance changes for one tap on a site today: off it if they're there; otherwise onto it, and off any other
+ * site they're marked on today, so one worker never draws two days' pay for one day.
+ */
+export function tapSite(here: string[], site: string): { project_id: string; present: boolean }[] {
+  if (here.includes(site)) return [{ project_id: site, present: false }];
+  return [...here.map((s) => ({ project_id: s, present: false })), { project_id: site, present: true }];
 }

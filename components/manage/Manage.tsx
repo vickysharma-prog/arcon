@@ -7,7 +7,7 @@ import { Reveal } from "@/components/fx/Motion";
 import { ok, tick } from "@/components/fx/sfx";
 import { money, STATUS_LABEL, type FeeAction } from "@/lib/project/fees";
 import type { LedgerLine, LedgerTotals } from "@/lib/manage/ledger";
-import type { CrewLine } from "@/lib/manage/crew";
+import { tapSite, type CrewLine } from "@/lib/manage/crew";
 
 // Running the business across every project: the fee ledger, the crew's week, deliveries, and each site's money.
 // Every button goes through the project's own API, so the same checks apply as on the project itself.
@@ -28,13 +28,19 @@ function useAct() {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const act = async (key: string, url: string, body: unknown) => {
+  // one or more posts in order; stops at the first that fails
+  const act = async (key: string, ...calls: [url: string, body: unknown][]) => {
     tick();
     setBusy(key);
     setError(null);
-    const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
+    for (const [url, body] of calls) {
+      const res = await fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }).catch(() => null);
+      if (!res?.ok) {
+        setBusy(null);
+        return setError((await res?.json().catch(() => null))?.error ?? "That didn't go through. Try again.");
+      }
+    }
     setBusy(null);
-    if (!res?.ok) return setError((await res?.json().catch(() => null))?.error ?? "That didn't go through. Try again.");
     ok();
     router.refresh();
   };
@@ -116,7 +122,7 @@ export function FeeLedger({ lines, totals, pro }: { lines: LedgerLine[]; totals:
                   {l.actions.length ? (
                     <span className="flex flex-wrap gap-1.5">
                       {l.actions.map((a) => (
-                        <button key={a} disabled={!!busy} onClick={() => act(`${l.id}`, `/api/projects/${l.project_id}/fees/${l.id}`, { action: a })} className="glow-btn rounded-full px-3 py-1 text-xs disabled:opacity-60">
+                        <button key={a} disabled={!!busy} onClick={() => act(`${l.id}`, [`/api/projects/${l.project_id}/fees/${l.id}`, { action: a }])} className="glow-btn rounded-full px-3 py-1 text-xs disabled:opacity-60">
                           {busy === `${l.id}` ? "…" : ACTION[a]}
                         </button>
                       ))}
@@ -166,14 +172,14 @@ export function CrewBoard({ lines, sites, today, currency, onSite, earned }: { l
           <Reveal key={c.id} delay={0.03 * Math.min(i, 10)}>
             <li className={`${card} grid items-center gap-3 p-4 sm:grid-cols-[1fr_auto]`}>
               <div className="flex min-w-0 items-center gap-3">
-                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-serif text-lg ${c.today?.present ? "bg-leaf/15 text-leaf ring-2 ring-leaf/40" : "bg-paper text-ink-soft"}`}>{c.name[0]}</span>
+                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-full font-serif text-lg ${c.here.length ? "bg-leaf/15 text-leaf ring-2 ring-leaf/40" : "bg-paper text-ink-soft"}`}>{c.name[0]}</span>
                 <div className="min-w-0">
                   <p className="truncate font-medium">
                     {c.name}
                     {c.trade && <span className="ml-2 text-sm font-normal text-ink-soft">{c.trade}</span>}
                   </p>
                   <p className="truncate text-xs text-ink-soft">
-                    {c.today?.present ? <span className="text-leaf">● On site at {site.get(c.today.project_id)}</span> : c.today ? "Marked off today" : "Not marked today"}
+                    {c.here.length ? <span className="text-leaf">● On site at {c.here.map((s) => site.get(s)).join(", ")}</span> : c.marked ? "Marked off today" : "Not marked today"}
                     {" · "}
                     {c.days} day{c.days === 1 ? "" : "s"} this week · {money(c.earned, currency)} at {money(c.day_rate, currency)}/day
                   </p>
@@ -181,13 +187,13 @@ export function CrewBoard({ lines, sites, today, currency, onSite, earned }: { l
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {c.sites.map((s) => {
-                  const here = c.today?.present && c.today.project_id === s;
+                  const here = c.here.includes(s);
                   return (
                     <button
                       key={s}
                       disabled={!!busy}
-                      title={here ? "Mark off site today" : "Mark on site today"}
-                      onClick={() => act(`${c.id}-${s}`, `/api/projects/${s}/site`, { op: "attend", crew_id: c.id, day: today, present: !here })}
+                      title={here ? "Mark off site today" : c.here.length ? "Move here for today" : "Mark on site today"}
+                      onClick={() => act(`${c.id}-${s}`, ...tapSite(c.here, s).map((t): [string, unknown] => [`/api/projects/${t.project_id}/site`, { op: "attend", crew_id: c.id, day: today, present: t.present }]))}
                       className={`rounded-full border px-3 py-1 text-xs transition disabled:opacity-60 ${here ? "border-leaf/50 bg-leaf/10 text-leaf" : "border-line text-ink-soft hover:border-accent hover:text-accent"}`}
                     >
                       {busy === `${c.id}-${s}` ? "…" : `${here ? "✓ " : "+ "}${site.get(s) ?? "Site"}`}
@@ -201,7 +207,7 @@ export function CrewBoard({ lines, sites, today, currency, onSite, earned }: { l
         ))}
       </ul>
       <Problem text={error} />
-      <p className="mt-4 text-sm text-ink-soft">Tap a site to mark someone on site today (a full day). Hours, tasks and new workers are on each site&apos;s own page.</p>
+      <p className="mt-4 text-sm text-ink-soft">Tap a site to mark someone on site today (a full day); tapping another site moves them there. Hours, tasks and new workers are on each site&apos;s own page.</p>
     </>
   );
 }
@@ -255,7 +261,7 @@ export function Deliveries({ open, recent, low, currency }: { open: Order[]; rec
                   {o.cost > 0 && ` · ${money(o.cost, currency[o.project_id] ?? "USD")}`}
                 </p>
               </div>
-              <button disabled={!!busy} onClick={() => act(String(o.id), `/api/projects/${o.project_id}/site`, { op: "order.deliver", id: o.id })} className="glow-btn rounded-full px-4 py-1.5 text-xs disabled:opacity-60">
+              <button disabled={!!busy} onClick={() => act(String(o.id), [`/api/projects/${o.project_id}/site`, { op: "order.deliver", id: o.id }])} className="glow-btn rounded-full px-4 py-1.5 text-xs disabled:opacity-60">
                 {busy === String(o.id) ? "…" : "Mark delivered"}
               </button>
             </li>

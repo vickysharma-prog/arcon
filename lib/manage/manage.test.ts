@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ledger, OVERDUE_DAYS, type FeeRow } from "./ledger.ts";
-import { crewWeek, weekOf } from "./crew.ts";
+import { crewWeek, tapSite, weekOf } from "./crew.ts";
 
 const NOW = new Date("2026-10-20T12:00:00Z").getTime();
 const ago = (days: number) => new Date(NOW - days * 86_400_000).toISOString();
@@ -74,11 +74,18 @@ test("each worker's week: days on site, hours, and pay at their day rate", () =>
   assert.equal(ana.hours, 12);
   assert.equal(ana.earned, 360); // a full day and a half day
   assert.deepEqual(ana.sites, ["s1", "s2"]);
-  assert.deepEqual(ana.today, { project_id: "s2", present: true });
+  assert.deepEqual(ana.here, ["s2"]);
   const ben = lines.find((l) => l.name === "Ben")!;
-  assert.equal(ben.today?.present, false);
+  assert.deepEqual(ben.here, []);
+  assert.equal(ben.marked, true);
   assert.equal(ben.earned, 0);
   assert.equal(onSite, 1);
   assert.equal(earned, 360);
   assert.equal(lines[0].name, "Ana", "on site today leads");
+});
+
+test("a tap on another site moves the worker; a tap where they are takes them off", () => {
+  assert.deepEqual(tapSite([], "b"), [{ project_id: "b", present: true }]);
+  assert.deepEqual(tapSite(["a"], "b"), [{ project_id: "a", present: false }, { project_id: "b", present: true }]);
+  assert.deepEqual(tapSite(["b"], "b"), [{ project_id: "b", present: false }]);
 });

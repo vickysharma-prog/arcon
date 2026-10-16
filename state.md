@@ -35,6 +35,11 @@ last commit 110212a is live, 348 unit tests pass, tsc and the build are clean, a
   (FAQ), final call. Header: How it works, Taste, Features, Pricing, Resources; Get the app; Sign up free, or My
   projects when signed in.
 - **Signed in, "/" opens /home**; "/?site" shows the site itself.
+- **The app frame (16 Oct evening):** signed-in pages (app/(app): home, project, account, /pros, /pros/[id]) sit in a
+  sidebar layout: role tools in groups, the open project's parts as a tree, every project, profile bottom left, Ctrl+B
+  rail, phone drawer; search, Get the app and the bell top right. Home opens on the project last opened (?p=), and each
+  tool is a view (?view=waiting, inbox, all, pipeline, today, requests, fees, crew, deliveries, money). Fee ledger for
+  everyone; Crew & wages, Materials & deliveries and Site money for whoever runs sites. Guests keep the site header.
 - **Roles at sign-up (16 Oct, merged): Owner** (home or business; home page "My spaces"), **Architect or interior
   designer** ("Studio"), **Builder or contractor** ("Sites"). The kind of space on the project decides the business
   parts (opening day, neighbourhood read, $299).

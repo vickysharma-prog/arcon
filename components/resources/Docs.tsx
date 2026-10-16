@@ -60,18 +60,20 @@ const SECTIONS: Section[] = [
     title: "Your home page",
     body: (
       <>
-        <p>Once you sign in, Arcon opens on your own home page, laid out for how you use it. Every version starts with two things:</p>
+        <p>Once you sign in, Arcon works like an app: a sidebar on the left with your tools and every project, and the page on the right.</p>
         <Steps
           items={[
-            "A status line: how many projects are at each stage, and how many things are waiting on you.",
+            "The sidebar: your tools first (home, Waiting on you, Inbox), then your projects. The project in front of you opens out into its parts: overview, style, plans, 3D, changes, thread, site, budget, shopping, drawings and team, one click each. Your profile is at the bottom; Ctrl+B folds the sidebar to icons, and on a phone it slides in from the menu button.",
+            "Your home opens on the project you last had open: its plan drawing itself, View in 3D, where it stands, what's next and an estimate, and below it everything waiting on you.",
             "Waiting on you: a design to review, changes asked, a fee to pay or confirm, work running late on site, a plan to choose, new messages. The most urgent comes first; tap one to go straight there.",
+            "The bell: what happened on your projects. Each one is marked read when you open it, and takes you to the right place.",
           ]}
         />
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {[
             ["My spaces", "Owners, of a home or a business. Your newest project in focus: its plan drawing itself, View in 3D, where it stands, what's next and an estimate; for a café, office, shop or hotel, a countdown to opening day too."],
-            ["Studio", "Architects and designers. Fees billed and received, and every client in columns by stage."],
-            ["Sites", "Builders. Today on every site: how far along, the phase, who's on site, what's behind."],
+            ["Studio", "Architects and designers. Pipeline (every client in columns by stage), requests from owners, and the fee ledger: billed, to confirm, received and overdue."],
+            ["Sites", "Builders. Today on every site, Crew & wages (who's where, days and pay this week), Materials & deliveries (on the way, late, running low), Site money (budget against spend) and fees."],
           ].map(([t, d]) => (
             <div key={t} className="rounded-2xl border border-line bg-paper p-4">
               <p className="font-medium">{t}</p>
@@ -90,7 +92,7 @@ const SECTIONS: Section[] = [
       <>
         <Steps
           items={[
-            "Press Ctrl+K (⌘K on a Mac), or the search button at the top, to jump anywhere: a project, or one part of it such as its budget, thread, site or 3D. Type any words in any order, like \"austin budget\".",
+            "Press Ctrl+K (⌘K on a Mac), or the search box at the top right, to jump anywhere: a project, or one part of it such as its budget, thread, site or 3D. Type any words in any order, like \"austin budget\".",
             "Get the app, at the top of every page: on a phone it installs Arcon to your home screen; on a computer it shows a code to scan for your phone, and in Chrome or Edge installs Arcon in its own window.",
             "Arcon plays its opening each time you open it, and remembers your theme and sound settings (in the profile menu).",
           ]}
@@ -155,7 +157,7 @@ const SECTIONS: Section[] = [
     title: "For architects and designers",
     body: (
       <>
-        <p>Studio is your home page: fees billed and received, and every client in columns by stage, each with its plan and new messages.</p>
+        <p>Studio is your home: Pipeline lays every client out by stage, Requests holds owners asking for you, and the fee ledger shows every milestone across projects, with what's overdue.</p>
         <Steps
           items={[
             "New client: answer Let's get to know you together in a meeting, or send the client a link to answer at home.",
@@ -174,7 +176,7 @@ const SECTIONS: Section[] = [
     title: "For builders",
     body: (
       <>
-        <p>Sites is your home page: every active site with how far along it is, the phase, who&apos;s on site today and what&apos;s behind.</p>
+        <p>Sites is your home: today on every site, your crew&apos;s week and wages across sites, every delivery on the way, and each site&apos;s budget against what it has cost.</p>
         <Steps
           items={[
             "The phases come from the design's timeline, and the materials are taken off the approved plan.",

@@ -319,7 +319,7 @@ export function Workspace<P extends Project>({ p, tier, ticked, onProject, onDon
 
       {/* what the plan costs, takes and grows, after every change */}
       <ToScreen>
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-paper/90 backdrop-blur-md">
+      <div className="fixed bottom-0 right-0 left-[var(--shell-w,0px)] z-30 border-t border-line bg-paper/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3">
           <Stat label="Budget">
             {cost ? (

@@ -14,6 +14,7 @@ import { NewClient } from "@/components/account/NewClient";
 import { TeamPanel } from "@/components/project/TeamPanel";
 import { Decode } from "@/components/fx/Decode";
 import { tick, whoosh } from "@/components/fx/sfx";
+import { announcePart } from "./part";
 import { activeId, HOME_TITLE, projectTools, roleGroups, type Icon, type NavItem } from "@/lib/shell/nav";
 import { STAGES } from "@/lib/project/stage";
 import { ROLE_NAME } from "@/lib/project/access";
@@ -142,9 +143,7 @@ function Item({ item, active, onAction }: { item: NavItem; active: boolean; onAc
       aria-current={active ? "page" : undefined}
       onClick={() => {
         tick();
-        // On the project already open, tell its page too: a URL it rewrote itself doesn't always reach it as a change.
-        const [path, query] = item.href.split("?");
-        if (query && path === location.pathname) window.dispatchEvent(new CustomEvent("arcon:part", { detail: query }));
+        announcePart(item.href);
       }}
       className={cls}
     >

@@ -238,6 +238,11 @@ html.intro-seen .intro { display: none; }
 
 /* The signed-in sidebar: full, or folded to a rail of icons (html[data-rail="1"], wide screens only). */
 .shell-side { width: 17rem; }
+/* how much of the left edge the sidebar takes, for anything fixed to the bottom of the page */
+@media (min-width: 1024px) {
+  html:has(.shell-side) { --shell-w: 17rem; }
+  html[data-rail="1"]:has(.shell-side) { --shell-w: 4.5rem; }
+}
 html:not([data-rail="1"]) .shell-only-rail { display: none !important; }
 @media (max-width: 1023px) { .shell-only-rail { display: none !important; } }
 @media (min-width: 1024px) {

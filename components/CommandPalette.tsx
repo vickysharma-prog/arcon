@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { tick, transition } from "@/components/fx/sfx";
 import { matches, type PaletteItem } from "@/lib/home/palette";
+import { openPart } from "@/components/shell/part";
 
 // Ctrl+K (⌘K on a Mac): jump anywhere. Every project and each of its parts (style, plans, 3D, budget, thread,
 // site, files), and the app's own pages. Type a few letters of any of it; arrows and Enter, or tap.
@@ -79,7 +80,7 @@ export function CommandPalette({ variant = "header" }: { variant?: "header" | "b
   const go = (it: Item) => {
     transition();
     setOpen(false);
-    router.push(it.href);
+    openPart(router, it.href);
   };
 
   useEffect(() => {
