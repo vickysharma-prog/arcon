@@ -344,7 +344,7 @@ export function Audience() {
 // The size of what Arcon is for, each number with where it comes from.
 const MARKET = [
   { value: 518, prefix: "$", suffix: "B", what: "Americans' spending on improving their homes in 2026", source: "Harvard Joint Center for Housing Studies, LIRA, April 2026", href: "https://www.jchs.harvard.edu/press-releases/remodeling-growth-set-downshift-late-2026" },
-  { value: 24, prefix: "$", suffix: "K", what: "the median kitchen renovation in the US", source: "Houzz & Home Study, 2026", href: "https://www.houzz.com/magazine/11-things-to-know-about-home-renovations-today-stsetivw-vs~185079173" },
+  { value: 26, prefix: "", suffix: "M", what: "US homeowner households spent on improving their homes in 2023, almost 3 in 10 owners", source: "Harvard Joint Center for Housing Studies, Improving America's Housing 2025", href: "https://www.jchs.harvard.edu/improving-americas-housing-2025" },
 ];
 
 export function Market() {
