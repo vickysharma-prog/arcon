@@ -699,30 +699,48 @@ function Recenter({ layout, fitKey }: { layout: Layout; fitKey?: number }) {
   return null;
 }
 
+// One overlay for every room's label, each placed every frame where its room's centre lands on screen. (A drei <Html>
+// per label made a React root per room, and tearing them all down while leaving the 3D warned in development.)
 function RoomLabels({ layout, level }: { layout: Layout; level: number }) {
   const api = useBounds();
+  const { camera, size } = useThree();
   const floor = layout.floors.find((f) => f.level === level);
-  if (!floor) return null;
   const y = level * STOREY;
+  const spaces = useMemo(() => floor?.spaces.filter((s) => s.zone !== "circulation" || s.kind === "stairs") ?? [], [floor]);
+  const tags = useRef<(HTMLButtonElement | null)[]>([]);
+  const at = useMemo(() => new Vector3(), []);
+  useFrame(() => {
+    spaces.forEach((s, i) => {
+      const el = tags.current[i];
+      if (!el) return;
+      at.set(s.rect.x + s.rect.w / 2, y + 1.3, s.rect.y + s.rect.h / 2).project(camera);
+      // behind the camera or off the edge: hidden
+      const shown = at.z < 1 && Math.abs(at.x) < 1.05 && Math.abs(at.y) < 1.05;
+      el.style.visibility = shown ? "visible" : "hidden";
+      el.style.transform = `translate(-50%, -50%) translate(${((at.x + 1) / 2) * size.width}px, ${((1 - at.y) / 2) * size.height}px)`;
+    });
+  });
+  if (!floor) return null;
   return (
-    <>
-      {floor.spaces
-        .filter((s) => s.zone !== "circulation" || s.kind === "stairs")
-        .map((s) => (
-          <Html key={s.id} position={[s.rect.x + s.rect.w / 2, y + 1.3, s.rect.y + s.rect.h / 2]} center zIndexRange={[20, 0]}>
-            <button
-              onClick={() => {
-                const box = new Box3(new Vector3(s.rect.x, y, s.rect.y), new Vector3(s.rect.x + s.rect.w, y + WALL_H, s.rect.y + s.rect.h));
-                api.refresh(box).fit();
-                roomBell();
-              }}
-              className="whitespace-nowrap rounded-full border border-line bg-paper/90 px-3 py-1 text-xs font-medium text-ink shadow-sm backdrop-blur transition hover:bg-btn hover:text-btn-ink"
-            >
-              {s.name}
-            </button>
-          </Html>
-        ))}
-    </>
+    <Html fullscreen zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
+      {spaces.map((s, i) => (
+        <button
+          key={s.id}
+          ref={(el) => {
+            tags.current[i] = el;
+          }}
+          style={{ position: "absolute", left: 0, top: 0, pointerEvents: "auto", visibility: "hidden" }}
+          onClick={() => {
+            const box = new Box3(new Vector3(s.rect.x, y, s.rect.y), new Vector3(s.rect.x + s.rect.w, y + WALL_H, s.rect.y + s.rect.h));
+            api.refresh(box).fit();
+            roomBell();
+          }}
+          className="whitespace-nowrap rounded-full border border-line bg-paper/90 px-3 py-1 text-xs font-medium text-ink shadow-sm backdrop-blur transition-colors hover:bg-btn hover:text-btn-ink"
+        >
+          {s.name}
+        </button>
+      ))}
+    </Html>
   );
 }
 
