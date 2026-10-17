@@ -1,7 +1,10 @@
 // How a building site is doing: where each phase should be by today, the whole job's progress, what needs
 // attention, and what it has cost so far. Pure, so the builder, the client and the tests read the same numbers.
 
-export type PhaseRow = { id: number; key: string; name: string; start_date: string; end_date: string; status: "planned" | "active" | "done"; pct: number };
+export type PhaseRow = { id: number; key: string; name: string; start_date: string; end_date: string; status: "planned" | "active" | "done"; pct: number; signed_off_at?: string | null; signed_off_by?: string | null; signed_off_note?: string | null };
+
+/** Who visits and signs off the build's stages: the architect on the project, or an architect whose own project it is. */
+export const inspects = (role: string, mode: string, ownerKind: string | null) => role === "architect" || (role === "owner" && mode === "pro" && ownerKind === "architect");
 export type TaskRow = { id: number; title: string; due: string | null; status: "todo" | "doing" | "done"; phase_id: number | null };
 export type MaterialRow = { id: number; name: string; unit: string; needed: number; ordered: number; delivered: number; used: number; unit_cost: number; phase: string | null };
 export type Alert = { kind: "late" | "behind" | "overdue" | "stock" | "empty"; text: string };

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { dayIn, seedMaterials, seedPhases } from "./plan.ts";
-import { alertsFor, currentPhase, runsSite, withoutCosts, expectedPct, labourCost, overallPct, stockOf, type PhaseRow } from "./progress.ts";
+import { alertsFor, currentPhase, inspects, runsSite, withoutCosts, expectedPct, labourCost, overallPct, stockOf, type PhaseRow } from "./progress.ts";
 import { timeline } from "../budget/timeline.ts";
 import { estimate, marketOf } from "../budget/costs.ts";
 import { placeConcept } from "../layout/concepts.ts";
@@ -100,4 +100,13 @@ test("the client sees the budget and progress, not the builder's own costs", () 
   assert.deepEqual(seen.orders, [{ id: 1, qty: 218, supplier: "City Floors" }]);
   assert.deepEqual(seen.money, { budget: { low: 96241, high: 150376 }, currency: "USD" });
   assert.ok(!JSON.stringify(seen).includes("14944") && !JSON.stringify(seen).includes("120,"));
+});
+
+test("the architect visits and signs off stages: the architect on it, or an architect whose own project it is", () => {
+  assert.equal(inspects("architect", "owner", null), true);
+  assert.equal(inspects("owner", "pro", "architect"), true);
+  assert.equal(inspects("owner", "pro", "builder"), false);
+  assert.equal(inspects("builder", "pro", "architect"), false);
+  assert.equal(inspects("client", "pro", "architect"), false);
+  assert.equal(inspects("owner", "owner", null), false);
 });

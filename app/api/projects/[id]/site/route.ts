@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { remindToBill } from "@/lib/project/quote";
 import { accessTo, userOf } from "@/lib/auth/request";
-import { runsSite, withoutCosts } from "@/lib/site/progress";
+import { inspects, runsSite, withoutCosts } from "@/lib/site/progress";
 import { siteOf, startSite } from "@/lib/site/store";
 import { decides, nameOf, peopleOn, postEvent, inPersonClient } from "@/lib/project/thread";
 import { can } from "@/lib/project/access";
@@ -22,6 +22,8 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
   const today = Day.safeParse(new URL(request.url).searchParams.get("today")).data;
   const [site, people, approves, inPerson] = await Promise.all([siteOf(p, today), peopleOn(p), decides(p, a.role), inPersonClient(p, a.role)]);
   const runs = runsSite(a.role, p.mode, p.self_build, people.some((x) => x.role === "builder"));
+  const ownerKind = p.mode === "pro" && p.owner_id ? ((await db().from("profiles").select("role").eq("user_id", p.owner_id).maybeSingle()).data?.role ?? null) : null;
+  const inspector = inspects(a.role, p.mode, ownerKind);
   const roster = runs && me ? await db().from("crew").select("id, name, trade, phone, day_rate").eq("owner_id", me).eq("active", true).order("name").then((r) => r.data ?? []) : [];
   // What it takes to get building, for the screen before the site starts.
   const steps = {
@@ -33,7 +35,7 @@ export async function GET(request: Request, ctx: RouteContext<"/api/projects/[id
     selfBuild: !!p.self_build,
     inPerson,
   };
-  return Response.json({ site: site && !runs ? withoutCosts(site) : site, runs, status: p.status, roster, steps });
+  return Response.json({ site: site && !runs ? withoutCosts(site) : site, runs, inspects: inspector, status: p.status, roster, steps });
 }
 
 const Photo = z.object({ path: z.string().max(300), name: z.string().max(200), type: z.string().max(100), size: z.number().int().min(0).max(10_485_760) });
@@ -52,6 +54,8 @@ const Op = z.discriminatedUnion("op", [
   z.object({ op: z.literal("material.set"), id: Id, needed: z.number().min(0).max(1e9).optional(), used: z.number().min(0).max(1e9).optional() }),
   z.object({ op: z.literal("order.add"), material_id: Id, qty: z.number().positive().max(1e9), supplier: z.string().trim().max(80).optional(), cost: z.number().min(0).max(1e12).default(0), eta: Day.nullable().optional() }),
   z.object({ op: z.literal("order.deliver"), id: Id }),
+  z.object({ op: z.literal("visit"), note: z.string().trim().min(1).max(2000), visited_on: Day.optional() }),
+  z.object({ op: z.literal("signoff"), id: Id, note: z.string().trim().max(1000).optional() }),
   z.object({ op: z.literal("update"), note: z.string().trim().min(1).max(2000), phase_id: Id.nullable().optional(), pct: z.number().int().min(0).max(100).optional(), photos: z.array(Photo).max(8).default([]) }),
 ]);
 
@@ -70,6 +74,24 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
   if (o.op === "self") {
     if (a.role !== "owner") return bad("Only the owner decides who runs the build.", 403);
     await updateProject(id, { self_build: o.on });
+    return Response.json({ ok: true });
+  }
+  // the architect's part in the build: visits to the site, and signing off each finished stage
+  if (o.op === "visit" || o.op === "signoff") {
+    const ownerKind = p.mode === "pro" && p.owner_id ? ((await db().from("profiles").select("role").eq("user_id", p.owner_id).maybeSingle()).data?.role ?? null) : null;
+    if (!inspects(a.role, p.mode, ownerKind)) return bad("Only the architect visits and signs off the build.", 403);
+    const who = { id: me, name: await nameOf(me) };
+    if (o.op === "visit") {
+      await db().from("site_visits").insert({ project_id: id, author_id: me, author_name: who.name, note: o.note, ...(o.visited_on ? { visited_on: o.visited_on } : {}) });
+      await postEvent(p, who, { type: "visit", note: o.note }).catch(() => {});
+      return Response.json({ ok: true });
+    }
+    const { data: ph } = await db().from("site_phases").select("name, status, signed_off_at").eq("id", o.id).eq("project_id", id).maybeSingle();
+    if (!ph) return bad("not found", 404);
+    if (ph.status !== "done") return bad("A stage is signed off once it's finished.", 409);
+    if (ph.signed_off_at) return bad("This stage is already signed off.", 409);
+    await db().from("site_phases").update({ signed_off_at: new Date().toISOString(), signed_off_by: who.name, signed_off_note: o.note || null }).eq("id", o.id);
+    await postEvent(p, who, { type: "signoff", name: ph.name, note: o.note || null }).catch(() => {});
     return Response.json({ ok: true });
   }
   const builder = !!(await db().from("project_members").select("user_id").eq("project_id", id).eq("role", "builder").limit(1).maybeSingle()).data;

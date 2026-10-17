@@ -53,8 +53,8 @@ export type Site = Awaited<ReturnType<typeof siteOf>>;
 /** Everything about a site for one screen: phases, tasks, crew and today's attendance, materials and orders,
  *  photo updates, progress, money spent, and alerts. */
 export async function siteOf(p: Project, today = isoDay(new Date())) {
-  const [phases, tasks, crewLinks, materials, orders, updates, attendance] = await Promise.all([
-    must<PhaseRow[]>(db().from("site_phases").select("id, key, name, note, position, start_date, end_date, status, pct").eq("project_id", p.id).order("position")),
+  const [phases, tasks, crewLinks, materials, orders, updates, attendance, visits] = await Promise.all([
+    must<PhaseRow[]>(db().from("site_phases").select("id, key, name, note, position, start_date, end_date, status, pct, signed_off_at, signed_off_by, signed_off_note").eq("project_id", p.id).order("position")),
     must<(TaskRow & { crew_id: number | null })[]>(db().from("site_tasks").select("id, title, due, status, phase_id, crew_id").eq("project_id", p.id).order("created_at")),
     // The join returns one crew member per row (typed as a list by the client).
     must(db().from("site_crew").select("crew(id, name, trade, phone, day_rate, active)").eq("project_id", p.id)) as unknown as Promise<
@@ -68,6 +68,7 @@ export async function siteOf(p: Project, today = isoDay(new Date())) {
       db().from("site_updates").select("id, phase_id, author_name, note, pct, photos, created_at").eq("project_id", p.id).order("created_at", { ascending: false }).limit(50),
     ),
     must<{ crew_id: number; day: string; present: boolean; hours: number }[]>(db().from("attendance").select("crew_id, day, present, hours").eq("project_id", p.id)),
+    must<{ id: number; author_name: string; visited_on: string; note: string }[]>(db().from("site_visits").select("id, author_name, visited_on, note").eq("project_id", p.id).order("visited_on", { ascending: false }).limit(30)),
   ]);
   if (!phases.length) return null;
 
@@ -103,6 +104,7 @@ export async function siteOf(p: Project, today = isoDay(new Date())) {
     materials: mats,
     orders: ords,
     updates,
+    visits,
     money: { labour, materials: materialSpend, spent: labour + materialSpend, budget: siteBudget(est?.total ?? null, quoted), quoted: !!quoted, currency: est?.market.currency ?? "INR" },
     alerts: alertsFor({ phases, tasks, materials: mats, onSiteToday: todayRows.filter((a) => a.present).length, today }),
   };

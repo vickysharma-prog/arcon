@@ -10,7 +10,7 @@ import { money } from "@/lib/project/fees";
 import { expectedPct, stockOf } from "@/lib/site/progress";
 import { MoveIn } from "./MoveIn";
 
-type Phase = { id: number; key: string; name: string; note: string | null; start_date: string; end_date: string; status: "planned" | "active" | "done"; pct: number };
+type Phase = { id: number; key: string; name: string; note: string | null; start_date: string; end_date: string; status: "planned" | "active" | "done"; pct: number; signed_off_at?: string | null; signed_off_by?: string | null; signed_off_note?: string | null };
 type Task = { id: number; title: string; due: string | null; status: "todo" | "doing" | "done"; phase_id: number | null; crew_id: number | null };
 type Crew = { id: number; name: string; trade: string | null; phone: string | null; day_rate?: number };
 type Material = { id: number; name: string; unit: string; phase: string | null; needed: number; ordered: number; delivered: number; used: number; unit_cost?: number };
@@ -27,10 +27,11 @@ type Site = {
   materials: Material[];
   orders: Order[];
   updates: Update[];
+  visits?: { id: number; author_name: string; visited_on: string; note: string }[];
   money: { labour?: number; materials?: number; spent?: number; budget: { low: number; high: number } | null; quoted?: boolean; currency: string };
   alerts: { kind: string; text: string }[];
 };
-type Data = { site: Site | null; runs: boolean; status: string; roster: Crew[]; steps: Steps };
+type Data = { site: Site | null; runs: boolean; inspects?: boolean; status: string; roster: Crew[]; steps: Steps };
 
 const SECTIONS = [
   ["movein", "Move in"],
@@ -151,10 +152,15 @@ export function SiteView({ projectId, onStatus, onPlans, onTeam }: { projectId: 
         )}
         {at === "movein" && <MoveIn projectId={projectId} onStatus={onStatus} />}
         {at === "today" && <Today site={site} runs={runs} act={act} today={today} busy={busy} />}
-        {at === "phases" && <Phases site={site} runs={runs} act={act} busy={busy} />}
+        {at === "phases" && <Phases site={site} runs={runs} inspects={!!data.inspects} act={act} busy={busy} />}
         {at === "crew" && <CrewPanel site={site} runs={runs} roster={data.roster} act={act} today={today} busy={busy} />}
         {at === "materials" && <Materials site={site} runs={runs} act={act} busy={busy} />}
-        {at === "updates" && <Updates projectId={projectId} site={site} runs={runs} act={act} busy={busy} />}
+        {at === "updates" && (
+          <>
+            <Visits site={site} inspects={!!data.inspects} act={act} busy={busy} />
+            <Updates projectId={projectId} site={site} runs={runs} act={act} busy={busy} />
+          </>
+        )}
       </motion.div>
       {/* a save can take a few seconds: say so where it's seen */}
       <p aria-live="polite" className={`pointer-events-none fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full bg-btn px-4 py-2 text-sm text-btn-ink shadow-lg transition ${busy ? "opacity-100" : "opacity-0"}`}>
@@ -410,7 +416,7 @@ function TaskList({ tasks, site, runs, act, busy }: { tasks: Task[]; site: Site;
   );
 }
 
-function Phases({ site, runs, act, busy }: { site: Site; runs: boolean; act: Act; busy: boolean }) {
+function Phases({ site, runs, inspects, act, busy }: { site: Site; runs: boolean; inspects: boolean; act: Act; busy: boolean }) {
   const [adding, setAdding] = useState<number | null>(null);
   const [title, setTitle] = useState("");
   const [due, setDue] = useState("");
@@ -448,6 +454,20 @@ function Phases({ site, runs, act, busy }: { site: Site; runs: boolean; act: Act
                 <span className="text-xs text-ink-soft">{p.pct}%</span>
               )}
             </div>
+            {/* the architect's check of a finished stage */}
+            {p.status === "done" &&
+              (p.signed_off_at ? (
+                <p className="mt-2 text-sm text-leaf">
+                  ✓ Checked and signed off by {p.signed_off_by} · {short(p.signed_off_at.slice(0, 10))}
+                  {p.signed_off_note && <span className="text-ink-soft"> · &ldquo;{p.signed_off_note}&rdquo;</span>}
+                </p>
+              ) : inspects ? (
+                <button disabled={busy} onClick={() => act({ op: "signoff", id: p.id })} className="mt-2 rounded-full border border-leaf/50 px-3 py-1 text-xs text-leaf transition hover:bg-leaf/10 disabled:opacity-60">
+                  {busy ? "Saving…" : "Sign off this stage"}
+                </button>
+              ) : (
+                <p className="mt-2 text-xs text-ink-soft">Not signed off by the architect yet</p>
+              ))}
             {tasks.length > 0 && <TaskList tasks={tasks} site={site} runs={runs} act={act} busy={busy} />}
             {runs &&
               (adding === p.id ? (
@@ -819,5 +839,45 @@ export function SiteCard({ projectId, status, onOpen }: { projectId: string; sta
         </span>
       </span>
     </button>
+  );
+}
+
+// The architect's visits to the site: what they saw, on the record for everyone on the project.
+function Visits({ site, inspects, act, busy }: { site: Site; inspects: boolean; act: Act; busy: boolean }) {
+  const [note, setNote] = useState("");
+  const visits = site.visits ?? [];
+  if (!inspects && !visits.length) return null;
+  return (
+    <section className="mb-4 rounded-2xl border border-line bg-paper-raised p-4">
+      <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">Site visits</p>
+      {inspects && (
+        <form
+          className="mt-3 flex flex-wrap gap-2"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (note.trim() && (await act({ op: "visit", note: note.trim() }))) setNote("");
+          }}
+        >
+          <input value={note} onChange={(e) => setNote(e.target.value)} maxLength={2000} placeholder="What did you see on site today?" aria-label="Visit note" className="min-w-0 flex-1 rounded-full border border-line bg-paper px-4 py-2 text-sm outline-none focus:border-accent" />
+          <button disabled={busy || !note.trim()} className="glow-btn rounded-full px-5 py-2 text-sm disabled:opacity-60">
+            {busy ? "Saving…" : "Log the visit"}
+          </button>
+        </form>
+      )}
+      {visits.length > 0 ? (
+        <ul className="mt-3 space-y-2">
+          {visits.map((v) => (
+            <li key={v.id} className="rounded-xl bg-paper px-3 py-2 text-sm">
+              <span className="text-ink-soft">
+                {short(v.visited_on)} · {v.author_name}:
+              </span>{" "}
+              {v.note}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-2 text-sm text-ink-soft">No visits logged yet. Each one goes in the thread for the client and builder.</p>
+      )}
+    </section>
   );
 }
