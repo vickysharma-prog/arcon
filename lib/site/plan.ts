@@ -36,7 +36,7 @@ const WALL = 2.8; // metres of wall height that gets paint or tile
 const round = (n: number, to = 1) => Math.max(0, Math.round(n / to) * to);
 
 /** The main materials and how much of each, from the rooms in the plan. */
-export function seedMaterials(layout: Layout, est: Estimate, newBuild: boolean): SeedMaterial[] {
+export function seedMaterials(layout: Layout, est: Estimate, newBuild: boolean, units: "imperial" | "metric" = "metric"): SeedMaterial[] {
   const spaces = layout.floors.flatMap((f) => f.spaces).filter((s) => s.kind !== "void" && s.kind !== "stairs");
   const area = spaces.reduce((a, s) => a + s.rect.w * s.rect.h, 0);
   const walls = spaces.reduce((a, s) => a + 2 * (s.rect.w + s.rect.h) * WALL, 0);
@@ -64,5 +64,14 @@ export function seedMaterials(layout: Layout, est: Estimate, newBuild: boolean):
   add("Bathroom fittings", "sets", baths, each((c.bath ?? 0) * 0.75, baths), "joinery");
   add("Furniture pieces", "pieces", rooms.length * 3, each(c.furniture, rooms.length * 3), "furniture");
   add("Plants", "plants", rooms.length * 2, each(c.plants, rooms.length * 2), "plants");
-  return out;
+  return units === "imperial" ? out.map(toImperial) : out;
+}
+
+const PER: Record<string, [string, number]> = { "m²": ["sq ft", 10.7639], kg: ["lb", 2.20462] };
+/** A US site orders in sq ft and pounds: the same material, its quantity and unit price in those units. */
+export function toImperial(m: SeedMaterial): SeedMaterial {
+  const per = PER[m.unit];
+  if (!per) return m;
+  const [unit, f] = per;
+  return { ...m, unit, needed: Math.round(m.needed * f), unitCost: Math.round((m.unitCost / f) * 100) / 100 };
 }

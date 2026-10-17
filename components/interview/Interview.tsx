@@ -410,6 +410,7 @@ export function Interview() {
                         }}
                       />
                     )}
+                    {q.id === "city" && <CityLookup text={draft} onPick={(label) => answer(q.id, label)} />}
                     {q.kind === "taste" && own && (
                       <div className="mx-auto mt-4 max-w-lg">
                         <TasteLookup near={typeof answers.city === "string" ? answers.city : undefined} q={q} text={draft} say={say} onAnswer={(v) => answer(q.id, v)} />
@@ -758,5 +759,43 @@ function MicIcon() {
       <rect x="9" y="3" width="6" height="11" rx="3" />
       <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
     </svg>
+  );
+}
+
+// The city as the map knows it, with its country, as they type: one tap takes it, and a typo ("Delih") shows up as
+// somewhere else before the design is drawn for the wrong place.
+function CityLookup({ text, onPick }: { text: string; onPick: (label: string) => void }) {
+  const [places, setPlaces] = useState<string[] | null>(null);
+  const query = text.trim();
+  useEffect(() => {
+    setPlaces(null);
+    if (query.length < 3) return;
+    let live = true;
+    const t = setTimeout(async () => {
+      const res = await fetch(`/api/city?q=${encodeURIComponent(query)}`).catch(() => null);
+      const body = res?.ok ? ((await res.json()) as { places: string[] }) : { places: [] };
+      if (live) setPlaces(body.places);
+    }, 500);
+    return () => {
+      live = false;
+      clearTimeout(t);
+    };
+  }, [query]);
+  if (query.length < 3 || !places) return null;
+  return (
+    <div aria-live="polite" className="mx-auto mt-4 max-w-lg text-sm">
+      {places.length ? (
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <span className="text-ink-soft">On the map:</span>
+          {places.map((p) => (
+            <button key={p} type="button" onClick={() => (tick(), onPick(p))} className="rounded-full border border-line px-3 py-1 transition hover:border-accent hover:text-accent">
+              {p}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <p className="text-center text-ink-soft">That isn&apos;t on the map. Check the spelling, or add the state or country.</p>
+      )}
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { dayIn, seedMaterials, seedPhases } from "./plan.ts";
+import { dayIn, seedMaterials, seedPhases, toImperial } from "./plan.ts";
 import { alertsFor, currentPhase, inspects, runsSite, withoutCosts, expectedPct, labourCost, overallPct, stockOf, type PhaseRow } from "./progress.ts";
 import { timeline } from "../budget/timeline.ts";
 import { estimate, marketOf } from "../budget/costs.ts";
@@ -109,4 +109,13 @@ test("the architect visits and signs off stages: the architect on it, or an arch
   assert.equal(inspects("builder", "pro", "architect"), false);
   assert.equal(inspects("client", "pro", "architect"), false);
   assert.equal(inspects("owner", "owner", null), false);
+});
+
+test("a US site orders in sq ft and pounds, at the same total cost", () => {
+  const m = toImperial({ name: "Flooring", unit: "m²", needed: 100, unitCost: 50, phase: "finishes" });
+  assert.equal(m.unit, "sq ft");
+  assert.equal(m.needed, 1076);
+  assert.ok(Math.abs(m.needed * m.unitCost - 100 * 50) < 10);
+  assert.equal(toImperial({ name: "Steel", unit: "kg", needed: 10, unitCost: 2, phase: "structure" }).unit, "lb");
+  assert.equal(toImperial({ name: "Cement", unit: "bags", needed: 5, unitCost: 9, phase: "structure" }).unit, "bags");
 });

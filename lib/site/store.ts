@@ -40,7 +40,7 @@ export async function startSite(p: Project, start: Date) {
       .insert(phases.map((ph, i) => ({ project_id: p.id, key: ph.key, name: ph.name, note: ph.note, position: ph.position, start_date: ph.start, end_date: ph.end, status: i === 0 ? "active" : "planned" }))),
   );
   const est = estimate(layout, tier, marketOf(p.site?.location), nb, p.site?.location);
-  const mats = seedMaterials(layout, est, nb);
+  const mats = seedMaterials(layout, est, nb, p.site?.units ?? "metric");
   if (mats.length) await must(db().from("materials").insert(mats.map((m) => ({ project_id: p.id, name: m.name, unit: m.unit, phase: m.phase, needed: m.needed, unit_cost: m.unitCost }))));
   await updateProject(p.id, { status: "building" });
   return { first: phases[0]?.name ?? "the first phase", budget: est.total, currency: est.market.currency };
