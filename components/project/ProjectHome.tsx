@@ -228,6 +228,11 @@ export function Unlock({ p, role, onUnlocked, lead }: { p: Pick<Home, "id" | "sp
     setError(null);
     const res = await fetch(`/api/projects/${p.id}/unlock`, { method: "POST" });
     setBusy(false);
+    if (res.status === 401) {
+      // a guest signs in (their project comes with them), then lands back here to unlock
+      window.location.assign(`/login?next=${encodeURIComponent(window.location.pathname + window.location.search)}`);
+      return;
+    }
     if (!res.ok) return setError((await res.json().catch(() => ({}))).error ?? "Couldn't unlock. Please try again.");
     chime();
     // a moment to see it worked, then the project opens up
