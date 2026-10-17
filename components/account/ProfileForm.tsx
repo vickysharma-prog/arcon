@@ -165,7 +165,7 @@ export function ProfileForm({ initial, email, next, editing }: { initial: Profil
                 <>
                   <label className="grid gap-1.5 text-sm sm:col-span-2">
                     About your work <span className="text-xs text-ink-soft">Shown to clients looking for a {d.role === "architect" ? "designer" : "builder"}</span>
-                    <textarea maxLength={400} rows={2} value={d.about} onChange={(e) => set({ about: e.target.value })} className={input} placeholder="Warm, natural homes in Pune since 2015" />
+                    <textarea maxLength={400} rows={2} value={d.about} onChange={(e) => set({ about: e.target.value })} className={input} placeholder="Warm, natural homes in Austin since 2015" />
                   </label>
                   <label className="grid gap-1.5 text-sm">
                     Fees
