@@ -70,17 +70,21 @@ export async function kindredPlaces(likedIds: string[], decorTags: string[], tak
 }
 
 // Home and design brands matched to a set of liked entities, with why each one was picked.
+// Brands people know and can buy from (West Elm, CB2, One Kings Lane), still ranked by taste; the long tail only when
+// too few well-known ones match.
 export async function homeBrands(likedIds: string[], take = 25): Promise<Entity[]> {
   if (!likedIds.length) return [];
-  const brands = await insights({
-    "filter.type": "urn:entity:brand",
-    "filter.tags": "urn:tag:industry:qloo:interior_design",
-    "filter.popularity.max": 0.9,
-    "signal.interests.entities": likedIds.join(","),
-    "feature.explainability": true,
-    take,
-  });
-  return brands.filter(isHomeBrand);
+  const ask = (known: boolean) =>
+    insights({
+      "filter.type": "urn:entity:brand",
+      "filter.tags": "urn:tag:industry:qloo:interior_design",
+      ...(known ? { "filter.popularity.min": 0.8 } : {}),
+      "signal.interests.entities": likedIds.join(","),
+      "feature.explainability": true,
+      take,
+    }).then((b) => b.filter(isHomeBrand));
+  const known = await ask(true);
+  return known.length >= 6 ? known : [...known, ...(await ask(false)).filter((b) => !known.some((k) => k.entity_id === b.entity_id))];
 }
 
 /**

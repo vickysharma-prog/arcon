@@ -196,7 +196,7 @@ function NotStarted({ data, act, busy, error, review, onPlans, onTeam }: { data:
           )
         ) : !sent && s.canSend ? (
           <button onClick={() => review(s.approves && !s.inPerson ? "both" : "send")} disabled={busy} className={btn}>
-            {s.approves && !s.inPerson ? "Approve this design" : "Send for review"}
+            {busy ? "Saving…" : s.approves && !s.inPerson ? "Approve this design" : "Send for review"}
           </button>
         ) : (
           <p className="text-sm text-ink-soft">The design is being finished; it comes for review in the thread.</p>

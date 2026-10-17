@@ -115,7 +115,7 @@ function Form({ onClose }: { onClose: () => void }) {
           <div className="mt-5 grid gap-4">
             <label className="grid gap-1.5 text-sm">
               Client&apos;s name
-              <input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} className={input} placeholder="Priya Shah" autoFocus />
+              <input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} className={input} placeholder="Maya Chen" autoFocus />
             </label>
             <label className="grid gap-1.5 text-sm">
               What are you designing?
@@ -129,7 +129,7 @@ function Form({ onClose }: { onClose: () => void }) {
             </label>
             <label className="grid gap-1.5 text-sm">
               City
-              <input value={city} onChange={(e) => setCity(e.target.value)} maxLength={80} className={input} placeholder="Pune, Austin, London…" />
+              <input value={city} onChange={(e) => setCity(e.target.value)} maxLength={80} className={input} placeholder="Austin, Brooklyn, London…" />
             </label>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               <button onClick={() => create("now")} disabled={!!busy} className="glow-btn rounded-full px-4 py-3 text-sm disabled:opacity-60">

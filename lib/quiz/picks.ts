@@ -12,19 +12,23 @@ export const ROUNDS: { slot: Slot; types: string; ask: string; names: string[] }
     slot: "place",
     types: "urn:entity:place",
     ask: "Where would you happily spend a whole afternoon?",
-    names: ["Ace Hotel New York", "Soho House", "Blue Bottle Coffee", "The Taj Mahal Palace Mumbai", "Aman Tokyo", "Third Wave Coffee", "Chiltern Firehouse", "Rosewood Hong Kong"],
+    // famous places, each a clear look: industrial, old Hollywood, mid-century colour, modern glass, Japanese calm,
+    // Scandinavian home, minimal café, London classic
+    names: ["Ace Hotel New York", "Chateau Marmont", "Parker Palm Springs", "The Standard High Line", "Aman Tokyo", "Ett Hem", "Blue Bottle Coffee", "Chiltern Firehouse"],
   },
   {
     slot: "brand",
     types: "urn:entity:brand",
     ask: "Which brand would you fill your home with?",
-    names: ["Muji", "IKEA", "West Elm", "Pottery Barn", "HAY", "Anthropologie", "Aesop", "Kinfolk"],
+    // home brands people know, from Scandinavian and minimal to mid-century, classic, modern and boho
+    names: ["IKEA", "West Elm", "Pottery Barn", "Crate & Barrel", "CB2", "Design Within Reach", "Anthropologie", "Muji"],
   },
   {
     slot: "media",
-    types: "urn:entity:movie,urn:entity:artist",
+    types: "urn:entity:movie,urn:entity:tv_show,urn:entity:artist",
     ask: "What could you watch or play again and again?",
-    names: ["Interstellar", "The Grand Budapest Hotel", "Amélie", "Spirited Away", "Norah Jones", "A. R. Rahman", "In the Mood for Love", "Coldplay"],
+    // films, shows and music with a strong look or mood
+    names: ["Mad Men", "The Grand Budapest Hotel", "Interstellar", "Amélie", "Call Me by Your Name", "Spirited Away", "Norah Jones", "Daft Punk"],
   },
 ];
 

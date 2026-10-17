@@ -118,7 +118,8 @@ export function suggestions(layout: Layout): string[] {
   if (kitchen) out.push(`Make the ${kitchen.name.toLowerCase()} bigger`);
   if (!home) out.push(rooms.some((r) => r.kind === "meeting") ? "Add a store room" : "Add a meeting room");
   else if (!rooms.some((r) => r.kind === "office")) out.push("Add a study");
-  else out.push("Add a guest room");
+  else if (!rooms.some((r) => r.kind === "guest-room")) out.push("Add a guest room");
+  else out.push("Add a bathroom");
   if (kitchen) out.push(kitchen.open === false ? "Open up the kitchen" : "Give the kitchen its own room");
   if (biggest && biggest !== kitchen) out.push(`Make the ${biggest.name.toLowerCase()} smaller`);
   return out.slice(0, 4);

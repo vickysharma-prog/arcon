@@ -128,7 +128,7 @@ export function ProfileForm({ initial, email, next, editing }: { initial: Profil
               )}
               <label className="grid gap-1.5 text-sm">
                 City
-                <input maxLength={80} value={d.city} onChange={(e) => set({ city: e.target.value })} className={input} placeholder="Pune, Austin, London…" />
+                <input maxLength={80} value={d.city} onChange={(e) => set({ city: e.target.value })} className={input} placeholder="Austin, Brooklyn, London…" />
               </label>
               <fieldset className="grid gap-1.5 text-sm">
                 <legend className="mb-1.5">Units</legend>

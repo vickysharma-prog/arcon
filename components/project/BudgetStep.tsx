@@ -50,7 +50,8 @@ export function BudgetStep({ tier, onTier, id, layout, location, interview, brie
   const market = MARKETS.find((m) => m.id === marketId) ?? marketOf(location);
   const newBuild = isNewBuild({ interview });
   const said = Object.values((interview?.budget ?? {}) as Record<string, unknown>).filter((v) => typeof v === "string" || typeof v === "number");
-  const active = tier ?? projectTier({ interview }, taste?.tier ?? null);
+  const start = projectTier({ interview }, taste?.tier ?? null);
+  const active = tier ?? start;
   // The region (London, Mumbai, the US Northeast) counts only when costing the site's own market.
   const e = useMemo(() => estimate(layout, active, market, newBuild, marketId ? null : location), [layout, active, market, newBuild, marketId, location]);
   const cats = (Object.entries(e.byCategory) as [Category, number][]).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
@@ -98,7 +99,7 @@ export function BudgetStep({ tier, onTier, id, layout, location, interview, brie
           </div>
         ) : taste.signals.length ? (
           <p className="mt-2 text-sm">
-            We started at <strong>{TIER_NAMES[taste.tier].toLowerCase()}</strong> because you love{" "}
+            Your taste points to <strong>{TIER_NAMES[taste.tier].toLowerCase()}</strong>: you love{" "}
             {taste.signals.map((s, i) => (
               <span key={s.name}>
                 {i > 0 && (i === taste.signals.length - 1 ? " and " : ", ")}
@@ -110,7 +111,12 @@ export function BudgetStep({ tier, onTier, id, layout, location, interview, brie
         ) : (
           <p className="mt-2 text-sm text-ink-soft">Nothing you love tells us a price level, so we started at mid-range.</p>
         )}
-        {said.length > 0 && <p className="mt-1 text-sm text-ink-soft">You told us: {said.join(", ")}.</p>}
+        {/* the estimate starts at the quality they told us, when they told us one */}
+        {said.length > 0 && start !== taste?.tier && (
+          <p className="mt-1 text-sm text-ink-soft">
+            You told us <strong>{TIER_NAMES[start].toLowerCase()}</strong>, so the estimate starts there. Pick another quality any time.
+          </p>
+        )}
         <div role="radiogroup" aria-label="Quality tier" className="mt-4 flex flex-wrap gap-2">
           {TIERS.map((t) => (
             <motion.button
