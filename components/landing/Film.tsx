@@ -17,7 +17,8 @@ export function Film() {
     <section id="film" className="mx-auto max-w-5xl scroll-mt-24 px-4 py-20 sm:px-8">
       <Reveal className="mx-auto max-w-2xl text-center">
         <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent">See it in 30 seconds</p>
-        <h2 className="mt-3 font-serif text-4xl leading-tight sm:text-5xl">A family house in Los Angeles, from first tap to moving in.</h2>
+        <h2 className="mt-3 font-serif text-4xl leading-tight sm:text-5xl">Every side of it: homeowner, café owner, architect, client and builder.</h2>
+        <p className="mt-4 text-lg text-ink-soft">A real run of Arcon on a family house in Los Angeles, from three taps to moving in.</p>
       </Reveal>
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -33,7 +34,7 @@ export function Film() {
           <span className="h-2.5 w-2.5 rounded-full bg-line" />
           <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">arcon · the los angeles house</span>
         </div>
-        <video ref={video} src={`${BASE}/arcon-30s.mp4`} poster={`${BASE}/arcon-30s.jpg`} muted loop playsInline controls preload="metadata" onError={() => setGone(true)} className="block aspect-video w-full bg-paper" aria-label="A 30-second film of Arcon designing a family house in Los Angeles" />
+        <video ref={video} src={`${BASE}/arcon-30s.mp4`} poster={`${BASE}/arcon-30s.jpg`} muted loop playsInline controls preload="metadata" onError={() => setGone(true)} className="block aspect-video w-full bg-paper" aria-label="A 30-second film of Arcon from every side: homeowner, café owner, architect, client and builder" />
       </motion.div>
     </section>
   );

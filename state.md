@@ -68,6 +68,11 @@ last commit 110212a is live, 348 unit tests pass, tsc and the build are clean, a
 famous names with a clear look each, sign-in is asked for at unlock (try first, sign in to keep: Vicky's decision).
 All pushed and live; live checks pass.
 
+17 Oct (evening): For pros redesigned (AI vs Manage, a live screen per capability, links into Resources#architects
+and #builders, which now explain everything in depth). The 30-second film is recorded from every role
+(scripts/record-video.ts, re-run any time) and plays on the landing page from Supabase storage (bucket "media",
+public), never from the repo. Pricing: Vicky wants to brainstorm it next.
+
 Open for Vicky: US demo pros with work (data in the live database), the site materials list in m² and kg on US
 projects, whether to keep the eve interviewer agent (mounted at /eve/interviewer, nothing in the app calls it now),
 and what else she wants on the landing page.

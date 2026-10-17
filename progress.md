@@ -2,6 +2,18 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-17 (evening): For pros, the film, the playlist
+
+- For pros (Vicky): an AI design partner and the software to run every project, shown capability by capability
+  (each tagged AI or Manage) on a live screen, for architects and builders; "Everything … can do" opens the in-depth
+  Resources section for each.
+- The 30-second film, from every role: homeowner (picks, plans, 3D, change by chat), café owner, architect, client,
+  builder, move-in. Recorded by scripts/record-video.ts (each beat waits for its page; ffmpeg joins and fits 30 s),
+  uploaded by scripts/upload-video.ts to the public "media" bucket; the landing page plays it muted when in view.
+- Found in recording: the walk's playlist gave Russian pop for a Los Angeles house. It now leans to well-known
+  artists heard where the client lives.
+- Next: pricing brainstorm with Vicky.
+
 ## 2026-10-17 (afternoon): Re-check, landing page, taste picks, sign-in at unlock
 
 - Re-check of every journey in Chrome on the local build: all pass. Fixed on the way: the budget's "we started at
