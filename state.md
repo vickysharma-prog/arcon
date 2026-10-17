@@ -41,7 +41,7 @@ P7 app, the flow-audit items). What remains, in order:
 6. **F1 quality, the rest:** adversarial tests of the agents, speed pass, full eval re-run (after item 1).
 7. **C2b photoreal renders,** 28 to 29 Oct, on about $10 of Gemini credit from Vicky.
 8. **F2 submission:** polish, the submission video with voiceover, submission text with the business story
-   (sourced numbers, pricing, roadmap), scrub `private/` and Qloo data from
+   (sourced numbers, pricing, roadmap), scrub `private/`, Qloo data and the old tool-name lines in state.md (16 to 17 Oct commits) from
    the whole history (filter-branch, keep the day-by-day commits), make the repo public with the MIT licence,
    submit on Devpost before 30 Oct 11:45pm ET.
 
