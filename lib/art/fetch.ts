@@ -35,7 +35,12 @@ async function galleries(p: Project, liked: string[]) {
 async function playlist(p: Project) {
   const signals = playlistSignals(p.taste_signals);
   if (!signals.length) return [];
-  const artists = await insights({ "filter.type": "urn:entity:artist", "signal.interests.entities": signals.join(","), "filter.popularity.min": 0.5, take: 6 }).catch(() => []);
+  // well-known artists, leaning toward what's heard where they live (a house in Los Angeles shouldn't get a
+  // playlist of Russian pop because of one hotel)
+  const ask = (near: boolean) =>
+    insights({ "filter.type": "urn:entity:artist", "signal.interests.entities": signals.join(","), "filter.popularity.min": 0.8, ...(near && p.site.location ? { "signal.location.query": p.site.location } : {}), take: 10 }).catch(() => []);
+  const near = await ask(true);
+  const artists = (near.length ? near : await ask(false)).filter((a) => !/[\u0400-\u04FF]/.test(a.name)).slice(0, 6);
   return artists.map((a) => ({ name: a.name, image: a.properties?.image?.url ?? null, listen: listenAt(a.name) }));
 }
 
