@@ -179,6 +179,8 @@ async function HomePageBody({ searchParams }: { searchParams: Promise<Record<str
 // What's waiting on this person, most urgent first.
 const KIND: Record<Wait["kind"], { mark: string; tone: string }> = {
   request: { mark: "Asked", tone: "text-accent border-accent/40 bg-accent/5" },
+  quote: { mark: "Quote", tone: "text-accent border-accent/40 bg-accent/5" },
+  bill: { mark: "Bill", tone: "text-leaf border-leaf/40 bg-leaf/5" },
   review: { mark: "Review", tone: "text-accent border-accent/40 bg-accent/5" },
   change: { mark: "Change", tone: "text-amber-600 border-amber-500/40 bg-amber-500/5" },
   handover: { mark: "Move in", tone: "text-leaf border-leaf/40 bg-leaf/5" },

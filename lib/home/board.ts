@@ -39,16 +39,20 @@ export async function boardFor(userId: string, projects: BoardProject[], day?: s
   const ids = projects.slice(0, 40).map((p) => p.id);
   if (!ids.length) return { sketches: {}, unread: {}, sites: [], waits: [], money: { billed: null, received: null }, focus: null };
 
-  const [versions, approvals, fees, clients, sites, snags, unreadList] = await Promise.all([
+  const [versions, approvals, fees, clients, sites, snags, unreadList, quotes, phasesDone] = await Promise.all([
     // the light board needs only the version numbers (for changes waiting), not the plans
     db().from("project_versions").select(light ? "project_id, version" : "project_id, version, layout").in("project_id", ids).order("version", { ascending: false }),
     db().from("approvals").select("project_id, decision, version, created_at").in("project_id", ids).order("created_at", { ascending: false }),
-    db().from("milestones").select("project_id, label, amount, currency, status, created_by").in("project_id", ids).order("position"),
+    db().from("milestones").select("project_id, label, amount, currency, status, created_by, phase").in("project_id", ids).order("position"),
     db().from("project_members").select("project_id, role").in("project_id", ids).in("role", ["client", "builder"]),
     sitesToday(projects.filter((p) => p.status === "building").map((p) => p.id), day),
     db().from("snags").select("project_id, status").in("project_id", ids).neq("status", "closed"),
     Promise.all(ids.slice(0, 20).map(async (id) => [id, await unreadCount(id, userId).catch(() => 0)] as const)),
+    db().from("quotes").select("project_id").in("project_id", ids).eq("status", "sent"),
+    db().from("site_phases").select("project_id, key").in("project_id", ids).eq("status", "done"),
   ]);
+  const quoting = new Set(((quotes.data ?? []) as { project_id: string }[]).map((q) => q.project_id));
+  const finished = new Set(((phasesDone.data ?? []) as { project_id: string; key: string }[]).map((x) => `${x.project_id}:${x.key}`));
 
   // the latest saved version of each design, or else the chosen plan
   const layouts = new Map<string, Layout>();
@@ -77,7 +81,7 @@ export async function boardFor(userId: string, projects: BoardProject[], day?: s
   const unread = Object.fromEntries(unreadList);
   // A pro's fees are their own milestones (another pro on the project bills separately); a payer sees all they owe.
   const sideIn = new Map(projects.map((p) => [p.id, sideOf(p.role, p.mode as "owner" | "pro")]));
-  const feeRows = ((fees.data ?? []) as { project_id: string; label: string; amount: number; currency: string; status: string; created_by: string }[]).filter(
+  const feeRows = ((fees.data ?? []) as { project_id: string; label: string; amount: number; currency: string; status: string; created_by: string; phase: string | null }[]).filter(
     (f) => sideIn.get(f.project_id) !== "pro" || f.created_by === userId,
   );
 
@@ -96,6 +100,11 @@ export async function boardFor(userId: string, projects: BoardProject[], day?: s
       snagsToFix: (p.role === "builder" || (p.role === "owner" && p.mode === "pro" && !withBuilder.has(p.id))) ? snagRows.filter((s) => s.project_id === p.id && s.status === "open").length : 0,
       snagsToCheck: snagRows.filter((s) => s.project_id === p.id && s.status === "fixed").length,
       changePending: (p.status === "approved" || p.status === "building") && approvedV.has(p.id) && (latestV.get(p.id) ?? 0) > approvedV.get(p.id)!,
+      quotePending: quoting.has(p.id),
+      // a planned fee tied to a finished phase (or to the handover, once moved in), for the pro who set it out
+      toBill: feeRows
+        .filter((f) => f.project_id === p.id && f.status === "planned" && f.created_by === userId && f.phase && (finished.has(`${p.id}:${f.phase}`) || (f.phase === "handover" && p.status === "done") || f.phase === "start"))
+        .map((f) => ({ label: f.label, amount: money(Number(f.amount), f.currency) })),
       unread: unread[p.id] ?? 0,
       late: sites.find((s) => s.id === p.id)?.late ?? 0,
       fees: feeRows.filter((f) => f.project_id === p.id).map((f) => ({ label: f.label, status: f.status, amount: money(Number(f.amount), f.currency) })),

@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../supabase/admin.ts";
+import { acceptedQuotes, siteBudget } from "../project/quote.ts";
 import { timeline } from "../budget/timeline.ts";
 import { estimate, isNewBuild, marketOf, projectTier, type Tier } from "../budget/costs.ts";
 import { latestVersion, updateProject, type Project } from "../project/store.ts";
@@ -89,6 +90,8 @@ export async function siteOf(p: Project, today = isoDay(new Date())) {
   const materialSpend = Math.round(ords.reduce((s, o) => s + o.cost, 0));
   const layout = await approvedLayout(p);
   const est = layout ? estimate(layout, tierOf(p), marketOf(p.site?.location), newBuildOf(p), p.site?.location) : null;
+  // the builder's accepted quote is the budget, not Arcon's estimate
+  const quoted = (await acceptedQuotes([p.id])).get(p.id) ?? null;
   return {
     today,
     phases,
@@ -100,7 +103,7 @@ export async function siteOf(p: Project, today = isoDay(new Date())) {
     materials: mats,
     orders: ords,
     updates,
-    money: { labour, materials: materialSpend, spent: labour + materialSpend, budget: est?.total ?? null, currency: est?.market.currency ?? "INR" },
+    money: { labour, materials: materialSpend, spent: labour + materialSpend, budget: siteBudget(est?.total ?? null, quoted), quoted: !!quoted, currency: est?.market.currency ?? "INR" },
     alerts: alertsFor({ phases, tasks, materials: mats, onSiteToday: todayRows.filter((a) => a.present).length, today }),
   };
 }

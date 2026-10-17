@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { remindToBill } from "@/lib/project/quote";
 import { accessTo, userOf } from "@/lib/auth/request";
 import { runsSite, withoutCosts } from "@/lib/site/progress";
 import { siteOf, startSite } from "@/lib/site/store";
@@ -84,6 +85,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
       try {
         const s = await startSite(p, new Date(`${o.start}T00:00:00Z`));
         await postEvent(p, who, { type: "site", what: "started", name: s.first }).catch(() => {});
+        await remindToBill(p, "start", "The site has started").catch(() => {});
       } catch (e) {
         return bad(e instanceof Error ? e.message : "Couldn't start the site.", 409);
       }
@@ -98,9 +100,10 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
         patch.pct = o.pct;
         patch.status = o.pct >= 100 ? "done" : o.pct > 0 ? "active" : "planned";
       }
-      const { data: ph } = await db().from("site_phases").update(patch).eq("id", o.id).select("name, status").single();
+      const { data: ph } = await db().from("site_phases").update(patch).eq("id", o.id).select("key, name, status").single();
       if (ph?.status === "done") {
         await postEvent(p, who, { type: "site", what: "phase", name: ph.name }, true).catch(() => {});
+        await remindToBill(p, ph.key, `${ph.name} is done`).catch(() => {});
         // The next phase starts; when none is left, the build is finished and the handover begins (moving in is
         // the client's acceptance, in the Move in section).
         const { data: rest } = await db().from("site_phases").select("id, status").eq("project_id", id).neq("status", "done").order("position").limit(1);

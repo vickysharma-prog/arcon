@@ -53,3 +53,13 @@ export async function acceptedQuotes(projectIds: string[]): Promise<Map<string, 
   for (const q of data ?? []) if (!out.has(q.project_id)) out.set(q.project_id, { amount: Number(q.amount), currency: q.currency });
   return out;
 }
+
+/** A phase has finished (or the client moved in: "handover"): remind whoever set out a fee due on it to bill it. */
+/** `lead`: what just happened, "Foundations and structure is done". */
+export async function remindToBill(p: { id: string; title: string | null }, phase: string, lead: string) {
+  const { data } = await db().from("milestones").select("label, amount, currency, created_by").eq("project_id", p.id).eq("phase", phase).eq("status", "planned");
+  for (const m of data ?? []) {
+    const amount = new Intl.NumberFormat("en-US", { style: "currency", currency: m.currency, maximumFractionDigits: 0 }).format(Number(m.amount));
+    await db().from("events").insert({ user_id: m.created_by, project_id: p.id, kind: "fee", data: { project: p.title, text: `${lead} on ${p.title ?? "the project"}: time to bill ${m.label} (${amount}).` } });
+  }
+}

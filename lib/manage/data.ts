@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "../supabase/admin.ts";
+import { acceptedQuotes, siteBudget } from "../project/quote.ts";
 import { getProject } from "../project/store.ts";
 import { runsSite, alertsFor, labourCost, overallPct, type MaterialRow, type PhaseRow } from "../site/progress.ts";
 import { approvedLayout, newBuildOf, tierOf } from "../site/store.ts";
@@ -110,6 +111,7 @@ export async function moneyOf(sites: RunSite[]) {
     Promise.all(ids.map((id) => getProject(id).catch(() => null))),
   ]);
   const rate = new Map(crewLinks.flatMap((l) => (l.crew ? [[l.crew.id, Number(l.crew.day_rate)] as const] : [])));
+  const quotes = await acceptedQuotes(ids);
   return Promise.all(
     sites.map(async (s, i) => {
       const p = projects[i];
@@ -123,7 +125,8 @@ export async function moneyOf(sites: RunSite[]) {
         ...s,
         currency: est?.market.currency ?? s.currency,
         progress: overallPct(phases.filter((x) => x.project_id === s.id).map((x) => ({ ...x, pct: Number(x.pct) }))),
-        budget: est?.total ?? null,
+        budget: siteBudget(est?.total ?? null, quotes.get(s.id) ?? null),
+        quoted: quotes.has(s.id),
         labour,
         materials,
         spent: labour + materials,

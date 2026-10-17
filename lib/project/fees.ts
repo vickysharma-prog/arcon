@@ -30,18 +30,19 @@ export function actionsFor(status: FeeStatus, side: FeeSide): FeeAction[] {
 export type ProKind = "architect" | "builder";
 
 /** How each kind of pro is usually paid: an architect by design stage, a builder by stage of the build. */
-export const SPLITS: Record<ProKind, { label: string; share: number }[]> = {
+// `phase`: the site phase a fee falls due on ("start" when the site starts, "handover" on moving in).
+export const SPLITS: Record<ProKind, { label: string; share: number; phase?: string }[]> = {
   architect: [
     { label: "Design", share: 0.3 },
     { label: "Approval of the final design", share: 0.4 },
     { label: "Handover", share: 0.3 },
   ],
   builder: [
-    { label: "Deposit", share: 0.1 },
-    { label: "Foundations and structure", share: 0.3 },
-    { label: "Electrical and plumbing", share: 0.2 },
-    { label: "Finishes", share: 0.3 },
-    { label: "Handover", share: 0.1 },
+    { label: "Deposit", share: 0.1, phase: "start" },
+    { label: "Foundations and structure", share: 0.3, phase: "structure" },
+    { label: "Electrical and plumbing", share: 0.2, phase: "services" },
+    { label: "Finishes", share: 0.3, phase: "finishes" },
+    { label: "Handover", share: 0.1, phase: "handover" },
   ],
 };
 
@@ -49,11 +50,37 @@ export const SPLITS: Record<ProKind, { label: string; share: number }[]> = {
 export const splitWords = (kind: ProKind) => SPLITS[kind].map((p) => `${p.label.toLowerCase()} (${Math.round(p.share * 100)}%)`).join(", ");
 
 /** A common split of a total fee for this kind of pro. Rounds so the parts add up to the total. */
-export function standardSplit(total: number, kind: ProKind = "architect"): { label: string; amount: number }[] {
+export function standardSplit(total: number, kind: ProKind = "architect"): { label: string; amount: number; phase?: string }[] {
   const parts = SPLITS[kind];
-  const out = parts.map((p) => ({ label: p.label, amount: Math.round(total * p.share) }));
+  const out = parts.map((p) => ({ label: p.label, amount: Math.round(total * p.share), ...(p.phase ? { phase: p.phase } : {}) }));
   out[out.length - 1].amount += Math.round(total) - out.reduce((s, p) => s + p.amount, 0);
   return out;
+}
+
+/**
+ * A builder's fee split by the site's own phases: a 10% deposit when the site starts, 80% across the phases in
+ * proportion to how long each runs, and 10% on handover. Each part falls due as its phase finishes. Rounds so the
+ * parts add up to the total.
+ */
+export function phaseSplit(total: number, phases: { key: string; name: string; days: number }[]): { label: string; amount: number; phase: string }[] {
+  if (!phases.length) return standardSplit(total, "builder").map((p) => ({ ...p, phase: p.phase ?? "start" }));
+  const days = phases.reduce((n, p) => n + Math.max(1, p.days), 0);
+  const out = [
+    { label: "Deposit", amount: Math.round(total * 0.1), phase: "start" },
+    ...phases.map((p) => ({ label: p.name, amount: Math.round((total * 0.8 * Math.max(1, p.days)) / days), phase: p.key })),
+    { label: "Handover", amount: 0, phase: "handover" },
+  ];
+  out[out.length - 1].amount = Math.round(total) - out.reduce((s, p) => s + p.amount, 0);
+  return out;
+}
+
+/** In words, when a fee falls due: "when the site starts", "when Electrical and plumbing finishes", "on handover". */
+export function dueWhen(phase: string | null | undefined, phases: { key: string; name: string }[]): string | null {
+  if (!phase) return null;
+  if (phase === "start") return "when the site starts";
+  if (phase === "handover") return "on handover";
+  const p = phases.find((x) => x.key === phase);
+  return p ? `when ${p.name} finishes` : null;
 }
 
 export const STATUS_LABEL: Record<FeeStatus, string> = { planned: "Planned", billed: "Billed", claimed: "Paid, to confirm", received: "Received" };

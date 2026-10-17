@@ -15,7 +15,10 @@ export type ThreadEvent =
   | { type: "handover"; to: string }
   | { type: "movein"; what: "snag" | "fixed" | "closed" | "reopened" | "pack" | "moved"; note?: string | null; for?: string | null }
   | { type: "change"; what: "asked" | "approved" | "declined"; version: number; cost?: string; note?: string | null; for?: string | null }
-  | { type: "site"; what: "started" | "phase" | "update" | "finished"; name?: string; pct?: number; note?: string };
+  | { type: "site"; what: "started" | "phase" | "update" | "finished"; name?: string; pct?: number; note?: string }
+  | { type: "quote"; what: "sent" | "accepted" | "declined"; amount: string; against?: string; note?: string | null; for?: string | null }
+  | { type: "visit"; note: string }
+  | { type: "signoff"; name: string; note?: string | null };
 
 /** One line for the thread: "Priya approved version 3." */
 export function eventText(e: ThreadEvent, who: string): string {
@@ -77,6 +80,18 @@ export function eventText(e: ThreadEvent, who: string): string {
     }
     case "handover":
       return `${who} handed the project over to ${e.to}, who now runs it. ${who} stays on as the client.`;
+    case "quote": {
+      const by = e.for ? `${e.for} (in person, recorded by ${who})` : who;
+      return e.what === "sent"
+        ? `${who} sent a quote for the build: ${e.amount}${e.against ? `, ${e.against}` : ""}.${e.note ? ` "${e.note}"` : ""}`
+        : e.what === "accepted"
+          ? `${by} accepted the quote (${e.amount}). It's the site's budget now.`
+          : `${by} declined the quote (${e.amount}).${e.note ? ` "${e.note}"` : ""}`;
+    }
+    case "visit":
+      return `${who} visited the site: ${e.note}`;
+    case "signoff":
+      return `${who} checked and signed off ${e.name}.${e.note ? ` "${e.note}"` : ""}`;
   }
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { QuoteCard } from "./QuoteCard";
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Scanning, Bar } from "@/components/fx/Motion";
@@ -26,7 +27,7 @@ type Site = {
   materials: Material[];
   orders: Order[];
   updates: Update[];
-  money: { labour?: number; materials?: number; spent?: number; budget: { low: number; high: number } | null; currency: string };
+  money: { labour?: number; materials?: number; spent?: number; budget: { low: number; high: number } | null; quoted?: boolean; currency: string };
   alerts: { kind: string; text: string }[];
 };
 type Data = { site: Site | null; runs: boolean; status: string; roster: Crew[]; steps: Steps };
@@ -116,7 +117,7 @@ export function SiteView({ projectId, onStatus, onPlans, onTeam }: { projectId: 
   const shown = SECTIONS.filter(([id]) => id !== "movein" || finishing);
   const section = picked ?? (finishing ? "movein" : "today");
   const at: Section = section === "movein" && !finishing ? "today" : section;
-  if (!site) return <NotStarted data={data} act={act} busy={busy} error={error} review={review} onPlans={onPlans} onTeam={onTeam} />;
+  if (!site) return <NotStarted projectId={projectId} data={data} act={act} busy={busy} error={error} review={review} onPlans={onPlans} onTeam={onTeam} />;
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-16">
@@ -143,6 +144,11 @@ export function SiteView({ projectId, onStatus, onPlans, onTeam }: { projectId: 
         </p>
       )}
       <motion.div key={at} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-4">
+        {at === "today" && (
+          <div className="mb-4">
+            <QuoteCard projectId={projectId} onChange={() => void load()} />
+          </div>
+        )}
         {at === "movein" && <MoveIn projectId={projectId} onStatus={onStatus} />}
         {at === "today" && <Today site={site} runs={runs} act={act} today={today} busy={busy} />}
         {at === "phases" && <Phases site={site} runs={runs} act={act} busy={busy} />}
@@ -163,7 +169,7 @@ type Act = (body: Record<string, unknown>, sound?: boolean) => Promise<boolean>;
 type Steps = { chosen: boolean; canSend: boolean; approves: boolean; builder: boolean; owner: boolean; selfBuild: boolean; inPerson?: string | null };
 
 /** Before the site starts: the three steps to get building, each with what to do next. */
-function NotStarted({ data, act, busy, error, review, onPlans, onTeam }: { data: Data; act: Act; busy: boolean; error: string | null; review: (action: "send" | "approve" | "both") => void; onPlans?: () => void; onTeam?: () => void }) {
+function NotStarted({ projectId, data, act, busy, error, review, onPlans, onTeam }: { projectId: string; data: Data; act: Act; busy: boolean; error: string | null; review: (action: "send" | "approve" | "both") => void; onPlans?: () => void; onTeam?: () => void }) {
   const [start, setStart] = useState(localDay());
   const { runs, status, steps: s } = data;
   const approved = status === "approved" || status === "building" || status === "done";
@@ -266,6 +272,10 @@ function NotStarted({ data, act, busy, error, review, onPlans, onTeam }: { data:
           </motion.li>
         ))}
       </ol>
+      {/* the builder's price for the build, before the site starts */}
+      <div className="mt-4">
+        <QuoteCard projectId={projectId} />
+      </div>
       {error && (
         <p role="alert" className="mt-3 text-center text-sm text-red-600">
           {error}
@@ -300,13 +310,13 @@ function Header({ site, status }: { site: Site; status?: string }) {
             <p className="mt-1 font-serif text-2xl">{money(m.spent, m.currency)}</p>
             <p className="text-sm text-ink-soft">
               Labour {money(m.labour ?? 0, m.currency)} · materials {money(m.materials ?? 0, m.currency)}
-              {m.budget && <> · budget {money(m.budget.low, m.currency)} to {money(m.budget.high, m.currency)}</>}
+              {m.budget && <> · {m.quoted ? `quote ${money(m.budget.low, m.currency)}` : `budget ${money(m.budget.low, m.currency)} to ${money(m.budget.high, m.currency)}`}</>}
             </p>
           </>
         ) : (
           <>
-            <p className="text-xs uppercase tracking-widest text-ink-soft">Budget</p>
-            <p className="mt-1 font-serif text-2xl">{m.budget ? `${money(m.budget.low, m.currency)} to ${money(m.budget.high, m.currency)}` : "Set by the builder"}</p>
+            <p className="text-xs uppercase tracking-widest text-ink-soft">{m.quoted ? "Builder's quote" : "Budget"}</p>
+            <p className="mt-1 font-serif text-2xl">{m.budget ? (m.quoted ? money(m.budget.low, m.currency) : `${money(m.budget.low, m.currency)} to ${money(m.budget.high, m.currency)}`) : "Set by the builder"}</p>
             <p className="text-sm text-ink-soft">The builder&apos;s own costs stay with the builder.</p>
           </>
         )}

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { actionsFor, money, sideOf, standardSplit, step } from "./fees.ts";
+import { actionsFor, money, sideOf, standardSplit, step, dueWhen, phaseSplit } from "./fees.ts";
 
 test("who bills and who pays", () => {
   assert.equal(sideOf("architect", "owner"), "pro");
@@ -47,4 +47,21 @@ test("a builder is paid by stage of the build, an architect by stage of the desi
   assert.deepEqual(b.map((p) => p.label), ["Deposit", "Foundations and structure", "Electrical and plumbing", "Finishes", "Handover"]);
   assert.equal(b.reduce((n, p) => n + p.amount, 0), 450001);
   assert.equal(standardSplit(100, "architect")[0].label, "Design");
+});
+
+test("a builder's fee follows the site's phases: deposit, each phase by how long it runs, handover; it adds up", () => {
+  const phases = [
+    { key: "structure", name: "Foundations and structure", days: 60 },
+    { key: "services", name: "Electrical and plumbing", days: 20 },
+    { key: "finishes", name: "Floors, walls and ceilings", days: 20 },
+  ];
+  const s = phaseSplit(100_001, phases);
+  assert.deepEqual(s.map((p) => p.phase), ["start", "structure", "services", "finishes", "handover"]);
+  assert.equal(s.reduce((n, p) => n + p.amount, 0), 100_001);
+  assert.equal(s[1].amount, 48_000); // 60% of the 80%
+  assert.equal(dueWhen("services", phases), "when Electrical and plumbing finishes");
+  assert.equal(dueWhen("start", phases), "when the site starts");
+  assert.equal(dueWhen(null, phases), null);
+  // no site yet: the usual builder stages, each tied to a phase
+  assert.ok(phaseSplit(1000, []).every((p) => p.phase));
 });

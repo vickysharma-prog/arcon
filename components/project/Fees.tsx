@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { actionsFor, money, splitWords, standardSplit, STATUS_LABEL, type FeeAction, type FeeSide, type FeeStatus, type ProKind } from "@/lib/project/fees";
+import { actionsFor, dueWhen, money, phaseSplit, splitWords, standardSplit, STATUS_LABEL, type FeeAction, type FeeSide, type FeeStatus, type ProKind } from "@/lib/project/fees";
 import { ok, tick } from "@/components/fx/sfx";
 
-type Milestone = { id: number; label: string; amount: number; currency: string; status: FeeStatus; to?: string | null };
+type Milestone = { id: number; label: string; amount: number; currency: string; status: FeeStatus; to?: string | null; phase?: string | null };
+type Phase = { key: string; name: string; days: number; done: boolean };
 
 const CURRENCIES = ["INR", "USD", "GBP", "EUR", "AED", "SGD", "AUD", "CAD"];
 const guess = (location?: string | null) =>
@@ -24,9 +25,9 @@ const PILL: Record<FeeStatus, string> = { planned: "bg-line/60 text-ink-soft", b
 // Fees between the pro and the person paying: milestones the pro sets out, billed, marked paid, then confirmed.
 // Each step also posts in the thread. Hidden for people who are on neither side.
 export function Fees({ projectId, location }: { projectId: string; location?: string | null }) {
-  const [data, setData] = useState<{ milestones: Milestone[]; side: FeeSide; kind: ProKind | null } | null>(null);
+  const [data, setData] = useState<{ milestones: Milestone[]; side: FeeSide; kind: ProKind | null; phases?: Phase[]; movedIn?: boolean } | null>(null);
   // the split, laid out to change before it's saved
-  const [draft, setDraft] = useState<{ label: string; amount: number }[] | null>(null);
+  const [draft, setDraft] = useState<{ label: string; amount: number; phase?: string }[] | null>(null);
   const [total, setTotal] = useState("");
   const [currency, setCurrency] = useState(guess(location));
   const [busy, setBusy] = useState<number | "add" | null>(null);
@@ -66,12 +67,13 @@ export function Fees({ projectId, location }: { projectId: string; location?: st
     if (!n) return setError("Enter your total fee.");
     tick();
     setError(null);
-    setDraft(standardSplit(n, data?.kind ?? "architect"));
+    // a builder on a running site: one part per phase, each due as it finishes
+    setDraft(data?.kind === "builder" && data.phases?.length ? phaseSplit(n, data.phases) : standardSplit(n, data?.kind ?? "architect"));
   }
 
   async function add() {
     if (!draft) return;
-    const items = draft.filter((d) => d.label.trim() && d.amount > 0).map((d) => ({ label: d.label.trim(), amount: d.amount }));
+    const items = draft.filter((d) => d.label.trim() && d.amount > 0).map((d) => ({ label: d.label.trim(), amount: d.amount, ...(d.phase ? { phase: d.phase } : {}) }));
     if (!items.length) return setError("Add a name and an amount for each milestone.");
     setBusy("add");
     setError(null);
@@ -106,6 +108,12 @@ export function Fees({ projectId, location }: { projectId: string; location?: st
               <span className="min-w-0">
                 <span className="font-medium">{m.label}</span> <span className="text-ink-soft">· {money(m.amount, m.currency)}</span>
                 {data.side === "payer" && m.to && <span className="block text-xs text-ink-soft">to {m.to}</span>}
+                {m.status === "planned" && dueWhen(m.phase, data.phases ?? []) && (
+                  <span className="block text-xs text-ink-soft">
+                    Due {dueWhen(m.phase, data.phases ?? [])}
+                    {isDue(m, data.phases ?? [], !!data.movedIn) && <span className="ml-1.5 rounded-full bg-leaf/10 px-2 py-0.5 text-leaf">{data.side === "pro" ? "done: bill it" : "done"}</span>}
+                  </span>
+                )}
               </span>
               <span className="flex items-center gap-2">
                 <span className={`rounded-full px-2.5 py-0.5 text-xs ${PILL[m.status]}`}>{STATUS_LABEL[m.status]}</span>
@@ -120,7 +128,7 @@ export function Fees({ projectId, location }: { projectId: string; location?: st
         </ul>
       ) : (
         <div className="mt-3">
-          <p className="text-sm text-ink-soft">Set out your fee once: Arcon splits it into {splitWords(data.kind ?? "architect")}. Change any name or amount before you save. Your client sees what&apos;s due and when.</p>
+          <p className="text-sm text-ink-soft">Set out your fee once: Arcon splits it into {data.kind === "builder" && data.phases?.length ? "a 10% deposit, one part per phase of your site (by how long each runs) and 10% on handover, each due as it finishes" : splitWords(data.kind ?? "architect")}. Change any name or amount before you save. Your client sees what&apos;s due and when.</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <select value={currency} onChange={(e) => setCurrency(e.target.value)} aria-label="Currency" className="rounded-full border border-line bg-paper px-3 py-2 text-sm">
               {CURRENCIES.map((c) => (
@@ -135,9 +143,10 @@ export function Fees({ projectId, location }: { projectId: string; location?: st
           {draft && (
             <div className="mt-3 space-y-2">
               {draft.map((d, i) => (
-                <div key={i} className="flex gap-2">
+                <div key={i} className="flex flex-wrap items-center gap-2">
                   <input value={d.label} onChange={(e) => setDraft(draft.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))} aria-label="Milestone" maxLength={80} className="min-w-0 flex-1 rounded-xl border border-line bg-paper px-3 py-1.5 text-sm outline-none focus:border-accent" />
                   <input value={d.amount} onChange={(e) => setDraft(draft.map((x, j) => (j === i ? { ...x, amount: Number(e.target.value.replace(/[^\d.]/g, "")) || 0 } : x)))} inputMode="decimal" aria-label="Amount" className="w-32 rounded-xl border border-line bg-paper px-3 py-1.5 text-right text-sm outline-none focus:border-accent" />
+                  {dueWhen(d.phase, data.phases ?? []) && <span className="w-full text-xs text-ink-soft">due {dueWhen(d.phase, data.phases ?? [])}</span>}
                 </div>
               ))}
               <p className="text-xs text-ink-soft">Total {money(draft.reduce((n, d) => n + d.amount, 0), currency)}</p>
@@ -155,4 +164,11 @@ export function Fees({ projectId, location }: { projectId: string; location?: st
       )}
     </section>
   );
+}
+
+/** A planned fee whose moment has come: the site started, its phase finished, or the client moved in. */
+function isDue(m: Milestone, phases: Phase[], movedIn: boolean) {
+  if (m.phase === "start") return phases.length > 0;
+  if (m.phase === "handover") return movedIn;
+  return phases.some((p) => p.key === m.phase && p.done);
 }

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { remindToBill } from "@/lib/project/quote";
 import { accessTo, userOf } from "@/lib/auth/request";
 import { updateProject } from "@/lib/project/store";
 import { decides, inPersonClient, nameOf, peopleOn, postEvent } from "@/lib/project/thread";
@@ -110,6 +111,7 @@ export async function POST(request: Request, ctx: RouteContext<"/api/projects/[i
       if (!canAccept({ status: p.status, allDone })) return bad("Every phase needs finishing before the handover.", 409);
       await updateProject(p.id, { status: "done", handed_over_at: new Date().toISOString() });
       await postEvent(p, who, { type: "movein", what: "moved", note: o.note || null, for: inPerson }).catch(() => {});
+      await remindToBill(p, "handover", "The client has moved in").catch(() => {});
       break;
     }
     case "review": {

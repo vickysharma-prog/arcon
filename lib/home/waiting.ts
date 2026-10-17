@@ -1,7 +1,7 @@
 // "Waiting on you": what each person needs to do next across their projects, from facts the home page already has.
 // Most urgent first: a review to answer, changes asked, money to pay or confirm, work running late, then messages.
 
-export type Wait = { projectId: string; kind: "request" | "review" | "change" | "handover" | "snags" | "changes" | "choose" | "pay" | "confirm" | "late" | "messages"; text: string; href: string };
+export type Wait = { projectId: string; kind: "request" | "review" | "quote" | "bill" | "change" | "handover" | "snags" | "changes" | "choose" | "pay" | "confirm" | "late" | "messages"; text: string; href: string };
 
 export type WaitInput = {
   id: string;
@@ -14,6 +14,10 @@ export type WaitInput = {
   decides: boolean;
   /** the last review answer was "changes", and nothing has been sent since */
   changesAsked: boolean;
+  /** the builder's quote is waiting for an answer */
+  quotePending?: boolean;
+  /** fees whose phase is finished but which haven't been billed yet, for the pro who set them out */
+  toBill?: { label: string; amount: string }[];
   /** a change to the approved design is waiting for approval */
   changePending?: boolean;
   /** the build is finished and the handover waits to be accepted */
@@ -26,7 +30,7 @@ export type WaitInput = {
   fees: { label: string; status: string; amount: string }[];
 };
 
-const ORDER: Wait["kind"][] = ["request", "review", "change", "handover", "snags", "changes", "pay", "confirm", "late", "choose", "messages"];
+const ORDER: Wait["kind"][] = ["request", "review", "quote", "bill", "change", "handover", "snags", "changes", "pay", "confirm", "late", "choose", "messages"];
 
 export function waitsFor(projects: WaitInput[]): Wait[] {
   const out: Wait[] = [];
@@ -40,6 +44,8 @@ export function waitsFor(projects: WaitInput[]): Wait[] {
     if (p.handoverReady && p.decides) out.push({ projectId: p.id, kind: "handover", text: `${p.name} is built: walk through it and accept the handover`, href: `${at}?tab=site` });
     if (p.snagsToFix) out.push({ projectId: p.id, kind: "snags", text: `${p.snagsToFix} snag${p.snagsToFix === 1 ? "" : "s"} to fix on ${p.name}`, href: `${at}?tab=site` });
     if (p.snagsToCheck && p.decides) out.push({ projectId: p.id, kind: "snags", text: `${p.snagsToCheck} fixed snag${p.snagsToCheck === 1 ? "" : "s"} to check on ${p.name}`, href: `${at}?tab=site` });
+    if (p.quotePending && p.decides) out.push({ projectId: p.id, kind: "quote", text: `Answer the builder's quote for ${p.name}`, href: `${at}?tab=site` });
+    for (const f of p.toBill ?? []) out.push({ projectId: p.id, kind: "bill", text: `${f.label} is done: bill ${f.amount}, ${p.name}`, href: at });
     if (p.changePending && p.decides) out.push({ projectId: p.id, kind: "change", text: `Approve or decline a change to ${p.name}`, href: `${at}?tab=thread` });
     if (p.changesAsked && designs && p.status !== "review") out.push({ projectId: p.id, kind: "changes", text: `Changes asked on ${p.name}`, href: `${at}?tab=thread` });
     for (const f of p.fees) {
