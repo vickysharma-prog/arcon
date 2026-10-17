@@ -23,6 +23,13 @@ const Steps = ({ items }: { items: string[] }) => (
   </ol>
 );
 
+const Sub = ({ title, children }: { title: string; children: ReactNode }) => (
+  <div className="mt-8">
+    <h3 className="font-serif text-2xl">{title}</h3>
+    {children}
+  </div>
+);
+
 const Code = ({ children }: { children: string }) => (
   <pre className="mt-4 overflow-x-auto rounded-2xl border border-line bg-paper p-4 font-mono text-[13px] leading-relaxed">
     <code>{children}</code>
@@ -158,16 +165,45 @@ const SECTIONS: Section[] = [
     title: "For architects and designers",
     body: (
       <>
-        <p>Studio is your home: Pipeline lays every client out by stage, Requests holds owners asking for you, and the fee ledger shows every milestone across projects, with what's overdue.</p>
-        <Steps
-          items={[
-            "New client: answer Let's get to know you together in a meeting, or send the client a link to answer at home.",
-            "Design in pro mode: you make the changes; the client asks for them in the thread. You're told when the client has finished answering.",
-            "Send for review. The client approves a version, which locks it; a later change goes to them as a change request, with what it does to the cost. A client who isn't on Arcon? Record their answer from your meeting.",
-            "Set out your fee once: Arcon splits it into design, approval and handover, and you can change any name or amount before saving. Bill each one; the client marks it paid and you confirm.",
-            "Your studio name and logo go on client links, the thread and the drawings pack.",
-          ]}
-        />
+        <p>Studio is two things in one: an AI design partner that does the slow first weeks of a project, and the software to run every client from the first link to the handover. Studio is your home: Pipeline lays every client out by stage, Requests holds owners asking for you, and the fee ledger shows every milestone across projects, with what&apos;s overdue.</p>
+        <Sub title="What Arcon's AI does for you">
+          <Steps
+            items={[
+              "Reads your client before you meet: send a link and they answer at home (typed, tapped or spoken, in English, Hindi or Hinglish), or answer together in your meeting. Qloo reads their style from the films, places and brands they love, and every choice in the design says which love it came from.",
+              "Draws three plans on day one: the layout engine fits their rooms to the plot three ways and checks each against building rules. Each option says what it does best and what it gives up. Or upload the plan you already have and Arcon reads it into an editable layout.",
+              "Builds the rest of a first presentation: the 3D walkthrough by day and night, the outside from their taste, a style brief with palette and materials, a budget in their currency, a timeline, a green score and a shopping list at their price level.",
+              "Takes changes by chat: type \"make the kitchen bigger\" or \"add a study\" and the plan, budget and drawings follow in seconds. A room that needs space takes it from the rooms around it, and the building can grow into the garden, never past the plot.",
+              "Exports the drawings pack: dimensioned plans, all four elevations, door and window schedules, as PDF and DXF for CAD, with your studio's name and logo.",
+            ]}
+          />
+        </Sub>
+        <Sub title="What you run in Arcon">
+          <Steps
+            items={[
+              "Pipeline: every client by stage (getting to know them, design, review, approved, building, moved in), and Waiting on you with what needs you first.",
+              "Review and approval: send a version for review; the client approves it or asks for changes in the thread, with the plan in front of them. An approved version is locked: any later change goes to the client as a change request, with what it does to the cost, and is only built once approved. A client who isn't on Arcon? Record their answer from your meeting.",
+              "The thread: everyone on the project talks in one place, room by room, with every approval and change on record. A team-only channel opens when a builder joins.",
+              "Fees by milestone: set out your fee once and Arcon splits it into design, approval and handover; change any name or amount. Bill each one, the client marks it paid, you confirm. The fee ledger shows every milestone across projects.",
+              "Your team: invite the builder by link or QR (Team opens on Builder), or let the owner find one through Find a pro.",
+              "Your studio: your name and logo on client links, the thread and every drawing; owners find you in Find a pro by how close your past work is to their taste, and your reviews show there after each handover.",
+            ]}
+          />
+        </Sub>
+        <Sub title="A client project, start to finish">
+          <Steps
+            items={[
+              "New client: their name, the kind of space and the city. Fill it in together now, or send them a link.",
+              "They answer; you're told when they've finished. The design starts on its own and they see their style revealed.",
+              "Pick a plan, make it yours by chat, and send it for review.",
+              "They approve; set out your fees; invite the builder.",
+              "The builder runs the site; you follow phases, photos and the budget, and approve any change.",
+              "Snags, the handover pack and the warranty; the client accepts the handover and reviews you.",
+            ]}
+          />
+        </Sub>
+        <Sub title="What it costs">
+          <p className="mt-2">Studio is $99 a month, or $990 a year (two months free), with 14 days free to start. Every client project is unlocked; your clients pay nothing.</p>
+        </Sub>
       </>
     ),
   },
@@ -177,18 +213,33 @@ const SECTIONS: Section[] = [
     title: "For builders",
     body: (
       <>
-        <p>Sites is your home: today on every site, your crew&apos;s week and wages across sites, every delivery on the way, and each site&apos;s budget against what it has cost.</p>
-        <Steps
-          items={[
-            "The phases come from the design's timeline, and the materials are taken off the approved plan.",
-            "Add your crew once and mark attendance on each site, each day.",
-            "Order materials, track deliveries and see stock running low.",
-            "Post photo updates; the client sees progress and the budget, never your costs.",
-            "Alerts tell you and the client when a phase runs late.",
-            "Get paid by stage of the build: deposit, structure, services, finishes and handover, each one editable.",
-            "When the build is done, fix the snags the client lists, hand over the pack and the warranty, and the client accepts the handover and reviews you.",
-          ]}
-        />
+        <p>Build is the software to run your sites, with the design and its numbers already done. Sites is your home: today on every site, your crew&apos;s week and wages across sites, every delivery on the way, and each site&apos;s budget against what it has cost.</p>
+        <Sub title="What Arcon does for you">
+          <Steps
+            items={[
+              "A site plan from the approved design: phases with dates from the design's timeline, and materials taken off the plan with quantities and costs.",
+              "Design-and-build: start a client yourself (New client), and Arcon gives you the interview, their style, three plans, the 3D and a budget, the same as an architect gets.",
+              "Alerts when a phase runs late, for you and the client.",
+            ]}
+          />
+        </Sub>
+        <Sub title="What you run in Arcon">
+          <Steps
+            items={[
+              "Today: who's on site, what's due and what needs attention, on every site.",
+              "Crew and wages: add your crew once, mark attendance on each site each day, and see days and pay for the week across sites.",
+              "Materials and deliveries: order, track what's on the way and what's late, and see stock running low.",
+              "Site money: each site's budget against what it has cost in labour and materials. Your own costs, wages and margins are never shown to the client.",
+              "Updates: post photos and progress from your phone; the client follows the build and the budget.",
+              "Paid by stage of the build: deposit, foundations and structure, electrical and plumbing, finishes and handover, each one editable. Bill each one when it's done; the client marks it paid and you confirm.",
+              "Moving in: the client lists snags room by room, you fix them, they sign each off. Hand over the pack (warranty, notes and drawings); the client accepts the handover and the warranty starts that day. Their review shows on your profile in Find a pro.",
+              "Requests: owners who find you through Find a pro ask you to join. You see their design first, then accept or decline right on the project.",
+            ]}
+          />
+        </Sub>
+        <Sub title="What it costs">
+          <p className="mt-2">Build is $299 a month, or $2,990 a year, with 14 days free to start. Every site; your clients pay nothing.</p>
+        </Sub>
       </>
     ),
   },
