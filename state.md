@@ -1,11 +1,11 @@
 # State
 
-Where Arcon stands right now. Updated 16 Oct 2026, evening (IST), at the end of a long session, for the next one to
+Where Arcon stands right now. Updated 17 Oct 2026, late night (IST), at the end of a long session, for the next one to
 pick up with nothing lost. Dated detail is in progress.md (newest first); every decision is in private/plan.md.
 
 ## Start here (next session)
 
-1. Read, in order: the local working agreement (loads by itself), this file, the top entries of `progress.md` (all of 16 Oct),
+1. Read, in order: the local working agreement (loads by itself), this file, the "Start from here" list below, the top entries of `progress.md` (all of 17 Oct),
    and in `private/plan.md` the sections "Decisions, 16 Oct 2026" and "Decisions (settled 9 Oct 2026)", then the
    rest of the plan as needed. The memory index (MEMORY.md) loads by itself.
 2. Open the role homes for Vicky, side by side, on the local production build (same code as live):
@@ -21,9 +21,32 @@ pick up with nothing lost. Dated detail is in progress.md (newest first); every 
 
 ## Live
 
-arcon-ten.vercel.app, auto-deploying from GitHub main (vickysharma-prog/arcon, private until submission). The
-last commit 110212a is live, 348 unit tests pass, tsc and the build are clean, and every live check passes
-(`scripts/live-check.ts`, 50+ checks).
+arcon-ten.vercel.app, auto-deploying from GitHub main (vickysharma-prog/arcon, private until submission). Last
+commit 43bd603 is pushed and live; 402 unit tests pass, tsc and the build are clean, every live check passes.
+
+## Start from here: what's left (17 Oct, late night)
+
+Built and live: all the planned features (A1 to A5, B1 to B4, C1, C2 video, D1 to D3, E1 site tracking, E2, Q7, Q10,
+P7 app, the flow-audit items). What remains, in order:
+
+1. **Gemini quota (now).** Free quota ran out on 17 Oct; resets at midnight Pacific (about 12:30pm IST). Vicky to
+   decide: wait, or a paid key / AI Gateway credit so the judges never hit it. Then re-run the full eval suite.
+2. **Brainstorm with Vicky (do not build before):** pricing (plans, prices, what's free, the paywall moment) and the
+   judge demo (how a judge gets in, which roles and projects they see, a role switcher).
+3. **US demo world:** a family house in Los Angeles in review, a café in New York with the neighbourhood read, an
+   architect's studio in Austin with three clients, a builder's live site; fees in dollars; demo pros with work.
+4. **Judge demo build:** /demo with role cards and a role switcher bar, from the brainstorm.
+5. **Pricing build: PayPal sandbox:** project order ($149, $299 business), Studio and Build subscriptions with the
+   14-day trial, plan limits, upgrade cards, a webhook. Needs Vicky's sandbox keys.
+6. **F1 quality, the rest:** adversarial tests of the agents, speed pass, full eval re-run (after item 1).
+7. **C2b photoreal renders,** 28 to 29 Oct, on about $10 of Gemini credit from Vicky.
+8. **F2 submission:** polish, the submission video with voiceover, submission text with the business story
+   (sourced numbers, pricing, roadmap), scrub `private/` and Qloo data from
+   the whole history (filter-branch, keep the day-by-day commits), make the repo public with the MIT licence,
+   submit on Devpost before 30 Oct 11:45pm ET.
+
+Open questions for Vicky: hide the Apple sign-in button until there's a paid developer account? A mail sender for
+confirmation emails (Gmail SMTP suggested)? Anything more on the landing page?
 
 ## What Arcon is now (16 Oct)
 
@@ -111,35 +134,9 @@ and what else she wants on the landing page.
   managing the build myself".
 - Next with Vicky: pricing and the judge demo (brainstorm).
 
-## What's left, in order (deadline 30 Oct 11:45pm ET = 31 Oct about 9:15am IST)
+## What's left
 
-0. **Re-check: done (17 Oct).** Every journey passes on the local build; results and the fixes made during it are in
-   private/e2e-run.md ("Re-check after the fixes"). Pushed and live.
-0b. **Landing page: first pass done (17 Oct).** Three plans drawn live by the engine, a sixth step (Move in), a
-   section for architects and builders, plain words on privacy; Resources and the FAQ brought up to date. Ask Vicky
-   what else she wants on it.
-1. **The app frame and sidebar** (pushed and live 17 Oct): Vicky to review on live; check phone width, dark mode and
-   a guest on a project during the re-check.
-1b. **From the flow audit** (private/flows-audit.md): the builder's quote, fees from the site's phases, the
-   architect's site visits. (Move-in flow done 16 Oct night.)
-2. **US demo world** (part of R5; judges are American, Jason Calacanis leads): a family house in Los Angeles in
-   review, a café in New York with the neighbourhood read, an architect's studio in Austin with three clients, a
-   builder's live site; fees in dollars. Then the judge demo: /demo with role cards and a role switcher bar.
-3. **The film: done (17 Oct).** 59 s, every role, music muted until asked; on the landing page from storage.
-   scripts/record-video.ts re-records it. The submission video (with voiceover) is still to make.
-4. **PayPal sandbox** (R5): a project order ($149, $299 business), Studio and Build subscriptions with the 14-day
-   trial, a webhook. Needs Vicky's sandbox keys.
-5. **F1 quality:** model comparison and evals, adversarial tests of the agents, a cleanup script for test data (test
-   projects, the business test café, the "Pune house" guest project), speed, task #62 (3D room labels without
-   separate React roots), task #63 (check the city in the interview against the map: "Delih" went to Slovenia),
-   lint (done 17 Oct: 0 errors), and the dev-mode reload loop on /home (production is fine).
-6. **C2b photoreal renders,** 28 to 29 Oct, on about $10 of Gemini credit from Vicky.
-7. **F2:** polish, README (rewritten 17 Oct), the submission text with the business story (sourced market numbers, pricing, roadmap)
-   for Jason, scrub `private/` and Qloo data from the whole history (filter-branch, keep the day-by-day commits), make
-   the repo public with the MIT licence visible, submit on Devpost.
-
-Open questions for Vicky: hide the Apple sign-in button until there's a paid developer account? A mail sender for
-confirmation emails (Gmail SMTP was the suggestion), later.
+See "Start from here" at the top.
 
 ## How we work (rules that hold every session)
 
