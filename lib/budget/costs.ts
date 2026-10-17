@@ -35,6 +35,10 @@ const FURNITURE: Record<string, number> = {
   living: 250, lounge: 250, bedroom: 200, "guest-room": 350, dining: 220, office: 180, workspace: 300, meeting: 350,
   reception: 400, counter: 600, retail: 250, fitting: 150, kitchen: 0, bath: 0, laundry: 40, storage: 40, closet: 120, pantry: 60,
 };
+// The kitchen rates are for a typical fitted kitchen of about 14 m2 (150 sq ft); a bigger one has more cabinets and
+// worktop, a smaller one less, but appliances cost the same, so the price follows the size gently.
+const KITCHEN_M2 = 14;
+export const kitchenSize = (area: number) => Math.min(1.6, Math.max(0.7, Math.sqrt(area / KITCHEN_M2)));
 const NO_PLANTS = new Set(["bath", "storage", "closet", "laundry", "pantry", "corridor", "stairs", "void"]);
 
 /**
@@ -103,7 +107,7 @@ export function estimate(layout: Layout, tier: Tier, market: Market, newBuild = 
             { category: "finishes", amount: area * (r.floor + r.paint) * k },
             { category: "electrical", amount: area * r.power * k },
           ];
-      if (s.kind === "kitchen") lines.push({ category: "kitchen", amount: r.kitchen * (home ? 1 : BUSINESS_KITCHEN) * k });
+      if (s.kind === "kitchen") lines.push({ category: "kitchen", amount: r.kitchen * kitchenSize(area) * (home ? 1 : BUSINESS_KITCHEN) * k });
       if (s.kind === "bath" && !newBuild) lines.push({ category: "bath", amount: r.bath * (/powder|wc|restroom|toilet/i.test(s.name) ? HALF_BATH : 1) * k });
       const furniture = FURNITURE[s.kind] ?? 0;
       if (furniture) lines.push({ category: "furniture", amount: area * furniture * inside });

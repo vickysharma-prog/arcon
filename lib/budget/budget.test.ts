@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { estimate, knownMarket, marketOf, money, MARKETS, type Tier } from "./costs.ts";
+import { estimate, knownMarket, marketOf, money, MARKETS, type Tier, kitchenSize } from "./costs.ts";
 import { priceOf, tierFrom } from "./tier.ts";
 import { templateFor } from "../design/program.ts";
 import { planOptionsFor } from "../design/options.ts";
@@ -128,4 +128,11 @@ test("every screen starts a project's cost at the same quality: what they told u
   assert.equal(toldTier({ interview: { budget: { level: "nonsense" } } }), null);
   assert.ok(isNewBuild({ interview: { project: { newBuild: true } } }));
   assert.ok(!isNewBuild({}));
+});
+
+test("a bigger kitchen costs more to fit, gently: about a typical 14 m2 kitchen, never wildly off", () => {
+  assert.equal(kitchenSize(14), 1);
+  assert.ok(kitchenSize(21) > 1 && kitchenSize(21) < 1.3);
+  assert.equal(kitchenSize(4), 0.7);
+  assert.equal(kitchenSize(80), 1.6);
 });
