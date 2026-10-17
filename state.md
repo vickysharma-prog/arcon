@@ -77,6 +77,18 @@ Open for Vicky: US demo pros with work (data in the live database), the site mat
 projects, whether to keep the eve interviewer agent (mounted at /eve/interviewer, nothing in the app calls it now),
 and what else she wants on the landing page.
 
+## In progress (17 Oct, stopped at the usage limit)
+
+- Done: market strip now says almost 26 million US homeowner households improved their homes in 2023 (Harvard JCHS,
+  Improving America's Housing 2025, page 2). eve interviewer agent: keep it (Vicky left it to me); run its evals.
+- Started: migration 016 applied (quotes, milestones.phase, site_visits, site_phases.signed_off_*);
+  lib/project/quote.ts with tests (who can quote, quote vs estimate, accepted quote = site budget).
+- Next, in order: quote API route + card on the site (send / accept / decline, thread event, site and Site money
+  budget from the accepted quote); builder fees split by the site's phases with a "bill now" reminder when a phase
+  finishes; architect site visits + stage sign-off; then the quality items (city check, test-data cleanup script,
+  3D labels, dev reload loop, run evals + model comparison, materials in sq ft/lb on US projects); then the pricing
+  and judge-demo brainstorm with Vicky.
+
 ## What's left, in order (deadline 30 Oct 11:45pm ET = 31 Oct about 9:15am IST)
 
 0. **Re-check: done (17 Oct).** Every journey passes on the local build; results and the fixes made during it are in
