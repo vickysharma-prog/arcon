@@ -30,6 +30,7 @@ const STEPS = [
   { n: "03", title: "Choose a plan", body: "Three floor plans for your plot, each clear about what it does best and what it gives up." },
   { n: "04", title: "Walk through it", body: "Step inside in 3D, by day or by night, with the outside designed from your taste too." },
   { n: "05", title: "Build it", body: "Budget, drawings, a shopping list, your team and the building site, all in one place." },
+  { n: "06", title: "Move in", body: "Check it room by room, list anything to fix, get the handover pack and warranty, then review your team." },
 ];
 
 export function HowItWorks() {
@@ -48,7 +49,7 @@ export function HowItWorks() {
       <Heading eyebrow="How it works" title="From a conversation to a space you can walk through." />
       <motion.div className="relative mt-16" onViewportEnter={() => setSeen(true)} viewport={{ once: true, margin: "-120px" }}>
         {/* the line joining the steps: a quiet track, the part done so far, and a light moving along it */}
-        <div aria-hidden className="absolute bottom-6 left-6 top-6 w-px bg-line md:bottom-auto md:left-6 md:right-[calc(20%-1.5rem)] md:top-6 md:h-px md:w-auto">
+        <div aria-hidden className="absolute bottom-6 left-6 top-6 w-px bg-line md:bottom-auto md:left-6 md:right-[calc(16.667%-1.5rem)] md:top-6 md:h-px md:w-auto">
           <motion.div
             className="absolute left-0 top-0 w-px bg-gradient-to-b from-btn via-accent to-leaf md:hidden"
             animate={{ height: `${pct}%` }}
@@ -67,7 +68,7 @@ export function HowItWorks() {
             />
           )}
         </div>
-        <ol className="relative grid gap-8 md:grid-cols-5 md:gap-6">
+        <ol className="relative grid gap-8 md:grid-cols-6 md:gap-5">
           {STEPS.map((s, i) => {
             const on = i === active;
             const done = i < active;

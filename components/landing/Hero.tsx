@@ -15,7 +15,8 @@ import { Showcase } from "./Showcase";
 const LINKS = [
   ["How it works", "#how"],
   ["Taste", "#taste"],
-  ["Features", "#features"],
+  ["Plans", "#plans"],
+  ["For pros", "#pros"],
   ["Pricing", "#pricing"],
   ["Resources", "/resources"],
 ];
@@ -134,7 +135,7 @@ export function Hero() {
             </Link>
           </div>
           <p className="mt-5 text-sm text-ink-soft">
-            Type or talk · no account needed ·{" "}
+            Type or talk · no account needed to try ·{" "}
             <Link href="/quiz" onClick={() => tick()} className="text-accent underline-offset-2 hover:underline">
               Find your space style in three taps
             </Link>

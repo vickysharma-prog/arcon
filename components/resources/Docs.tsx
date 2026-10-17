@@ -45,7 +45,7 @@ const SECTIONS: Section[] = [
             "Find your style: pick a few places, brands, films or music you love. Qloo reads what they have in common.",
             "Choose one of three plans, each with what it does best and what it gives up, or upload your own.",
             "Walk through it in 3D, change anything by chat, and see the budget follow.",
-            "Share it with your architect, client or builder, approve it, and follow the build.",
+            "Share it with your architect, client or builder, approve it, follow the build and move in.",
           ]}
         />
         <p className="mt-4">
@@ -94,7 +94,7 @@ const SECTIONS: Section[] = [
           items={[
             "Press Ctrl+K (⌘K on a Mac), or the search box at the top right, to jump anywhere: a project, or one part of it such as its budget, thread, site or 3D. Type any words in any order, like \"austin budget\".",
             "Get the app, at the top of every page: on a phone it installs Arcon to your home screen; on a computer it shows a code to scan for your phone, and in Chrome or Edge installs Arcon in its own window.",
-            "Arcon plays its opening each time you open it, and remembers your theme and sound settings (in the profile menu).",
+            "The landing page plays Arcon's opening once a visit; a link someone sends you (an invite, a shared project) goes straight to what it points at. Your theme and sound settings are in the profile menu.",
           ]}
         />
       </>
@@ -125,10 +125,10 @@ const SECTIONS: Section[] = [
         <p>My spaces puts your newest project in focus, with where it stands and what happens next.</p>
         <Steps
           items={[
-            "Design as a guest for free; sign up to keep the project on every device.",
-            "Unlock the project once to open the walkthrough, budget, shopping list, changes by chat and the drawings pack.",
+            "Try it free as a guest: the interview, your style, three plans and the 3D from outside. Sign in to keep the project; it moves to your account with everything in it.",
+            "Unlock the project once (signed in) to open the walkthrough, budget, shopping list, changes by chat and the drawings pack.",
             "Invite your architect or builder from Team, by link or QR code. Everyone talks in the project's thread.",
-            "When your architect sends the design for review, approve it or ask for changes in the thread.",
+            "When your architect sends the design for review, the plan is right there in the thread: approve it or ask for changes. On your own, you approve it in one step. A change after approval comes to you with what it does to the cost.",
             "Once building starts, follow progress, photos and spending in the Site tab, or run the build yourself.",
             "When the build is finished, walk through it and list anything to fix in Move in; the builder fixes each one and you sign it off. Accept the handover to move in: the warranty starts that day, and you can review your architect and builder.",
           ]}
@@ -162,9 +162,9 @@ const SECTIONS: Section[] = [
         <Steps
           items={[
             "New client: answer Let's get to know you together in a meeting, or send the client a link to answer at home.",
-            "Design in pro mode: you make the changes; the client asks for them in the thread.",
-            "Send for review. The client approves a version, which locks it; any later change needs approval again.",
-            "Set fee milestones (design, approval, handover) and mark them billed and paid.",
+            "Design in pro mode: you make the changes; the client asks for them in the thread. You're told when the client has finished answering.",
+            "Send for review. The client approves a version, which locks it; a later change goes to them as a change request, with what it does to the cost. A client who isn't on Arcon? Record their answer from your meeting.",
+            "Set out your fee once: Arcon splits it into design, approval and handover, and you can change any name or amount before saving. Bill each one; the client marks it paid and you confirm.",
             "Your studio name and logo go on client links, the thread and the drawings pack.",
           ]}
         />
@@ -185,6 +185,8 @@ const SECTIONS: Section[] = [
             "Order materials, track deliveries and see stock running low.",
             "Post photo updates; the client sees progress and the budget, never your costs.",
             "Alerts tell you and the client when a phase runs late.",
+            "Get paid by stage of the build: deposit, structure, services, finishes and handover, each one editable.",
+            "When the build is done, fix the snags the client lists, hand over the pack and the warranty, and the client accepts the handover and reviews you.",
           ]}
         />
       </>
@@ -202,7 +204,7 @@ const SECTIONS: Section[] = [
         </p>
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           {[
-            ["The interview", "An agent asks about the space and about you, in English, Hindi or Hinglish, typed or spoken."],
+            ["The interview", "Arcon asks about the space and about you, one question at a time, in English, Hindi or Hinglish, typed, tapped or spoken."],
             ["Qloo's taste graph", "The things you name become Qloo entities. Qloo returns what they share: decor, ambience, price level, and brands and places that match."],
             ["The brief", "A style name and its words, a palette, materials and a moodboard, each linked to the taste behind it."],
             ["The plans", "A layout engine fits your rooms to the site three ways and checks each one against building rules."],
@@ -240,7 +242,7 @@ const SECTIONS: Section[] = [
     body: (
       <>
         <p>
-          Arcon is a Next.js app (App Router, React, Tailwind) with three.js for the 3D, Supabase for accounts, data and files, Qloo&apos;s Insights API for taste, and an AI model for the interview and the brief. The interviewer is an agent with its own tools, instructions and evals.
+          Arcon is a Next.js app (App Router, React, Tailwind) with three.js for the 3D, Supabase for accounts, data and files, Qloo&apos;s Insights API for taste, and an AI model for the brief, the room list and changes by chat. The interview is a script that asks one question at a time and never waits on a model; an interviewer agent built with eve (agents/interviewer, with its own tools, instructions and evals) is mounted at /eve/interviewer.
         </p>
         <Code>{`app/          pages and API routes
 components/   screens; components/fx holds the shared sounds and motion
@@ -260,7 +262,7 @@ npm test                      # unit tests`}</Code>
           <table className="w-full text-left text-sm">
             <tbody className="divide-y divide-line">
               {[
-                ["POST /api/interview", "the interview agent, one turn at a time"],
+                ["POST /api/interview", "every answer of the interview: checked, the taste picks confirmed with Qloo, the project created"],
                 ["POST /api/taste", "names you love → Qloo entities and taste tags"],
                 ["GET /api/projects/:id", "a project and your role on it"],
                 ["POST /api/projects/:id/design", "brief, three plans and their trade-offs"],
@@ -271,6 +273,13 @@ npm test                      # unit tests`}</Code>
                 ["GET /api/projects/:id/neighbourhood", "the business neighbourhood read"],
                 ["GET|POST /api/projects/:id/thread", "the project thread"],
                 ["GET|POST /api/projects/:id/site", "phases, crew, materials, updates"],
+                ["GET|POST /api/projects/:id/team", "who is on it, and invite links by role"],
+                ["POST /api/projects/:id/review", "send for review, approve, ask for changes, answer a change request"],
+                ["GET|POST /api/projects/:id/fees", "fee milestones: set out, bill, paid, received"],
+                ["GET|POST /api/projects/:id/movein", "snags, the handover pack, accepting the handover, reviews"],
+                ["POST /api/projects/:id/unlock", "unlock a project (its owner, signed in)"],
+                ["GET /api/shell", "the sidebar: your tools, counts and projects"],
+                ["GET /api/pros", "find an architect or builder by taste match"],
                 ["POST /api/projects/:id/opening", "set a business's opening day (owner only)"],
                 ["DELETE /api/projects/:id", "delete a project (owner only)"],
                 ["DELETE /api/account", "delete your account"],

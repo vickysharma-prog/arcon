@@ -18,7 +18,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Do I need an account?",
-    a: "No. You can design as a guest and your project stays in that browser. Sign up when you want to keep it on every device or share it with your architect, client or builder.",
+    a: "Not to try it. As a guest you answer the interview and see your style, three plans and the 3D from outside. Sign in to keep the project on every device, unlock it, or share it with your architect, client or builder; it comes with you when you sign in.",
   },
   {
     q: "Which languages does Arcon speak?",

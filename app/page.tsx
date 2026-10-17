@@ -1,6 +1,8 @@
 import { Hero, LandingHeader } from "@/components/landing/Hero";
 import { Audience, Faq, Features, FinalCall, Footer, HowItWorks, Market, Pricing, TasteFlow } from "@/components/landing/Sections";
 import { QlooStrip } from "@/components/landing/QlooStrip";
+import { PlansDemo } from "@/components/landing/PlansDemo";
+import { ForPros, Trust } from "@/components/landing/ForPros";
 
 export default function Home() {
   return (
@@ -10,9 +12,12 @@ export default function Home() {
         <Hero />
         <QlooStrip />
         <HowItWorks />
+        <PlansDemo />
         <TasteFlow />
         <Features />
         <Audience />
+        <ForPros />
+        <Trust />
         <Market />
         <Pricing />
         <Faq />
