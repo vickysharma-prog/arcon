@@ -132,5 +132,18 @@ check("move-in steps for the owner", moveIn.status === 200 && Array.isArray(move
 const stranger = await get(`/api/projects/${BUILDING}/movein`);
 check("a stranger can't read the move-in", stranger.status >= 400);
 
+// The builder's quote, fees by phase, the architect on site (read-only)
+const quoteB = await get(`/api/projects/${BUILDING}/quote`, "builder");
+check("the builder can send a quote", quoteB.status === 200 && quoteB.body.canSend === true);
+const quoteC = await get(`/api/projects/${BUILDING}/quote`, "client");
+check("the client can't send a quote", quoteC.status === 200 && quoteC.body.canSend === false);
+check("a stranger can't see the quote", (await get(`/api/projects/${BUILDING}/quote`)).status >= 400);
+const feesB = await get(`/api/projects/${BUILDING}/fees`, "builder");
+check("a builder's fees know the site's phases", feesB.status === 200 && Array.isArray(feesB.body.phases) && feesB.body.phases.length > 0, `${(feesB.body.phases ?? []).length} phases`);
+const siteO = await get(`/api/projects/${BUILDING}/site`, "owner");
+check("the site carries visits and says who inspects", siteO.status === 200 && siteO.body.inspects === false && Array.isArray(siteO.body.site?.visits));
+const city = await get("/api/city?q=Los%20Angeles", "owner");
+check("the interview finds a city on the map", city.status === 200 && (city.body.places ?? []).some((p: string) => p.includes("Los Angeles")), (city.body.places ?? []).join("; "));
+
 console.log(failed ? `${failed} failed` : "all live checks passed");
 process.exit(failed ? 1 : 0);

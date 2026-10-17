@@ -77,17 +77,29 @@ Open for Vicky: US demo pros with work (data in the live database), the site mat
 projects, whether to keep the eve interviewer agent (mounted at /eve/interviewer, nothing in the app calls it now),
 and what else she wants on the landing page.
 
-## In progress (17 Oct, stopped at the usage limit)
+## 17 Oct (night): flow-audit items and quality, done
 
-- Done: market strip now says almost 26 million US homeowner households improved their homes in 2023 (Harvard JCHS,
-  Improving America's Housing 2025, page 2). eve interviewer agent: keep it (Vicky left it to me); run its evals.
-- Started: migration 016 applied (quotes, milestones.phase, site_visits, site_phases.signed_off_*);
-  lib/project/quote.ts with tests (who can quote, quote vs estimate, accepted quote = site budget).
-- Next, in order: quote API route + card on the site (send / accept / decline, thread event, site and Site money
-  budget from the accepted quote); builder fees split by the site's phases with a "bill now" reminder when a phase
-  finishes; architect site visits + stage sign-off; then the quality items (city check, test-data cleanup script,
-  3D labels, dev reload loop, run evals + model comparison, materials in sq ft/lb on US projects); then the pricing
-  and judge-demo brainstorm with Vicky.
+- Market strip: almost 26 million US homeowner households improved their homes in 2023 (Harvard JCHS, Improving
+  America's Housing 2025, page 2).
+- Builder's quote (migration 016, lib/project/quote.ts, /api/projects/[id]/quote, QuoteCard on the site): the builder
+  sends a price; whoever approves the design accepts or declines it (in person too); accepted, it's the site's budget
+  on the site and in Site money. Waiting on you: "Answer the builder's quote".
+- Fees from the site's phases (phaseSplit, dueWhen): a builder's fee on a running site splits into a deposit, one part
+  per phase by how long it runs, and handover; each fee shows when it's due and "done: bill it"; the pro gets a bell
+  when a phase finishes (and on site start and move-in), and "Bill" in Waiting on you.
+- Architect on site: site visits (logged in the thread) and "Sign off this stage" on finished phases, for the
+  architect on the project or an architect whose own project it is.
+- Interview city check (/api/city, OpenStreetMap): matches with their country as they type; "Delih" now says it isn't
+  on the map. US sites order flooring in sq ft and steel in pounds.
+- scripts/clean-test-data.ts: deleted 6 leftover test projects (empty "Priya's house" and "Sam's house", three test
+  projects); keeps the live-check and film projects.
+- Model comparison (scripts/compare-models.ts) on three real projects: all 9 runs passed the schema, 0 invented
+  credits, 3 plans from the model every time; Flash-Lite fastest for the room list (1.5 to 2.5 s vs about 10 s).
+- The eve interviewer agent stays (Vicky left it to me).
+- Waiting for the local server (it was stopped for low memory): the eve evals (they boot a dev server), task
+  #62 (3D room labels: one overlay instead of a React root per label, needs a look in the browser), and the dev-mode
+  reload loop.
+- Next with Vicky: pricing and the judge demo (brainstorm).
 
 ## What's left, in order (deadline 30 Oct 11:45pm ET = 31 Oct about 9:15am IST)
 
@@ -144,7 +156,7 @@ confirmation emails (Gmail SMTP was the suggestion), later.
   in the local memory note "arcon-local-testing", not in the repo); run
   `node --env-file=.env.local scripts/release-test-projects.ts`.
 - Test projects: 2ec977ae (Austin house, building; owner, client and builder Raj), 6aa147ed (New York café),
-  d494ab31 (Austin office), 50c3d046 (Delhi house exterior test, "Delih"), 2418b263 (self-build), and the Brooklyn
+  2418b263 (self-build), and the Brooklyn
   café copy owned by the business test account. Their fees are in rupees; the US demo world replaces them for the demo.
 
 ## Known issues

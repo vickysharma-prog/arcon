@@ -2,6 +2,14 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-17 (night): Quotes, fees by phase, the architect on site, quality
+
+- Builder's quote, accepted by whoever approves, becomes the site's budget; builder fees follow the site's phases with
+  reminders to bill; architect site visits and stage sign-off (migration 016).
+- City check in the interview; materials in sq ft and pounds on US sites; market strip with a sourced households
+  number; test-data cleanup; a model comparison on the real pipeline (all pass, Flash-Lite fastest).
+- Waiting on the local server: eve evals, 3D room labels, the dev reload loop.
+
 ## 2026-10-17 (evening): For pros, the film, the playlist
 
 - For pros (Vicky): an AI design partner and the software to run every project, shown capability by capability
