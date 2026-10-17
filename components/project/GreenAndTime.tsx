@@ -209,7 +209,7 @@ export function GreenAndTime({ id, layout, brief, taste, lot, tier, newBuild, sa
                 )}
               </div>
             )}
-            {!open.length && g.score < 100 && <p className="mt-2 text-xs text-ink-soft">That's all this plan has room for: the rest would need more floor or window space.</p>}
+            {!open.length && g.score < 100 && <p className="mt-2 text-xs text-ink-soft">That&apos;s all this plan has room for: the rest would need more floor or window space.</p>}
           </div>
         )}
 

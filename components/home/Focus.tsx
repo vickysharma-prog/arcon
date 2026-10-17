@@ -55,7 +55,9 @@ export function PlanOr3D({ projectId, layout, children }: { projectId: string; l
 export function OpeningDay({ projectId, date, set, canEdit }: { projectId: string; date: string | null; set: boolean; canEdit: boolean }) {
   const [value, setValue] = useState(date);
   const [editing, setEditing] = useState(false);
-  const days = value ? Math.ceil((new Date(value).getTime() - Date.now()) / 86_400_000) : null;
+  // today, read once: the count doesn't need to tick while the page is open
+  const [now] = useState(() => Date.now());
+  const days = value ? Math.ceil((new Date(value).getTime() - now) / 86_400_000) : null;
   async function save(v: string) {
     setValue(v);
     setEditing(false);

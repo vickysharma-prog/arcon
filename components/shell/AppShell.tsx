@@ -157,7 +157,7 @@ function Section({ title, children }: { title: string | null; children: ReactNod
     <div className="mt-4 first:mt-0">
       {title && (
         <p className="shell-label mb-1 px-3 font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft/80">
-          <span className="text-accent/70">// </span>
+          <span className="text-accent/70">{"// "}</span>
           {title}
         </p>
       )}

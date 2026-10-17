@@ -77,7 +77,7 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
         <Decode text="Is this your plan?" />
       </h1>
       <p className="mt-3 max-w-2xl text-lg text-ink-soft">
-        Here's what we read off your drawing. Fix any room name or type, then tell us a few things you love so we can style it.{" "}
+        Here&apos;s what we read off your drawing. Fix any room name or type, then tell us a few things you love so we can style it.{" "}
         <a href="/start/plan" className="text-accent underline-offset-2 hover:underline">
           Upload a different plan
         </a>
@@ -104,7 +104,7 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
           )}
           {advice.length > 0 && (
             <div className="rounded-2xl border border-line bg-paper p-4 text-sm">
-              <p className="font-medium">Worth knowing (it won't stop us):</p>
+              <p className="font-medium">Worth knowing (it won&apos;t stop us):</p>
               <ul className="mt-2 list-disc space-y-1 pl-5 text-ink-soft">
                 {advice.map((m) => (
                   <li key={m}>{plainProblem(m, layout)}</li>
@@ -159,7 +159,7 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
 
           {imported.questions.length > 0 && (
             <section>
-              <h2 className="font-serif text-2xl">A few things we weren't sure of</h2>
+              <h2 className="font-serif text-2xl">A few things we weren&apos;t sure of</h2>
               {imported.questions.map((q) => (
                 <label key={q} className="mt-3 block">
                   <span className="text-sm">{q}</span>
@@ -171,7 +171,7 @@ export function CheckPlan({ id, imported, units, onDone }: Props) {
 
           <section>
             <h2 className="font-serif text-2xl">What do you love?</h2>
-            <p className="mt-1 text-sm text-ink-soft">We style your plan from these, through Qloo's taste data.</p>
+            <p className="mt-1 text-sm text-ink-soft">We style your plan from these, through Qloo&apos;s taste data.</p>
             {SLOTS.map((slot) => (
               <TasteQuestion key={slot.id} slot={slot} onPick={(p) => setPicks((all) => ({ ...all, [slot.id]: p ?? undefined }))} />
             ))}

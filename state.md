@@ -91,17 +91,16 @@ and what else she wants on the landing page.
 2. **US demo world** (part of R5; judges are American, Jason Calacanis leads): a family house in Los Angeles in
    review, a café in New York with the neighbourhood read, an architect's studio in Austin with three clients, a
    builder's live site; fees in dollars. Then the judge demo: /demo with role cards and a role switcher bar.
-3. **The 30-second video** (L2): a real recording of the LA family house, interview to 3D, captions, Arcon's sounds
-   when unmuted; Puppeteer, Chromium and ffmpeg are on this machine. It goes on the landing page and in the
-   submission.
+3. **The film: done (17 Oct).** 59 s, every role, music muted until asked; on the landing page from storage.
+   scripts/record-video.ts re-records it. The submission video (with voiceover) is still to make.
 4. **PayPal sandbox** (R5): a project order ($149, $299 business), Studio and Build subscriptions with the 14-day
    trial, a webhook. Needs Vicky's sandbox keys.
 5. **F1 quality:** model comparison and evals, adversarial tests of the agents, a cleanup script for test data (test
    projects, the business test café, the "Pune house" guest project), speed, task #62 (3D room labels without
    separate React roots), task #63 (check the city in the interview against the map: "Delih" went to Slovenia),
-   lint, and the dev-mode reload loop on /home (production is fine).
+   lint (done 17 Oct: 0 errors), and the dev-mode reload loop on /home (production is fine).
 6. **C2b photoreal renders,** 28 to 29 Oct, on about $10 of Gemini credit from Vicky.
-7. **F2:** polish, README, the submission text with the business story (sourced market numbers, pricing, roadmap)
+7. **F2:** polish, README (rewritten 17 Oct), the submission text with the business story (sourced market numbers, pricing, roadmap)
    for Jason, scrub `private/` and Qloo data from the whole history (filter-branch, keep the day-by-day commits), make
    the repo public with the MIT licence visible, submit on Devpost.
 

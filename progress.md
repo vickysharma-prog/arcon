@@ -16,6 +16,10 @@ One entry per working session, newest at the top. Date, what got done, what brok
   list and drawings were added, plus a quiet original music bed (made with ffmpeg); muted by default with a Sound
   on button. The card is smaller and lifted off the page. Found while recording: the shopping list started at the
   taste's quality (luxury) while the budget started at the quality they told us; both start there now.
+- README rewritten in full (architecture, design pipeline, project lifecycle and data model diagrams; the AI and
+  what code checks; the taste, layout and edit engines; money; roles; security; testing; setup). Lint is clean
+  (0 errors): seven markup fixes, two hook fixes, and two React Compiler rules set to warn with the reason in
+  eslint.config.mjs (reading the browser on mount; three.js mutating in place).
 - Next: pricing brainstorm with Vicky.
 
 ## 2026-10-17 (afternoon): Re-check, landing page, taste picks, sign-in at unlock

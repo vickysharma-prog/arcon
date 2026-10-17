@@ -84,7 +84,9 @@ export function useSpeak(onDone?: () => void) {
   const [on, setOn] = useState(true);
   const [speaking, setSpeaking] = useState(false);
   const done = useRef(onDone);
-  done.current = onDone;
+  useEffect(() => {
+    done.current = onDone;
+  }, [onDone]);
 
   // Voices load asynchronously in Chrome; asking once wakes the list up.
   useEffect(() => {
