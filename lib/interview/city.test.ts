@@ -12,3 +12,7 @@ test("a city reads the way people write it, with its country, and US cities keep
   assert.equal(cityLabel({ name: "Brooklyn", address: { suburb: "Brooklyn", country: "United States" } }), "Brooklyn, USA");
   assert.equal(cityLabel({ address: { city: "Nowhere" } }), null);
 });
+
+test("a borough keeps its own name, not the city around it", () => {
+  assert.equal(cityLabel({ name: "Brooklyn", address: { suburb: "Brooklyn", city: "New York", state: "New York", country: "United States" } }), "Brooklyn, NY");
+});

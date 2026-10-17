@@ -10,7 +10,8 @@ const STATE_CODE: Record<string, string> = {
 /** "Austin, TX" for the US (how Americans write it, and how the budget reads regions), "Pune, India" elsewhere. */
 export function cityLabel(p: Place): string | null {
   const a = p.address ?? {};
-  const city = a.city ?? a.town ?? a.village ?? a.suburb ?? a.municipality ?? p.name;
+  // the place itself first: Brooklyn, not the city it sits in (New York)
+  const city = p.name ?? a.city ?? a.town ?? a.village ?? a.suburb ?? a.municipality;
   const country = a.country;
   if (!city || !country) return null;
   if (country === US) {

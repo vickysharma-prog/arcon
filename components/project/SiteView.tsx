@@ -232,6 +232,9 @@ function NotStarted({ projectId, data, act, busy, error, review, onPlans, onTeam
             </button>
           )}
         </div>
+      ) : s.owner && s.builder ? (
+        // the builder they brought in runs the site; nothing for the owner to pick here
+        <p className="text-sm text-ink-soft">Your builder starts the site from here. You&apos;ll follow every phase, photo and cost.</p>
       ) : s.owner ? (
         <div className="flex flex-wrap gap-2">
           <button onClick={() => act({ op: "self", on: true })} disabled={busy} className={btn}>
