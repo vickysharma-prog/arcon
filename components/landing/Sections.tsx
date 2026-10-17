@@ -9,6 +9,7 @@ import { HomeLink } from "./Intro";
 import { CountUp, HudCard, Reveal, Ring } from "@/components/fx/Motion";
 import { tick, transition } from "@/components/fx/sfx";
 import { FAQ } from "@/lib/content/faq";
+import { TasteGraph } from "./TasteGraph";
 
 function Eyebrow({ children }: { children: ReactNode }) {
   return <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-accent">{children}</p>;
@@ -105,6 +106,13 @@ export function HowItWorks() {
 
 // Invented examples of what someone loves, the taste words found in them, and what the design does with them.
 const LOVES = ["A slow film you rewatch every winter", "The corner café with the long wooden bar", "Linen sheets, always", "Old jazz while you cook"];
+const KINDS = ["Film", "Café", "Home", "Music"];
+const SWATCHES = [
+  "radial-gradient(circle at 50% 30%, #ffe2a8, #e0a243 55%, #6b4a1c)", // warm lamp light
+  "linear-gradient(135deg, #6b3f1f, #a8693a 45%, #5a3218)", // a walnut bar
+  "linear-gradient(135deg, #c9a27a 0 50%, #ece4d6 50% 100%)", // oak and linen
+  "linear-gradient(135deg, #20392d, #345a45)", // a deep green study
+];
 const TAGS = ["Low light", "Vintage", "Warm", "Natural materials", "Understated", "Cosy", "Earthy", "Handmade"];
 const MAKES = ["Warm lamps, no glare from above", "A wooden bar between kitchen and living", "Oak floors and linen curtains", "A record shelf in a deep green study"];
 // Which taste words each love carries, and which design choices each love leads to.
@@ -139,7 +147,22 @@ export function TasteFlow() {
           title="Your films, cafés and brands, read by Qloo's taste AI."
           sub="Most design tools ask you to describe a style. Arcon finds it in the things you already love, then shows you why every choice was made."
         />
-        <div className="mt-16 grid gap-8 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-center md:gap-4" onMouseLeave={() => setHeld(false)}>
+        <Reveal className="mt-14 hidden md:block">
+          <div onMouseLeave={() => setHeld(false)}>
+            <TasteGraph
+              loves={LOVES.map((text, i) => ({ text, kind: KINDS[i] }))}
+              tags={TAGS}
+              makes={MAKES.map((text, i) => ({ text, swatch: SWATCHES[i] }))}
+              links={LINKS}
+              on={on}
+              onPick={(i) => {
+                setHeld(true);
+                setOn(i);
+              }}
+            />
+          </div>
+        </Reveal>
+        <div className="mt-12 grid gap-8 md:hidden">
           <Column title="You say">
             {LOVES.map((l, i) => (
               <button
@@ -160,7 +183,6 @@ export function TasteFlow() {
               </button>
             ))}
           </Column>
-          <Flow />
           <Column title="Qloo reads">
             <div className="relative flex flex-wrap justify-center gap-2.5 rounded-3xl border border-accent/30 bg-paper/70 px-5 py-8 shadow-[0_0_80px_-30px_var(--accent)]">
               {/* the taste engine at the centre, pulsing */}
@@ -177,7 +199,6 @@ export function TasteFlow() {
               ))}
             </div>
           </Column>
-          <Flow />
           <Column title="Arcon designs">
             {MAKES.map((m, i) => (
               <motion.p
@@ -205,25 +226,6 @@ function Column({ title, children }: { title: string; children: ReactNode }) {
       <p className="mb-3 text-center font-mono text-[11px] uppercase tracking-[0.3em] text-ink-soft">{title}</p>
       <div className="space-y-2">{children}</div>
     </Reveal>
-  );
-}
-
-// Dots running from one column to the next.
-function Flow() {
-  const still = useReducedMotion();
-  return (
-    <div aria-hidden className="relative mx-auto h-12 w-px overflow-hidden bg-line md:h-px md:w-20 lg:w-28">
-      {!still &&
-        [0, 1, 2].map((i) => (
-          <motion.span
-            key={i}
-            className="absolute left-0 top-0 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-accent md:translate-x-0"
-            animate={{ left: ["0%", "100%"], top: ["0%", "100%"] }}
-            transition={{ duration: 1.4, repeat: Infinity, delay: i * 0.45, ease: "linear" }}
-            style={{ boxShadow: "0 0 8px var(--accent)" }}
-          />
-        ))}
-    </div>
   );
 }
 
