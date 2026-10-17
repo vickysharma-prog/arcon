@@ -53,8 +53,12 @@ const CATEGORY = "urn:tag:category:place:";
 // Places whose look is the outdoors or a holiday, not a room: nothing to borrow for a home or a shop.
 const OUTDOORS = /camp|park|beach|trail|resort|marina|golf|ski|zoo|garden|lake|forest|mountain|island/;
 
-/** A place whose rooms you could learn from: not a campsite, a park or a resort. A place with no category is kept. */
-export const isRoomPlace = (e: Entity) => !(e.tags ?? []).map(tagId).some((t) => t.startsWith(CATEGORY) && OUTDOORS.test(t.slice(CATEGORY.length))) && !/\b(campsite|campground|camping|resort)\b/i.test(e.name);
+// Budget chains: the same room in every city, nothing of anyone's taste in it.
+const CHAIN = /\b(best western|holiday inn|novotel|ibis|hampton inn|comfort inn|days inn|super 8|travelodge|premier inn|motel 6|la quinta|courtyard by marriott|residence inn|fairfield inn|red roof|quality inn|econo lodge)\b/i;
+
+/** A place whose rooms you could learn from: not a campsite, a park, a resort or a budget chain. A place with no category is kept. */
+export const isRoomPlace = (e: Entity) =>
+  !(e.tags ?? []).map(tagId).some((t) => t.startsWith(CATEGORY) && OUTDOORS.test(t.slice(CATEGORY.length))) && !/\b(campsite|campground|camping|resort)\b/i.test(e.name) && !CHAIN.test(e.name);
 
 /** Places with a photo that share these decor tags and suit this taste: hotels, cafés and bars that look the part. */
 export async function kindredPlaces(likedIds: string[], decorTags: string[], take = 6): Promise<Entity[]> {

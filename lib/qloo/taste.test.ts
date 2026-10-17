@@ -63,3 +63,11 @@ test("places that share your look are rooms to learn from, not campsites, parks 
   assert.equal(isRoomPlace(at("Seaside Beach Resort")), false);
   assert.equal(isRoomPlace(at("Hyde", "park")), false);
 });
+
+test("budget hotel chains aren't places to borrow a look from", async () => {
+  const { isRoomPlace } = await import("./api.ts");
+  const at = (name: string): Entity => ({ entity_id: name, name, types: ["urn:entity:place"], tags: [] });
+  assert.equal(isRoomPlace(at("Holiday Inn Rome - Aurelia")), false);
+  assert.equal(isRoomPlace(at("Best Western Plus Hotel Colbert")), false);
+  assert.equal(isRoomPlace(at("Sunset Marquis")), true);
+});

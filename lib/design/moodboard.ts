@@ -17,7 +17,8 @@ const imageOf = (e: Entity) => e.properties?.image?.url;
 /** The decor tags behind their style, from things they named (a matched brand's decor never leads). */
 export function decorTags(p: Taste, n = 4): string[] {
   return (p.taste?.tags ?? [])
-    .filter((t) => t.family === "decor" && t.sources.some((s) => s.layer !== 3))
+    // "standardized chain" describes a chain hotel, not a look anyone wants to borrow
+    .filter((t) => t.family === "decor" && t.value !== "standardized_chain" && t.sources.some((s) => s.layer !== 3))
     .slice(0, n)
     .map((t) => `${DECOR}${t.value}`);
 }
