@@ -64,22 +64,21 @@ last commit 110212a is live, 348 unit tests pass, tsc and the build are clean, a
 
 ## Resume here (next session, first thing)
 
-The fix lists from the end-to-end run (`private/e2e-run.md`) are fixed and pushed (17 Oct), and the live site is
-deployed from them (live checks all pass). Next, first thing: re-run the journeys that changed in Chrome on the local build (1, 3, 4, 5, 7)
-and note the results in e2e-run.md, then add live checks for /api/shell, the management views and
-/api/projects/[id]/movein to scripts/live-check.ts.
+17 Oct: the re-check passed (private/e2e-run.md), the landing page and Resources were updated, taste picks are now
+famous names with a clear look each, sign-in is asked for at unlock (try first, sign in to keep: Vicky's decision).
+All pushed and live; live checks pass.
 
-Still open from the run: US demo pros with work (data in the live database: Vicky decides), and the site materials
-list in m² and kg on US projects (needs the quantities converted, not just the labels).
+Open for Vicky: US demo pros with work (data in the live database), the site materials list in m² and kg on US
+projects, whether to keep the eve interviewer agent (mounted at /eve/interviewer, nothing in the app calls it now),
+and what else she wants on the landing page.
 
 ## What's left, in order (deadline 30 Oct 11:45pm ET = 31 Oct about 9:15am IST)
 
-0. **RE-CHECK, FIRST THING (Vicky, 17 Oct):** everything from the run is fixed, pushed and live (all live checks pass,
-   including new ones for /api/shell, the business views and move-in). Re-run in Chrome on the local build, by
-   hand, every journey in private/e2e-run.md (1 to 8, phone width too) and note each result there. Fix anything that
-   breaks before new work.
-0b. **Landing page, more UI and content (Vicky, 17 Oct):** after the re-check, work on the landing page's design and
-   what it says. Ask Vicky what she wants changed first, then go section by section.
+0. **Re-check: done (17 Oct).** Every journey passes on the local build; results and the fixes made during it are in
+   private/e2e-run.md ("Re-check after the fixes"). Pushed and live.
+0b. **Landing page: first pass done (17 Oct).** Three plans drawn live by the engine, a sixth step (Move in), a
+   section for architects and builders, plain words on privacy; Resources and the FAQ brought up to date. Ask Vicky
+   what else she wants on it.
 1. **The app frame and sidebar** (pushed and live 17 Oct): Vicky to review on live; check phone width, dark mode and
    a guest on a project during the re-check.
 1b. **From the flow audit** (private/flows-audit.md): the builder's quote, fees from the site's phases, the

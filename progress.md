@@ -2,6 +2,18 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-17 (afternoon): Re-check, landing page, taste picks, sign-in at unlock
+
+- Re-check of every journey in Chrome on the local build: all pass. Fixed on the way: the budget's "we started at
+  luxury" wording, a bigger kitchen pricing cheaper (kitchen price now follows its size), a suggestion to add a room
+  that exists, Approve with no busy state, the cookie notice over the language buttons, India-first placeholders.
+- Sign-in: try first, sign in to keep (Vicky). Unlocking asks a guest to sign in; the project comes with them.
+- Landing page: three plans drawn live by the layout engine, Move in as step six, a section for architects and
+  builders, a row on privacy; nav gets Plans and For pros. Resources and the FAQ brought up to date.
+- Taste picks (Vicky): famous names with a clear look each, checked in Qloo; matched brands prefer ones people
+  know; places that share your look leave out budget chains.
+- Next: Vicky's call on demo pros, the materials list units, the unused eve agent and more landing page.
+
 ## 2026-10-17: Every fix from the end-to-end run, pushed and deployed
 
 - Tour paywall, one estimate everywhere, fees say who they're to and a builder is paid by stage of the build.
