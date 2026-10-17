@@ -96,9 +96,19 @@ and what else she wants on the landing page.
 - Model comparison (scripts/compare-models.ts) on three real projects: all 9 runs passed the schema, 0 invented
   credits, 3 plans from the model every time; Flash-Lite fastest for the room list (1.5 to 2.5 s vs about 10 s).
 - The eve interviewer agent stays (Vicky left it to me).
-- Waiting for the local server (it was stopped for low memory): the eve evals (they boot a dev server), task
-  #62 (3D room labels: one overlay instead of a React root per label, needs a look in the browser), and the dev-mode
-  reload loop.
+- Checked in the browser (17 Oct, late): quote send, accept and the site budget; fees by phase with "done: bill
+  it", the bell and "Bill"; architect visits and sign-off; the city check; 3D room labels (one overlay now, no
+  warning when leaving the 3D in dev); the dev-mode reload loop on /home no longer happens.
+- Landing taste graph redrawn (components/landing/TasteGraph.tsx): loves on the left, Qloo's taste words around a
+  hub with weights, design choices with material swatches on the right, links that draw in with pulses. Phones keep
+  the three columns.
+- Evals: hindi, hotel-guests, running-cafe and running-office now pass after instruction fixes (office headcount
+  saved as people, hotel guests asked, stillNeed asked first). The full suite re-run is waiting on Gemini quota.
+- **Gemini free quota ran out on 17 Oct for all three models.** It resets at midnight Pacific (about 12:30pm IST).
+  Until then new designs, briefs and chat edits the rules can't read fail on live. Options for Vicky: wait, or a
+  paid key / AI Gateway credit before the judges look.
+- Fixed: Brooklyn shows as Brooklyn, NY (not New York, NY); an owner with a builder is no longer offered "I'm
+  managing the build myself".
 - Next with Vicky: pricing and the judge demo (brainstorm).
 
 ## What's left, in order (deadline 30 Oct 11:45pm ET = 31 Oct about 9:15am IST)
@@ -161,10 +171,7 @@ confirmation emails (Gmail SMTP was the suggestion), later.
 
 ## Known issues
 
-- /home in dev mode (`next dev`) reloads in a loop with "The server could not finish this Suspense boundary";
-  production builds and the live site are fine. Investigate in F1.
-- 3D room labels log a React warning in development when leaving the 3D (task #62).
-- A typo'd city geocodes to the wrong place (task #63).
+- Gemini free quota: see 17 Oct (night) above; re-run the full eval suite once it resets.
 - On a busy laptop (Vicky's CPU was at 91% with Chrome, Spotify, VS Code) the landing film can still stutter.
 - Google's sign-in page names the Supabase address, not "Arcon" (needs Supabase's paid custom domain).
 - The project page has two old lint errors about state set in effects.

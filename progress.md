@@ -8,7 +8,12 @@ One entry per working session, newest at the top. Date, what got done, what brok
   reminders to bill; architect site visits and stage sign-off (migration 016).
 - City check in the interview; materials in sq ft and pounds on US sites; market strip with a sourced households
   number; test-data cleanup; a model comparison on the real pipeline (all pass, Flash-Lite fastest).
-- Waiting on the local server: eve evals, 3D room labels, the dev reload loop.
+- Browser check of all of it on the local build: quote, fees by phase, visits and sign-off, city check. All work.
+- 3D room labels share one overlay (no dev warning on leaving the 3D); the dev reload loop on /home is gone.
+- New taste graph on the landing page. Interviewer instruction fixes; four failing evals now pass.
+- Fixed Brooklyn showing as New York, and an owner with a builder being offered self-build.
+- Gemini free quota ran out for all models; the full eval re-run waits for the reset (midnight Pacific).
+- Next: pricing and the judge demo, brainstormed with Vicky.
 
 ## 2026-10-17 (evening): For pros, the film, the playlist
 
