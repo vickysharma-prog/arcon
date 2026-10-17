@@ -69,7 +69,7 @@ famous names with a clear look each, sign-in is asked for at unlock (try first, 
 All pushed and live; live checks pass.
 
 17 Oct (evening): For pros redesigned (AI vs Manage, a live screen per capability, links into Resources#architects
-and #builders, which now explain everything in depth). The 30-second film is recorded from every role
+and #builders, which now explain everything in depth). The film (59 s, every role, sound off until asked) is recorded
 (scripts/record-video.ts, re-run any time) and plays on the landing page from Supabase storage (bucket "media",
 public), never from the repo. Pricing: Vicky wants to brainstorm it next.
 

@@ -4,7 +4,7 @@ import type { Layout } from "../layout/schema.ts";
 import { furnish } from "../three/furniture.ts";
 import { look } from "../three/materials.ts";
 import { choicesOf, type Ticked } from "../green/improve.ts";
-import { marketOf, type Tier } from "../budget/costs.ts";
+import { marketOf, projectTier, type Tier } from "../budget/costs.ts";
 import { tasteTier, type PriceSignal } from "../budget/tier.ts";
 import { creditOf } from "../design/trail.ts";
 import { closeness } from "../plan-import/taste.ts";
@@ -53,7 +53,8 @@ export async function shoppingFor(p: Project, tierOverride?: Tier): Promise<Shop
   if (!layout) return { tier: "mid", signals: [], currency: "USD", lines: [], stores: [] };
   const market = marketOf(p.site.location);
   const read = await tasteTier(p.taste_signals).catch(() => ({ tier: "mid" as Tier, signals: [] }));
-  const tier = tierOverride ?? read.tier;
+  // where the whole project starts: the quality they told us, else what their taste points to
+  const tier = tierOverride ?? projectTier(p, read.tier);
 
   const ticked = (Array.isArray(p.interview?.green) ? p.interview.green : []) as Ticked;
   const items = furnish(layout, { lush: look(p.brief as never, p.taste).lush, extraPlants: choicesOf(ticked).extra });

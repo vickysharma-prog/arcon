@@ -1,4 +1,4 @@
-// Uploads the 30-second film (and its poster) to the public "media" bucket, where the landing page plays it from.
+// Uploads the film (and its poster) to the public "media" bucket, where the landing page plays it from.
 // The film shows Qloo images, so it lives in storage, never in the repo.
 // Run: node --env-file=.env.local --env-file=.env scripts/upload-video.ts <film.mp4> <poster.jpg>
 import { readFileSync } from "node:fs";
@@ -13,7 +13,7 @@ if (!buckets?.some((b) => b.name === "media")) {
   const { error } = await db.storage.createBucket("media", { public: true, fileSizeLimit: "50MB", allowedMimeTypes: ["video/mp4", "image/jpeg"] });
   if (error) throw error;
 }
-for (const [file, name, type] of [[film, "arcon-30s.mp4", "video/mp4"], [poster, "arcon-30s.jpg", "image/jpeg"]] as const) {
+for (const [file, name, type] of [[film, "arcon-film.mp4", "video/mp4"], [poster, "arcon-film.jpg", "image/jpeg"]] as const) {
   const { error } = await db.storage.from("media").upload(name, readFileSync(file), { contentType: type, upsert: true, cacheControl: "3600" });
   if (error) throw error;
   console.log("uploaded", db.storage.from("media").getPublicUrl(name).data.publicUrl);

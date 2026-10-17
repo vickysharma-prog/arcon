@@ -12,6 +12,10 @@ One entry per working session, newest at the top. Date, what got done, what brok
   uploaded by scripts/upload-video.ts to the public "media" bucket; the landing page plays it muted when in view.
 - Found in recording: the walk's playlist gave Russian pop for a Los Angeles house. It now leans to well-known
   artists heard where the client lives.
+- The film is now under a minute (Vicky): the interview, the style brief, look around inside, budget, shopping
+  list and drawings were added, plus a quiet original music bed (made with ffmpeg); muted by default with a Sound
+  on button. The card is smaller and lifted off the page. Found while recording: the shopping list started at the
+  taste's quality (luxury) while the budget started at the quality they told us; both start there now.
 - Next: pricing brainstorm with Vicky.
 
 ## 2026-10-17 (afternoon): Re-check, landing page, taste picks, sign-in at unlock
