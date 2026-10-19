@@ -2,6 +2,13 @@
 
 One entry per working session, newest at the top. Date, what got done, what broke, what is next.
 
+## 2026-10-19: Qloo notes for the family side
+
+- No Arcon code today. While researching a second entry, found Qloo signals Arcon can use: baby brands with design
+  tags (a nursery), the parents-with-young-children audience, family-friendly place tags for business projects.
+  Written up in private/qloo-findings.md.
+- What's left is unchanged (state.md, "Start from here").
+
 ## 2026-10-17 (night): Quotes, fees by phase, the architect on site, quality
 
 - Builder's quote, accepted by whoever approves, becomes the site's budget; builder fees follow the site's phases with
