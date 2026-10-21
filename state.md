@@ -33,9 +33,10 @@ P7 app, the flow-audit items). What remains, in order:
    decide: wait, or a paid key / AI Gateway credit so the judges never hit it. Then re-run the full eval suite.
 2. **Brainstorm with Vicky (do not build before):** pricing (plans, prices, what's free, the paywall moment) and the
    judge demo (how a judge gets in, which roles and projects they see, a role switcher).
-3. **US demo world:** a family house in Los Angeles in review, a café in New York with the neighbourhood read, an
+3. **US demo world: done (22 Oct)** as the judges' demo world (scripts/demo-world.ts). Was: a family house in Los Angeles in review, a café in New York with the neighbourhood read, an
    architect's studio in Austin with three clients, a builder's live site; fees in dollars; demo pros with work.
-4. **Judge demo build:** /demo with role cards and a role switcher bar, from the brainstorm.
+4. **Judge demo: built and live (22 Oct).** /demo, 11 stops, view only; see progress.md 22 Oct. Next: Vicky's review,
+   then the submission text and video around it.
 5. **Pricing: no PayPal for the hackathon (Vicky, 21 Oct).** Pricing shows on the landing page only; PayPal
    sandbox is after the hackathon.
 6. **F1 quality, the rest:** adversarial tests of the agents, speed pass, full eval re-run (after item 1).

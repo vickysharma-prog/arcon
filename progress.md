@@ -9,6 +9,20 @@ One entry per working session, newest at the top. Date, what got done, what brok
   Written up in private/qloo-findings.md.
 - What's left is unchanged (state.md, "Start from here").
 
+## 2026-10-22: The judges' demo, new type, FAQ and footer (Vicky)
+
+- New type: Funnel Display, Funnel Sans and Martian Mono (Vicky picked from a comparison page).
+- The judges' demo: /demo (header and hero "For judges"). A demo world built through the real app by
+  scripts/demo-world.ts: Lena Ortiz's LA studio, Maya's house (74%, on site, quote accepted, visits and sign-offs),
+  the Parks' house (in review), Ana's apartment (last week: snags, handover pack), Mike the builder, Sam's Brooklyn
+  café. 11 tour stops; a small glass pill at the bottom that opens on hover with the caption, role switch and exit.
+- View only: proxy.ts refuses any write from the four demo accounts (no model calls, deletes or invites), and the pill
+  says so when a judge presses a button. No reset needed. Reseeding needs a local server with ARCON_DEMO_SEED=1.
+- The interview replays Maya's answers by itself (1x or 2x, skip), with Qloo reading her picks live.
+- Fixed on the way: an accepted quote showed to the client as "$85,000 to $85,000"; the snag list now opens with the
+  last phase, not only at 100%; demo pros no longer see "trial has ended".
+- FAQ redesigned as cards beside a contact card; footer with Vicky's email and LinkedIn.
+
 ## 2026-10-17 (night): Quotes, fees by phase, the architect on site, quality
 
 - Builder's quote, accepted by whoever approves, becomes the site's budget; builder fees follow the site's phases with
