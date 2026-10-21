@@ -375,45 +375,63 @@ export function Market() {
   );
 }
 
-// Common questions, one open at a time.
+// Common questions, one open at a time: the questions as cards beside a short note and a way to ask anything else.
+const CONTACT = { email: "raghunathsharma296@gmail.com", linkedin: "https://www.linkedin.com/in/vickysharmasynap/" };
+
 export function Faq() {
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section id="faq" className="mx-auto max-w-3xl scroll-mt-24 px-4 py-24 sm:px-8">
-      <Heading eyebrow="Questions" title="Before you start" />
-      <ul className="mt-10 divide-y divide-line border-y border-line">
-        {FAQ.map((f, i) => (
-          <li key={f.q}>
-            <button
-              type="button"
-              aria-expanded={open === i}
-              onClick={() => {
-                tick();
-                setOpen(open === i ? null : i);
-              }}
-              className="flex w-full items-center justify-between gap-4 py-5 text-left text-lg transition hover:text-accent"
-            >
-              {f.q}
-              <motion.span aria-hidden animate={{ rotate: open === i ? 45 : 0 }} className="shrink-0 font-mono text-xl text-accent">
-                +
-              </motion.span>
-            </button>
-            <AnimatePresence initial={false}>
-              {open === i && (
-                <motion.p initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden text-ink-soft">
-                  <span className="block pb-5">{f.a}</span>
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-6 text-center text-sm text-ink-soft">
-        More in{" "}
-        <Link href="/resources" className="text-accent hover:underline">
-          Resources
-        </Link>
-      </p>
+    <section id="faq" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-24 sm:px-8">
+      <div className="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.4fr)] lg:gap-16">
+        <Reveal className="lg:sticky lg:top-28 lg:self-start">
+          <p className="font-mono text-xs uppercase tracking-[0.3em] text-accent">Questions</p>
+          <h2 className="mt-4 font-serif text-4xl leading-tight sm:text-5xl">Before you start</h2>
+          <p className="mt-4 max-w-sm text-ink-soft">What it costs, how it reads your taste, what happens to your data, and who it is for.</p>
+          <div className="mt-8 max-w-sm rounded-2xl border border-line bg-paper-raised/70 p-5 backdrop-blur">
+            <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">Something else?</p>
+            <p className="mt-2">Write to us and a person answers.</p>
+            <a href={`mailto:${CONTACT.email}`} className="mt-3 inline-block break-all text-accent underline-offset-2 hover:underline">
+              {CONTACT.email}
+            </a>
+            <p className="mt-4 text-sm text-ink-soft">
+              Or read the guides in{" "}
+              <Link href="/resources" className="text-accent underline-offset-2 hover:underline">
+                Resources
+              </Link>
+            </p>
+          </div>
+        </Reveal>
+        <ul className="space-y-3">
+          {FAQ.map((f, i) => {
+            const on = open === i;
+            return (
+              <li key={f.q} className={`overflow-hidden rounded-2xl border transition-colors duration-300 ${on ? "border-accent/50 bg-paper-raised shadow-[0_18px_50px_-28px_var(--accent)]" : "border-line bg-paper-raised/50 hover:border-accent/40"}`}>
+                <button
+                  type="button"
+                  aria-expanded={on}
+                  onClick={() => {
+                    tick();
+                    setOpen(on ? null : i);
+                  }}
+                  className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left sm:px-6 sm:py-5"
+                >
+                  <span className={`text-base transition-colors sm:text-lg ${on ? "text-ink" : "text-ink/90"}`}>{f.q}</span>
+                  <motion.span aria-hidden animate={{ rotate: on ? 45 : 0 }} transition={{ type: "spring", stiffness: 400, damping: 25 }} className={`grid h-8 w-8 shrink-0 place-items-center rounded-full border text-lg transition-colors ${on ? "border-accent bg-accent text-btn-ink" : "border-line text-accent"}`}>
+                    +
+                  </motion.span>
+                </button>
+                <AnimatePresence initial={false}>
+                  {on && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }} className="overflow-hidden">
+                      <p className="px-5 pb-5 leading-relaxed text-ink-soft sm:px-6">{f.a}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </section>
   );
 }
@@ -502,14 +520,40 @@ export function FinalCall() {
 export function Footer() {
   return (
     <footer className="border-t border-line">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-ink-soft sm:flex-row sm:px-8">
-        <HomeLink>
-          <Logo size={22} />
-        </HomeLink>
-        <p>Taste intelligence powered by Qloo · © 2026 Arcon</p>
-        <Link href="/privacy" className="hover:text-ink">
-          Privacy
-        </Link>
+      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-8 md:grid-cols-[1.4fr_1fr_1fr]">
+        <div>
+          <HomeLink>
+            <Logo size={24} />
+          </HomeLink>
+          <p className="mt-3 max-w-xs text-sm text-ink-soft">An AI architect that designs any space around the taste of the people who use it.</p>
+          <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.25em] text-accent">Taste intelligence by Qloo</p>
+        </div>
+        <nav aria-label="Arcon" className="grid content-start gap-2 text-sm">
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">Arcon</p>
+          <Link href="/start" className="w-fit hover:text-accent">Start designing</Link>
+          <a href="/demo" className="w-fit hover:text-accent">For judges</a>
+          <Link href="/resources" className="w-fit hover:text-accent">Resources</Link>
+          <Link href="/privacy" className="w-fit hover:text-accent">Privacy</Link>
+        </nav>
+        <div className="grid content-start gap-2 text-sm">
+          <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-ink-soft">Made by Vicky Sharma</p>
+          <a href={`mailto:${CONTACT.email}`} className="flex w-fit items-center gap-2 break-all hover:text-accent">
+            <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="m3 7 9 6 9-6" />
+            </svg>
+            {CONTACT.email}
+          </a>
+          <a href={CONTACT.linkedin} target="_blank" rel="noopener noreferrer" className="flex w-fit items-center gap-2 hover:text-accent">
+            <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="shrink-0">
+              <path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5ZM3 9.75h4v11H3v-11Zm7 0h3.8v1.5h.06c.53-1 1.84-2.06 3.79-2.06 4.05 0 4.8 2.67 4.8 6.13v5.43h-4v-4.81c0-1.15-.02-2.63-1.6-2.63-1.6 0-1.85 1.25-1.85 2.55v4.89h-4v-11Z" />
+            </svg>
+            LinkedIn
+          </a>
+        </div>
+      </div>
+      <div className="border-t border-line">
+        <p className="mx-auto max-w-6xl px-4 py-5 text-xs text-ink-soft sm:px-8">© 2026 Arcon</p>
       </div>
     </footer>
   );

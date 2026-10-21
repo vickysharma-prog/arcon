@@ -131,17 +131,24 @@ export function Hero() {
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-ink-soft sm:text-xl">
             Talk to Arcon about the films, places and things you love. It turns your taste into a floor plan, a 3D walkthrough, a budget in your currency and a shopping list, for a home, café, office, hotel, shop or studio.
           </p>
-          <div className="mt-9 flex flex-wrap items-center gap-3">
+          <div className="mt-9 flex flex-wrap items-center gap-2.5">
             <Link
               href="/start"
               onClick={() => transition()}
-              className="glow-btn group px-7 py-3.5 text-lg"
+              className="glow-btn group px-6 py-3.5 text-base"
             >
               Start designing free
             </Link>
-            <Link href="/start/plan" onClick={() => tick()} className="rounded-full border border-line bg-paper-raised/70 px-6 py-3.5 text-lg backdrop-blur transition hover:-translate-y-0.5 hover:border-accent hover:text-accent hover:shadow-[0_12px_36px_-14px_var(--accent)]">
+            <Link href="/start/plan" onClick={() => tick()} className="rounded-full border border-line bg-paper-raised/70 px-5 py-3.5 text-base backdrop-blur transition hover:-translate-y-0.5 hover:border-accent hover:text-accent hover:shadow-[0_12px_36px_-14px_var(--accent)]">
               I have a floor plan
             </Link>
+            <a href="/demo" onClick={() => tick()} className="group flex items-center gap-2.5 rounded-full border border-accent/50 bg-accent/5 px-5 py-3.5 text-base text-accent backdrop-blur transition hover:-translate-y-0.5 hover:bg-accent/10 hover:shadow-[0_12px_36px_-14px_var(--accent)]">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60 motion-reduce:hidden" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent" />
+              </span>
+              For judges
+            </a>
           </div>
           <p className="mt-5 text-sm text-ink-soft">
             Type or talk · no account needed to try ·{" "}
@@ -149,12 +156,7 @@ export function Hero() {
               Find your space style in three taps
             </Link>
           </p>
-          <p className="mt-2 text-sm text-ink-soft">
-            Judging Arcon?{" "}
-            <a href="/demo" onClick={() => tick()} className="text-accent underline-offset-2 hover:underline">
-              Take the 3-minute tour, no sign-up
-            </a>
-          </p>
+
         </div>
 
         <motion.div initial={still ? false : { opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}>
