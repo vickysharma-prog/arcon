@@ -14,6 +14,8 @@ export type Item = {
   /** The piece's own width and depth before turning, and which way its front faces (radians about y). */
   lw: number; ld: number; rot: number;
   role: Role; level: number;
+  /** The kind of room it dresses (feature walls take a different shade in each). */
+  kind?: string;
 };
 
 // Pieces in room-local terms: fx, fz are fractions of the room (0 = the wall at the room's back), sizes in
@@ -59,11 +61,20 @@ const SETS: Record<string, Piece[]> = {
           name: "media unit", fx: 0.18, fz: 0.95, w: 1.3, d: 0.4, h: 1.3, role: "wood", face: [0, -1],
           or: {
             name: "media unit", fx: 0.82, fz: 0.95, w: 1.3, d: 0.4, h: 1.3, role: "wood", face: [0, -1],
-            or: {
-              name: "media unit", fx: 0.96, fz: 0.45, w: 1.2, d: 0.4, h: 1.3, role: "wood", face: [-1, 0],
-              // Last resort in a very open room: a low console standing free, facing the sofa, as a room divider.
-              or: { name: "media unit", fx: 0.5, fz: 0.72, w: 1.4, d: 0.4, h: 1.3, role: "wood", face: [0, -1] },
-            },
+            // Then on either side wall, narrower each time. Never standing free in the room: a TV in the middle of
+            // an open plan blocks the way in and faces the door with its back (Vicky, 22 Oct).
+            // Last, a slim wall-mounted TV anywhere along the walls.
+            or: chain([
+              ...[1.2, 1.0].flatMap((w) => [0.45, 0.75].flatMap((fz) => [
+                { name: "media unit", fx: 0.96, fz, w, d: 0.4, h: 1.3, role: "wood" as const, face: [-1, 0] as [number, number] },
+                { name: "media unit", fx: 0.04, fz, w, d: 0.4, h: 1.3, role: "wood" as const, face: [1, 0] as [number, number] },
+              ])),
+              ...[0.25, 0.5, 0.75].flatMap((at) => [
+                { name: "media unit", fx: 0.97, fz: at, w: 0.9, d: 0.15, h: 1.3, role: "wood" as const, face: [-1, 0] as [number, number] },
+                { name: "media unit", fx: 0.03, fz: at, w: 0.9, d: 0.15, h: 1.3, role: "wood" as const, face: [1, 0] as [number, number] },
+                { name: "media unit", fx: at, fz: 0.97, w: 0.9, d: 0.15, h: 1.3, role: "wood" as const, face: [0, -1] as [number, number] },
+              ]),
+            ]),
           },
         },
       },
@@ -164,6 +175,8 @@ const PLANT: Piece = {
 };
 // A taste that leans green (gardens, botanical places) gets a second, smaller plant in the opposite corner.
 const LUSH_PLANT: Piece = { name: "plant", fx: 0.06, fz: 0.92, w: 0.45, d: 0.45, h: 0.9, role: "plant" };
+const PLANTED = new Set(["living", "lounge", "bedroom", "guest-room", "dining", "office"]);
+const LUSH_ROOMS = new Set(["living", "lounge", "bedroom"]);
 
 // Plants the client added to raise the greenery score: every corner, then the middle of each wall, so each one
 // finds the next free spot. The usual plant above is untouched, so a design without additions stays the same.
@@ -308,16 +321,28 @@ export function furnish(layout: Layout, { lush = false, extraPlants = {} as Reco
       };
       // A powder room, WC or restroom is a half bath: toilet and basin, no shower.
       const half = room.kind === "bath" && /powder|wc|restroom|toilet/i.test(room.name);
-      for (const p of [...setFor(room, layout.spaceType, W, D).filter((q) => !(half && q.name === "shower")), PLANT, ...(lush ? [LUSH_PLANT] : []), ...Array<Piece>(extraPlants[room.id] ?? 0).fill(EXTRA_PLANT)]) place(p);
+      // One plant to a room, where people sit or sleep; a lush taste adds a second in living rooms and bedrooms only,
+      // so an open plan doesn't fill up with pots (kitchens, halls and wet rooms keep their floors clear).
+      const green = PLANTED.has(room.kind) || !HOMES.has(layout.spaceType);
+      const plants = green ? [PLANT, ...(lush && LUSH_ROOMS.has(room.kind) ? [LUSH_PLANT] : [])] : [];
+      for (const p of [...setFor(room, layout.spaceType, W, D).filter((q) => !(half && q.name === "shower")), ...plants, ...Array<Piece>(extraPlants[room.id] ?? 0).fill(EXTRA_PLANT)]) place(p);
       return roomItems;
       };
       const needs = essentialsFor(room.kind, layout.spaceType);
       const missing = (its: Item[]) => needs.filter((n) => !its.some((i) => i.name === n)).length;
+      // a sofa that looks at the TV, not past it
+      const facing = (its: Item[]) => {
+        const sofa = its.find((i) => i.name === "sofa");
+        const tv = its.find((i) => i.name === "media unit");
+        return !!sofa && !!tv && Math.cos(sofa.rot - tv.rot) < -0.99;
+      };
       let best: Item[] = [];
       let bestScore = -Infinity;
       for (const frame of [orient(room, door), ...frames(room)]) {
         const its = furnishAs(frame);
-        const score = -missing(its) * 100 + its.length;
+        // somewhere to sit matters more than the TV
+        const seated = !needs.includes("sofa") || its.some((i) => i.name === "sofa");
+        const score = -missing(its) * 100 - (seated ? 0 : 60) + (facing(its) ? 50 : 0) + its.length;
         if (score > bestScore) [best, bestScore] = [its, score];
         if (missing(its) === 0 && frame === undefined) break;
       }
@@ -350,7 +375,8 @@ function setFor(room: Space, spaceType: string, W: number, D: number): Piece[] {
 
 // What makes a room usable: a living room needs somewhere to sit and a TV, a dining room a table, and so on.
 export const ESSENTIALS: Record<string, string[]> = {
-  living: ["sofa", "media unit"],
+  // A TV is tried on every wall, but a room with no wall free for one goes without rather than have it stand in the way.
+  living: ["sofa"],
   dining: ["dining set"],
   bedroom: ["bed"],
   "guest-room": ["bed"],

@@ -83,7 +83,7 @@ function onWall(room: Space, level: number, line: Line, s: { t0: number; t1: num
   return {
     room: room.id, name, x, z, y: level * STOREY + s.y0, h: s.y1 - s.y0,
     w: alongX ? lw : depth, d: alongX ? depth : lw, lw, ld: depth,
-    rot: Math.atan2(line.inward[0], line.inward[1]), role, level,
+    rot: Math.atan2(line.inward[0], line.inward[1]), role, level, kind: room.kind,
   };
 }
 

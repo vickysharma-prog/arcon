@@ -144,3 +144,22 @@ test("a café's seating is many small tables, and its kitchen has no café table
   assert.ok(!items.some((i) => i.room === "seating" && i.name === "dining set"), "no family table");
   assert.ok(!items.some((i) => i.room === "kitchen" && i.name === "cafe table"));
 });
+
+test("a TV always stands against a wall, never free in the middle of a room", () => {
+  for (const layout of layouts)
+    for (const f of layout.floors)
+      for (const tv of furnish(layout).filter((i) => i.name === "media unit" && i.level === f.level)) {
+        const room = f.spaces.find((s) => s.id === tv.room)!.rect;
+        // its back is the side away from where it faces
+        const bx = tv.x - Math.sin(tv.rot) * (tv.ld / 2);
+        const bz = tv.z - Math.cos(tv.rot) * (tv.ld / 2);
+        const toWall = Math.min(Math.abs(bx - room.x), Math.abs(bx - room.x - room.w), Math.abs(bz - room.y), Math.abs(bz - room.y - room.h));
+        assert.ok(toWall < 0.35, `${layout.spaceType} ${tv.room}: ${toWall.toFixed(2)} m from a wall`);
+      }
+});
+
+test("plants go where people sit or sleep, not across the kitchen and hall", () => {
+  const items = furnish(house, { lush: true });
+  const rooms = new Map(house.floors.flatMap((f) => f.spaces.map((s) => [s.id, s.kind])));
+  for (const p of items.filter((i) => i.name === "plant")) assert.ok(!["kitchen", "bath", "laundry"].includes(rooms.get(p.room) ?? ""), p.room);
+});

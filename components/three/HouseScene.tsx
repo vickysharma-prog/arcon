@@ -63,6 +63,11 @@ type Props = {
 };
 
 
+/** Which face of an outside wall's box looks out of the building: +z or -z for a wall along x, +x or -x along z. */
+function outerFace(w: WallBox, W: number, D: number) {
+  return w.axis === "x" ? (w.at > D / 2 ? 4 : 5) : w.at > W / 2 ? 0 : 1;
+}
+
 function wallGeom(w: WallBox | Glass, thick: number) {
   const len = w.to - w.from;
   const h = w.y1 - w.y0;
@@ -174,16 +179,25 @@ function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway
           <group key={`w-${i}`}>
             <mesh position={g.position} castShadow receiveShadow>
               <boxGeometry args={g.size} />
-              {w.exterior && clad ? (
-                <meshStandardMaterial map={tiledOnce(clad, Math.abs(w.to - w.from), w.y1 - w.y0, ex.cladding === "brick" ? 1.2 : 2.4, ex.cladding === "brick" ? 0.6 : 0.8)} roughness={0.92} />
-              ) : (
-                <meshStandardMaterial color={w.exterior ? colors.exterior : colors.wall} roughness={0.92} />
+              {/* An outside wall is clad on its outside face only; the room side is painted like every inside wall.
+                  A box's faces run +x, -x, +y, -y, +z, -z. */}
+              {[0, 1, 2, 3, 4, 5].map((f) =>
+                w.exterior && f === outerFace(w, W, D) ? (
+                  clad ? (
+                    <meshStandardMaterial key={f} attach={`material-${f}`} map={tiledOnce(clad, Math.abs(w.to - w.from), w.y1 - w.y0, ex.cladding === "brick" ? 1.2 : 2.4, ex.cladding === "brick" ? 0.6 : 0.8)} roughness={0.92} />
+                  ) : (
+                    <meshStandardMaterial key={f} attach={`material-${f}`} color={colors.exterior} roughness={0.92} />
+                  )
+                ) : (
+                  <meshStandardMaterial key={f} attach={`material-${f}`} color={colors.wall} roughness={0.92} />
+                ),
               )}
             </mesh>
             {w.cut && (
+              // the top of a wall cut for the section view: a pale cap, so the plan reads like a drawing, not a black outline
               <mesh position={[g.position[0], w.y1 + 0.01, g.position[2]]}>
                 <boxGeometry args={[g.size[0] + 0.001, 0.02, g.size[2] + 0.001]} />
-                <meshStandardMaterial color="#2b2f36" roughness={0.8} />
+                <meshStandardMaterial color={mix(colors.wall, "#d8d2c8", 0.5)} roughness={0.8} />
               </mesh>
             )}
             {foot && (

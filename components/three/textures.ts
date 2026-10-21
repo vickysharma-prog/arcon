@@ -151,48 +151,134 @@ export const wallpaper = (ground: string, leaf: string) =>
       }
   });
 
-/** An abstract print in the palette: arches, a sun, and a horizon, different for each seed. */
-export const art = (colors: string[], seed: number) =>
+/**
+ * A print in the palette, one of eight kinds: 0 arches, 1 hills under a sun, 2 loose shapes, 3 a colour field,
+ * 4 a single-line drawing, 5 botanical leaves, 6 the sea at dusk, 7 a Bauhaus grid. `seed` varies it within its kind.
+ */
+export const art = (colors: string[], kind: number, seed = 0) =>
   paint(
-    `art${colors.join()}${seed}`,
-    256,
+    `art${colors.join()}${kind}.${seed}`,
+    512,
     (g, s) => {
-      const pick = (i: number) => colors[Math.floor(rand(seed * 13 + i) * colors.length)];
-      g.fillStyle = mix(pick(0), "#f4efe6", 0.8);
+      const pick = (i: number) => colors[Math.floor(rand(seed * 13 + kind * 7 + i) * colors.length)];
+      const r = (i: number) => rand(seed * 31 + i);
+      g.fillStyle = mix(pick(0), "#f4efe6", 0.82);
       g.fillRect(0, 0, s, s);
-      const style = seed % 3;
-      if (style === 0) {
-        for (let i = 0; i < 3; i++) {
-          g.fillStyle = pick(i + 1);
-          const w = s * (0.5 - i * 0.12);
+      switch (kind % 8) {
+        case 0: // arches, nested
+          for (let i = 0; i < 3; i++) {
+            g.fillStyle = pick(i + 1);
+            const w = s * (0.56 - i * 0.14);
+            const top = s * (0.42 + i * 0.08);
+            g.beginPath();
+            g.moveTo(s / 2 - w / 2, s);
+            g.lineTo(s / 2 - w / 2, top);
+            g.arc(s / 2, top, w / 2, Math.PI, 0);
+            g.lineTo(s / 2 + w / 2, s);
+            g.fill();
+          }
+          break;
+        case 1: // hills under a sun
+          g.fillStyle = pick(2);
           g.beginPath();
-          g.moveTo(s / 2 - w / 2, s);
-          g.lineTo(s / 2 - w / 2, s * 0.55 - i * 10);
-          g.arc(s / 2, s * 0.55 - i * 10, w / 2, Math.PI, 0);
-          g.lineTo(s / 2 + w / 2, s);
+          g.arc(s * (0.3 + r(1) * 0.4), s * 0.32, s * 0.13, 0, Math.PI * 2);
           g.fill();
-        }
-      } else if (style === 1) {
-        g.fillStyle = pick(2);
-        g.beginPath();
-        g.arc(s * 0.62, s * 0.38, s * 0.16, 0, Math.PI * 2);
-        g.fill();
-        g.fillStyle = pick(3);
-        g.fillRect(0, s * 0.62, s, s * 0.38);
-        g.fillStyle = mix(pick(3), "#000000", 0.2);
-        g.beginPath();
-        g.moveTo(0, s * 0.62);
-        g.quadraticCurveTo(s * 0.4, s * 0.45, s, s * 0.62);
-        g.fill();
-      } else {
-        for (let i = 0; i < 6; i++) {
-          g.fillStyle = pick(i + 4);
-          g.globalAlpha = 0.85;
+          for (let i = 0; i < 3; i++) {
+            g.fillStyle = mix(pick(3 + i), "#000000", i * 0.12);
+            g.beginPath();
+            g.moveTo(0, s);
+            g.lineTo(0, s * (0.6 + i * 0.1));
+            g.quadraticCurveTo(s * (0.3 + r(i) * 0.4), s * (0.4 + i * 0.12), s, s * (0.62 + i * 0.09));
+            g.lineTo(s, s);
+            g.fill();
+          }
+          break;
+        case 2: // loose shapes
+          for (let i = 0; i < 6; i++) {
+            g.fillStyle = pick(i + 4);
+            g.globalAlpha = 0.85;
+            g.beginPath();
+            g.ellipse(r(i) * s, r(i + 20) * s, s * (0.1 + r(i + 40) * 0.15), s * (0.06 + r(i + 3) * 0.1), r(i + 8) * 3, 0, Math.PI * 2);
+            g.fill();
+          }
+          g.globalAlpha = 1;
+          break;
+        case 3: // a colour field: soft bands, one above the other
+          for (let i = 0; i < 3; i++) {
+            g.fillStyle = pick(i + 2);
+            g.globalAlpha = 0.9;
+            g.fillRect(s * 0.1, s * (0.1 + i * 0.29), s * 0.8, s * 0.24);
+          }
+          g.globalAlpha = 1;
+          break;
+        case 4: // one unbroken line, like an ink drawing, and a dot of colour
+          g.strokeStyle = mix(pick(1), "#000000", 0.55);
+          g.lineWidth = s * 0.012;
+          g.lineCap = "round";
           g.beginPath();
-          g.ellipse(rand(seed + i) * s, rand(seed + i + 20) * s, s * (0.1 + rand(i) * 0.15), s * (0.06 + rand(i + 3) * 0.1), rand(i + 8) * 3, 0, Math.PI * 2);
+          g.moveTo(s * 0.15, s * 0.8);
+          for (let i = 0; i < 5; i++) g.bezierCurveTo(s * r(i * 3), s * r(i * 3 + 1), s * r(i * 3 + 2), s * r(i * 3 + 5), s * (0.2 + r(i + 9) * 0.6), s * (0.2 + r(i + 11) * 0.6));
+          g.stroke();
+          g.fillStyle = pick(2);
+          g.beginPath();
+          g.arc(s * 0.66, s * 0.36, s * 0.09, 0, Math.PI * 2);
           g.fill();
+          break;
+        case 5: { // botanical: leaves along a stem
+          const leaf = mix(pick(1), "#3f6b3a", 0.5);
+          g.strokeStyle = mix(leaf, "#000000", 0.3);
+          g.lineWidth = s * 0.008;
+          g.beginPath();
+          g.moveTo(s * 0.5, s * 0.92);
+          g.quadraticCurveTo(s * 0.46, s * 0.5, s * 0.55, s * 0.1);
+          g.stroke();
+          for (let i = 0; i < 9; i++) {
+            const side = i % 2 ? 1 : -1;
+            g.fillStyle = mix(leaf, "#ffffff", r(i) * 0.25);
+            g.save();
+            g.translate(s * 0.5, s * (0.92 - (0.15 + i * 0.085) * 0.85));
+            g.rotate(side * (0.9 + r(i + 5) * 0.4));
+            g.beginPath();
+            g.ellipse(0, -s * 0.07, s * 0.035, s * 0.08, 0, 0, Math.PI * 2);
+            g.fill();
+            g.restore();
+          }
+          break;
         }
-        g.globalAlpha = 1;
+        case 6: { // the sea at dusk, like a photograph
+          const sky = g.createLinearGradient(0, 0, 0, s * 0.6);
+          sky.addColorStop(0, mix(pick(1), "#2c3e5c", 0.5));
+          sky.addColorStop(1, mix(pick(2), "#f2b27a", 0.55));
+          g.fillStyle = sky;
+          g.fillRect(0, 0, s, s * 0.6);
+          const sea = g.createLinearGradient(0, s * 0.6, 0, s);
+          sea.addColorStop(0, mix(pick(1), "#2f4a66", 0.6));
+          sea.addColorStop(1, mix(pick(1), "#0f1d2e", 0.7));
+          g.fillStyle = sea;
+          g.fillRect(0, s * 0.6, s, s * 0.4);
+          g.fillStyle = "#ffe2b0";
+          g.beginPath();
+          g.arc(s * (0.35 + r(2) * 0.3), s * 0.6, s * 0.07, Math.PI, 0);
+          g.fill();
+          g.globalAlpha = 0.5;
+          for (let i = 0; i < 8; i++) g.fillRect(s * (0.3 + r(i) * 0.4), s * (0.63 + i * 0.04), s * (0.05 + r(i + 4) * 0.12), s * 0.006);
+          g.globalAlpha = 1;
+          break;
+        }
+        default: { // a Bauhaus grid of circles, halves and squares
+          const n = 3;
+          const c = s / n;
+          for (let i = 0; i < n * n; i++) {
+            const x = (i % n) * c;
+            const y = Math.floor(i / n) * c;
+            g.fillStyle = mix(pick(i + 1), "#f4efe6", 0.15);
+            g.beginPath();
+            if (r(i) < 0.4) g.arc(x + c / 2, y + c / 2, c * 0.38, 0, Math.PI * 2);
+            else if (r(i) < 0.75) g.arc(x + c / 2, y + c, c * 0.45, Math.PI, 0);
+            else g.rect(x + c * 0.15, y + c * 0.15, c * 0.7, c * 0.7);
+            g.fill();
+          }
+        }
       }
     },
     false,

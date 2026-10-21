@@ -120,7 +120,7 @@ function Sofa({ w, d, h, k }: { w: number; d: number; h: number; k: Scheme }) {
       {[-1, 1].map((sx) => (
         <group key={sx}>
           <B p={[sx * (w / 2 - arm / 2), seatY + 0.06, 0]} s={[arm, 0.3, d]} c={deep} f={f} />
-          {style === "classic" && <C p={[sx * (w / 2 - arm / 2), seatY + 0.21, -d / 2]} r={arm * 0.6} h={d} c={deep} f={f} rot={[Math.PI / 2, 0, 0]} />}
+          {style === "classic" && <mesh geometry={cylGeom(1)} material={mat(deep, f)} position={[sx * (w / 2 - arm / 2), seatY + 0.21, 0]} scale={[arm * 1.1, d - 0.02, arm * 1.1]} rotation={[Math.PI / 2, 0, 0]} castShadow />}
         </group>
       ))}
       {Array.from({ length: seats }, (_, i) => {
@@ -244,33 +244,54 @@ function Monitor({ x = 0, y, z = 0, turn = 0 }: { x?: number; y: number; z?: num
   );
 }
 
-function Plant({ w, h, k }: { w: number; h: number; k: Scheme }) {
-  const pot = Math.min(0.3, w * 0.55);
-  const leaf = k.plant;
-  const dark = mix(leaf, "#000000", 0.25);
-  const n = 11;
+// A house plant in a pot, one of three kinds by its place in the house: a snake plant (upright blades), a fiddle-leaf
+// fig (big leaves up a trunk) or a monstera (broad leaves fanning out low), so a house doesn't repeat one plant.
+function Plant({ w, h, k, seed = 0 }: { w: number; h: number; k: Scheme; seed?: number }) {
+  const pot = Math.min(0.32, w * 0.6);
+  const leaf = mix(k.plant, "#3f6e3a", 0.35);
+  const dark = mix(leaf, "#000000", 0.28);
+  const light = mix(leaf, "#c9d98a", 0.25);
+  const kind = seed % 3;
+  const top = h - pot;
   return (
     <>
-      <C p={[0, 0, 0]} r={pot * 0.42} h={pot * 1.05} taper={1.25} c={k.pot} f={{ r: 0.85 }} />
-      <C p={[0, pot * 1.0, 0]} r={pot * 0.5} h={0.02} c="#3b2c22" />
-      {[0, 1, 2].map((i) => (
-        <C key={`st${i}`} p={[0, pot, 0]} r={0.01} h={h - pot - 0.1} c={dark} rot={[(i - 1) * 0.18, 0, (i - 1) * 0.12]} />
-      ))}
-      {Array.from({ length: n }, (_, i) => {
-        const a = i * 2.4;
-        const up = pot + 0.15 + ((h - pot - 0.25) * i) / n;
-        const out = w * (0.18 + 0.2 * rand(i + 3));
-        return (
-          <S
-            key={i}
-            p={[Math.sin(a) * out, up, Math.cos(a) * out]}
-            s={[w * 0.42, 0.02, w * 0.26]}
-            c={i % 3 ? leaf : dark}
-            f={{ r: 0.6 }}
-            rot={[0, a + Math.PI / 2, 0.45 + rand(i) * 0.3]}
-          />
-        );
-      })}
+      <C p={[0, 0, 0]} r={pot * 0.46} h={pot} taper={1.22} c={k.pot} f={{ r: 0.75 }} />
+      <C p={[0, pot - 0.005, 0]} r={pot * 0.54} h={0.02} c="#3b2c22" />
+      {kind === 0 &&
+        // snake plant: stiff blades, slightly fanned, two greens
+        Array.from({ length: 11 }, (_, i) => {
+          const a = i * 2.39;
+          const lean = 0.06 + rand(i + 7) * 0.16;
+          const bh = top * (0.65 + rand(i) * 0.35);
+          return (
+            <B key={i} p={[Math.sin(a) * pot * 0.22, pot + bh / 2, Math.cos(a) * pot * 0.22]} s={[0.06, bh, 0.012]} c={i % 2 ? leaf : dark} f={{ r: 0.5 }} rot={[Math.cos(a) * lean, a, -Math.sin(a) * lean]} />
+          );
+        })}
+      {kind === 1 && (
+        // fiddle-leaf fig: a slim trunk and broad leaves crowded at the top
+        <>
+          <C p={[0, pot, 0]} r={0.018} h={top * 0.75} taper={0.8} c="#6b4f3a" />
+          {Array.from({ length: 16 }, (_, i) => {
+            const a = i * 2.39;
+            const up = pot + top * (0.35 + (0.6 * i) / 16);
+            const out = 0.08 + rand(i + 2) * w * 0.32;
+            return <S key={i} p={[Math.sin(a) * out, up, Math.cos(a) * out]} s={[0.17, 0.02, 0.24]} c={i % 3 ? leaf : light} f={{ r: 0.45 }} rot={[0.5 + rand(i) * 0.4, a, 0]} />;
+          })}
+        </>
+      )}
+      {kind === 2 &&
+        // monstera: broad split leaves on long stems, spreading wide and low
+        Array.from({ length: 9 }, (_, i) => {
+          const a = i * 2.39;
+          const out = w * (0.25 + rand(i + 4) * 0.25);
+          const up = pot + top * (0.3 + rand(i) * 0.6);
+          return (
+            <group key={i}>
+              <C p={[0, pot, 0]} r={0.008} h={up - pot} c={dark} rot={[Math.cos(a) * 0.5, 0, -Math.sin(a) * 0.5]} />
+              <S p={[Math.sin(a) * out, up, Math.cos(a) * out]} s={[0.34, 0.02, 0.28]} c={i % 2 ? leaf : dark} f={{ r: 0.45 }} rot={[0.35, a, 0]} />
+            </group>
+          );
+        })}
     </>
   );
 }
@@ -472,9 +493,18 @@ function Rug({ w, d, k }: { w: number; d: number; k: Scheme }) {
   );
 }
 
-function FeatureWall({ w, d, h }: { w: number; d: number; h: number }) {
+// Each room's feature wall in its own shade of the brief's colour: the living room takes it as it is, a bedroom a
+// softer one, the dining room a warmer one (toward the wood), a study a deeper one.
+const SHADE: Record<string, (c: string, k: Scheme) => string> = {
+  bedroom: (c, k) => mix(c, k.textile, 0.45),
+  "guest-room": (c) => mix(c, "#ffffff", 0.4),
+  dining: (c, k) => mix(c, k.wood, 0.35),
+  office: (c) => mix(c, "#2c3e4a", 0.3),
+};
+
+function FeatureWall({ w, d, h, kind, k }: { w: number; d: number; h: number; kind?: string; k: Scheme }) {
   const l = useContext(LookCtx) ?? FALLBACK_LOOK;
-  const c = l.feature;
+  const c = l.finish === "paint" || l.finish === "plaster" || l.finish === "wallpaper" ? (SHADE[kind ?? ""]?.(l.feature, k) ?? l.feature) : l.feature;
   switch (l.finish) {
     case "panel": {
       const n = Math.max(1, Math.floor(w / 0.1));
@@ -496,17 +526,19 @@ function FeatureWall({ w, d, h }: { w: number; d: number; h: number }) {
   }
 }
 
-// Which print the art shows, by furniture style: 0 arches, 1 landscape, 2 loose shapes.
-const ART_KIND = { midcentury: 2, boho: 0, scandi: 1, classic: 1, industrial: 2, modern: 0 } as const;
+// Which prints a style leans to (see textures.art): each frame in the house takes one by its place, so frames
+// side by side differ.
+const ART_KINDS = { midcentury: [2, 7, 3, 4], boho: [0, 5, 6, 2], scandi: [1, 4, 5, 3], classic: [1, 6, 3, 5], industrial: [3, 7, 4, 2], modern: [3, 4, 7, 0] } as const;
 
 function Art({ w, d, h, seed }: { w: number; d: number; h: number; seed: number }) {
   const l = useContext(LookCtx) ?? FALLBACK_LOOK;
-  const kind = ART_KIND[l.style];
+  const kinds = ART_KINDS[l.style];
+  const kind = kinds[Math.floor(rand(seed) * kinds.length)];
   return (
     <>
       <B p={[0, h / 2, 0]} s={[w, h, d]} c={l.frame} f={{ r: 0.5 }} />
       <B p={[0, h / 2, d / 2 + 0.001]} s={[w - 0.05, h - 0.05, 0.002]} c={WHITE} f={{ r: 0.9 }} />
-      <T p={[0, h / 2, d / 2 + 0.003]} s={[w * 0.72, h * 0.72, 0.002]} map={art([...l.art], kind + 3 * (seed % 7))} r={0.8} />
+      <T p={[0, h / 2, d / 2 + 0.003]} s={[w * 0.72, h * 0.72, 0.002]} map={art([...l.art], kind, seed)} r={0.8} />
     </>
   );
 }
@@ -731,18 +763,18 @@ export function Model({ it, k }: { it: Item; k: Scheme }) {
       body = <DiningSet w={w} d={d} k={k} />;
       break;
     case "plant":
-      body = <Plant w={w} h={h} k={k} />;
+      body = <Plant w={w} h={h} k={k} seed={Math.round(Math.abs(it.x * 3 + it.z * 5))} />;
       break;
     case "wall plant":
       body = (
         <>
           <B p={[0, -0.02, 0]} s={[w + 0.1, 0.03, d]} c={k.wood} f={{ r: 0.5 }} />
-          <Plant w={w} h={h} k={k} />
+          <Plant w={w} h={h} k={k} seed={Math.round(Math.abs(it.x * 3 + it.z * 5))} />
         </>
       );
       break;
     case "feature wall":
-      body = <FeatureWall w={w} d={d} h={h} />;
+      body = <FeatureWall w={w} d={d} h={h} kind={it.kind} k={k} />;
       break;
     case "art":
       body = <Art w={w} d={d} h={h} seed={Math.round(Math.abs(it.x * 7 + it.z * 13))} />;
