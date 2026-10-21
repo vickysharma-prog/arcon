@@ -114,7 +114,8 @@ export function SiteView({ projectId, onStatus, onPlans, onTeam }: { projectId: 
       </div>
     );
   const { site, runs } = data;
-  const finishing = !!site && (site.overall >= 100 || data.status === "done");
+  // the snag list and handover start with the last phase, as on a real site, not once everything is at 100%
+  const finishing = !!site && (site.overall >= 100 || data.status === "done" || (site.phases.at(-1)?.status ?? "planned") !== "planned");
   const shown = SECTIONS.filter(([id]) => id !== "movein" || finishing);
   const section = picked ?? (finishing ? "movein" : "today");
   const at: Section = section === "movein" && !finishing ? "today" : section;

@@ -98,8 +98,11 @@ test("the client sees the budget and progress, not the builder's own costs", () 
   assert.deepEqual(seen.crew, [{ id: 1, name: "Sunil", trade: "Tiler" }]);
   assert.deepEqual(seen.materials, [{ id: 1, name: "Flooring", needed: 218 }]);
   assert.deepEqual(seen.orders, [{ id: 1, qty: 218, supplier: "City Floors" }]);
-  assert.deepEqual(seen.money, { budget: { low: 96241, high: 150376 }, currency: "USD" });
+  assert.deepEqual(seen.money, { budget: { low: 96241, high: 150376 }, quoted: undefined, currency: "USD" });
   assert.ok(!JSON.stringify(seen).includes("14944") && !JSON.stringify(seen).includes("120,"));
+  // an accepted quote is one price, and the client still sees it as the quote, not a range
+  const quoted = withoutCosts({ ...site, money: { ...site.money, budget: { low: 395000, high: 395000 }, quoted: true } });
+  assert.deepEqual(quoted.money, { budget: { low: 395000, high: 395000 }, quoted: true, currency: "USD" });
 });
 
 test("the architect visits and signs off stages: the architect on it, or an architect whose own project it is", () => {

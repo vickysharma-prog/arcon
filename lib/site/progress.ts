@@ -72,7 +72,7 @@ type Costed = {
   crew: { day_rate?: number }[];
   materials: { unit_cost?: number }[];
   orders: { cost?: number }[];
-  money: { labour?: number; materials?: number; spent?: number; budget: unknown; currency: string };
+  money: { labour?: number; materials?: number; spent?: number; budget: unknown; quoted?: boolean; currency: string };
 };
 
 /** The site as the client (or anyone not running it) sees it: the budget and the progress, not the builder's own
@@ -83,6 +83,7 @@ export function withoutCosts<S extends Costed>(site: S): S {
     crew: site.crew.map(({ day_rate: _, ...c }) => c),
     materials: site.materials.map(({ unit_cost: _, ...m }) => m),
     orders: site.orders.map(({ cost: _, ...o }) => o),
-    money: { budget: site.money.budget, currency: site.money.currency },
+    // whether the budget is the builder's accepted quote (one price) or Arcon's estimate (a range)
+    money: { budget: site.money.budget, quoted: site.money.quoted, currency: site.money.currency },
   };
 }
