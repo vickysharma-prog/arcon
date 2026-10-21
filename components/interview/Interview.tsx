@@ -15,6 +15,7 @@ import { asked, labelOf, matchChoices, next, picksOf, type Answer, type Answers,
 import { sizeFrom } from "@/lib/interview/logic";
 import type { Candidate } from "@/lib/interview/logic";
 import { useListen, useMicLevel, useSpeak } from "./useVoice";
+import { MAYA } from "@/lib/demo/story";
 import { VoiceMode, type VoiceState } from "./VoiceMode";
 
 const LANG_KEY = "arcon-lang";
@@ -75,6 +76,10 @@ export function Interview() {
     return () => clearTimeout(go);
   }, [projectId, router]);
   const [taste, setTaste] = useState<TasteView | null>(null);
+  // The judges' replay (/start?demo=1): Maya's answers play themselves, at 1x or 2x; nothing is saved.
+  const [replay, setReplay] = useState(false);
+  const [speed, setSpeed] = useState(1);
+  const [ghost, setGhost] = useState<Answer | null>(null);
   const spoken = useRef(new Set<string>());
   // Answering for a project a pro set up ("New client"): its id, and whose it is.
   const [into, setInto] = useState<{ id: string; whose: string | null } | null>(null);
@@ -99,6 +104,7 @@ export function Interview() {
   // Answers so far live in this browser tab, so a reload (or a phone that drops the page) picks up where it was.
   const keep = `arcon-answers-${typeof location === "undefined" ? "" : (new URLSearchParams(location.search).get("project") ?? "new")}`;
   useEffect(() => {
+    if (new URLSearchParams(location.search).get("demo") === "1") return setReplay(true);
     try {
       const was = JSON.parse(sessionStorage.getItem(keep) ?? "null") as Answers | null;
       if (was && typeof was === "object") setAnswers((a) => ({ ...was, ...a }));
@@ -131,9 +137,9 @@ export function Interview() {
 
   useEffect(() => {
     try {
-      if (Object.keys(answers).length) sessionStorage.setItem(keep, JSON.stringify(answers));
+      if (Object.keys(answers).length && !replay) sessionStorage.setItem(keep, JSON.stringify(answers));
     } catch {}
-  }, [answers, keep]);
+  }, [answers, keep, replay]);
   // once the project is saved, the answers are in it
   useEffect(() => {
     try {
@@ -150,6 +156,26 @@ export function Interview() {
     },
     [],
   );
+
+  // The replay: each answer is shown being picked (or typed), then given, so it reads like Maya doing it.
+  useEffect(() => {
+    if (!replay || !q || MAYA[q.id] === undefined) return;
+    const want = MAYA[q.id];
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const later = (ms: number, f: () => void) => timers.push(setTimeout(f, ms / speed));
+    setGhost(null);
+    if (q.kind === "text") {
+      // the city is typed as people type it, and taken from the map's own list
+      const text = q.id === "city" ? "Los Angeles" : String(want);
+      [...text].forEach((_, i) => later(1100 + i * 45, () => setDraft(text.slice(0, i + 1))));
+      later(1100 + text.length * 45 + (q.id === "city" ? 1800 : 600), () => answer(q.id, want));
+    } else {
+      later(1300, () => setGhost(want));
+      later(2200, () => answer(q.id, want));
+    }
+    return () => timers.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [replay, q?.id, speed]);
 
   // A typed or spoken answer: matched to a choice, read as a size, or taken as it is.
   const submit = useCallback(
@@ -326,6 +352,21 @@ export function Interview() {
             </div>
           </div>
         </div>
+        {replay && (
+          <div className="mb-4 flex flex-wrap items-center justify-center gap-2 text-sm">
+            <span className="rounded-full border border-accent/40 bg-accent/5 px-3 py-1 font-mono text-[11px] uppercase tracking-[0.18em] text-accent">Replaying Maya&apos;s interview</span>
+            <div role="radiogroup" aria-label="Speed" className="flex rounded-full border border-line bg-paper-raised p-0.5">
+              {[1, 2].map((x) => (
+                <button key={x} type="button" role="radio" aria-checked={speed === x} onClick={() => setSpeed(x)} className={`rounded-full px-3 py-0.5 ${speed === x ? "bg-btn text-btn-ink" : "text-ink-soft"}`}>
+                  {x}x
+                </button>
+              ))}
+            </div>
+            <a href="/demo?step=2" className="rounded-full px-3 py-1 text-ink-soft transition hover:text-accent">
+              Skip to her design →
+            </a>
+          </div>
+        )}
         <ol className="grid grid-cols-5 gap-2" aria-label={`Progress: ${stage} of ${STAGES.length}`}>
           {STAGES.map((s, i) => (
             <li key={s}>
@@ -370,7 +411,7 @@ export function Interview() {
                   </h1>
 
                   <div className="mt-8">
-                    {(q.kind === "choice" || q.kind === "multi") && <Choices q={q} lang={lang} start={q.preset?.(answers) ?? []} onAnswer={(v) => answer(q.id, v)} doneLabel={say("done")} />}
+                    {(q.kind === "choice" || q.kind === "multi") && <Choices q={q} lang={lang} start={q.preset?.(answers) ?? []} shown={typeof ghost === "string" || Array.isArray(ghost) ? ([] as string[]).concat(ghost) : []} onAnswer={(v) => answer(q.id, v)} doneLabel={say("done")} />}
                     {q.kind === "size" && <SizeInput lang={lang} say={say} onAnswer={(v) => answer(q.id, v)} />}
                     {typing && (
                       <form
@@ -401,6 +442,7 @@ export function Interview() {
                     {q.kind === "taste" && !own && (
                       <Pictures
                         options={pictures[q.slot!] ?? []}
+                        chosen={ghost && typeof ghost === "object" && "id" in ghost ? ghost.id : null}
                         hint={say("pictures")}
                         typeOwn={say("typeOwn")}
                         onPick={(o) => answer(q.id, { slot: q.slot!, id: o.id, name: o.name })}
@@ -484,9 +526,15 @@ export function Interview() {
                       <TypeLog lines={["Reading your picks with Qloo", "Finding the words your style is made of", "Matching brands to your taste"]} done={false} />
                     </div>
                   )}
-                  <button type="button" onClick={designNow} disabled={!taste?.family} className="glow-btn mt-8 px-8 py-3.5 text-lg disabled:opacity-50">
-                    {say("designNow")}
-                  </button>
+                  {replay ? (
+                    <a href="/demo?step=2" className="glow-btn mt-8 px-8 py-3.5 text-lg">
+                      See Maya&apos;s design
+                    </a>
+                  ) : (
+                    <button type="button" onClick={designNow} disabled={!taste?.family} className="glow-btn mt-8 px-8 py-3.5 text-lg disabled:opacity-50">
+                      {say("designNow")}
+                    </button>
+                  )}
                 </motion.div>
               ) : (
                 <motion.div key="finish" initial={still ? false : { opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-xl">
@@ -562,7 +610,7 @@ export function Interview() {
 type Picture = { key: string; id: string; name: string; image: string };
 
 // A style pick from pictures (the quiz's), one tap each, or "Something else? Type it" to name your own.
-function Pictures({ options, hint, typeOwn, onPick, onOwn }: { options: Picture[]; hint: string; typeOwn: string; onPick: (o: Picture) => void; onOwn: () => void }) {
+function Pictures({ options, chosen, hint, typeOwn, onPick, onOwn }: { options: Picture[]; chosen?: string | null; hint: string; typeOwn: string; onPick: (o: Picture) => void; onOwn: () => void }) {
   const still = useReducedMotion();
   return (
     <div>
@@ -580,7 +628,7 @@ function Pictures({ options, hint, typeOwn, onPick, onOwn }: { options: Picture[
               <button
                 type="button"
                 onClick={() => onPick(o)}
-                className="group block w-full overflow-hidden rounded-2xl border border-line bg-paper-raised text-left transition hover:-translate-y-0.5 hover:border-accent hover:shadow-[0_18px_44px_-22px_var(--accent)]"
+                className={`group block w-full overflow-hidden rounded-2xl border bg-paper-raised text-left transition hover:-translate-y-0.5 hover:border-accent hover:shadow-[0_18px_44px_-22px_var(--accent)] ${chosen === o.id ? "-translate-y-1 border-accent ring-4 ring-accent/30" : "border-line"}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- Qloo's own image host, sized by CSS */}
                 <img src={o.image} alt="" onError={(e) => e.currentTarget.closest("li")?.setAttribute("hidden", "")} className="aspect-square w-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -598,7 +646,7 @@ function Pictures({ options, hint, typeOwn, onPick, onOwn }: { options: Picture[
 }
 
 // Answers to tap. One tap answers a single choice; several can be ticked, then Done.
-function Choices({ q, lang, start, onAnswer, doneLabel }: { q: Question; lang: LangId; start: string[]; onAnswer: (v: string | string[]) => void; doneLabel: string }) {
+function Choices({ q, lang, start, shown = [], onAnswer, doneLabel }: { q: Question; lang: LangId; start: string[]; shown?: string[]; onAnswer: (v: string | string[]) => void; doneLabel: string }) {
   const still = useReducedMotion();
   const [picked, setPicked] = useState<string[]>(start);
   const multi = q.kind === "multi";
@@ -623,7 +671,7 @@ function Choices({ q, lang, start, onAnswer, doneLabel }: { q: Question; lang: L
   return (
     <div className="flex flex-wrap justify-center gap-2.5">
       {q.choices!.map((ch, i) => {
-        const on = picked.includes(ch.value);
+        const on = picked.includes(ch.value) || shown.includes(ch.value);
         return (
           <motion.button
             key={ch.value}
