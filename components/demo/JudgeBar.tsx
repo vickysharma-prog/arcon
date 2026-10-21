@@ -64,7 +64,22 @@ export function JudgeBar() {
   const step = (n: number) => `/demo?step=${n}`;
 
   return (
-    // opens as the pointer reaches it (a tap on a phone), closes a moment after it leaves
+    <>
+      {/* back and next at the top too, in the header's empty middle, where people look for the way on */}
+      <nav aria-label="Judges' tour" className="fixed left-1/2 top-3.5 z-[60] hidden -translate-x-1/2 items-center gap-1 rounded-full border border-accent/40 bg-paper-raised/80 p-1 shadow-[0_10px_30px_-16px_var(--accent)] backdrop-blur-xl md:flex">
+        {at.step > 1 && (
+          <a href={step(at.step - 1)} aria-label="Back" className="grid h-7 w-7 place-items-center rounded-full text-ink-soft transition hover:bg-paper/60 hover:text-ink">
+            ‹
+          </a>
+        )}
+        <span className="px-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-accent">
+          Tour {at.step}/{TOUR.length}
+        </span>
+        <a href={last ? "/demo?exit=start" : step(at.step + 1)} title={last ? undefined : `Next: ${TOUR[at.step].title}`} className="rounded-full bg-btn px-3 py-1 text-sm text-btn-ink transition hover:opacity-90">
+          {last ? "Try it yourself" : "Next ›"}
+        </a>
+      </nav>
+    {/* the pill: opens as the pointer reaches it (a tap on a phone), closes a moment after it leaves */}
     <div
       ref={box}
       onPointerEnter={(e) => {
@@ -161,5 +176,6 @@ export function JudgeBar() {
         </a>
       </div>
     </div>
+    </>
   );
 }
