@@ -36,8 +36,8 @@ P7 app, the flow-audit items). What remains, in order:
 3. **US demo world:** a family house in Los Angeles in review, a café in New York with the neighbourhood read, an
    architect's studio in Austin with three clients, a builder's live site; fees in dollars; demo pros with work.
 4. **Judge demo build:** /demo with role cards and a role switcher bar, from the brainstorm.
-5. **Pricing build: PayPal sandbox:** project order ($149, $299 business), Studio and Build subscriptions with the
-   14-day trial, plan limits, upgrade cards, a webhook. Needs Vicky's sandbox keys.
+5. **Pricing: no PayPal for the hackathon (Vicky, 21 Oct).** Pricing shows on the landing page only; PayPal
+   sandbox is after the hackathon.
 6. **F1 quality, the rest:** adversarial tests of the agents, speed pass, full eval re-run (after item 1).
 7. **C2b photoreal renders,** 28 to 29 Oct, on about $10 of Gemini credit from Vicky.
 8. **F2 submission:** polish, the submission video with voiceover, submission text with the business story
@@ -45,8 +45,8 @@ P7 app, the flow-audit items). What remains, in order:
    the whole history (filter-branch, keep the day-by-day commits), make the repo public with the MIT licence,
    submit on Devpost before 30 Oct 11:45pm ET.
 
-Open questions for Vicky: hide the Apple sign-in button until there's a paid developer account? A mail sender for
-confirmation emails (Gmail SMTP suggested)? Anything more on the landing page?
+Apple sign-in button stays as it is (Vicky, 21 Oct). Open: a mail sender for confirmation emails (Gmail SMTP
+suggested)? Also (21 Oct): Vicky wants a more techy font than Geist; options being brainstormed.
 
 ## What Arcon is now (16 Oct)
 
