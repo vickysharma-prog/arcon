@@ -1,5 +1,6 @@
 "use client";
 
+import { JudgeNext } from "@/components/demo/JudgeBar";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -405,6 +406,7 @@ export function ProjectView({ id }: { id: string }) {
       {next && step !== "walkthrough" && (
         <div className="sticky top-0 z-20 bg-paper/90 backdrop-blur">
           <div className="mx-auto flex w-full max-w-6xl items-center justify-end gap-4 px-4 py-2">
+            <JudgeNext />
             {step === "plans" && p.chosen_option === null && <p className="text-sm text-ink-soft">Choose a plan to continue</p>}
             <button
               onClick={() => setStep(next)}

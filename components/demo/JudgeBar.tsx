@@ -10,19 +10,49 @@ import { TOUR } from "@/lib/demo/tour";
 // The judges' tour, kept out of the way: a small glass pill at the bottom (which stop, back and next). Pointing at it
 // (or a tap) opens
 // what this stop shows, whose view it is (switch in one click) and the way out. Shown only in a demo session.
-export function JudgeBar() {
+/** Which stop of the tour this is, and whose view, from the /demo route's cookie; null outside the demo. */
+function useStop() {
   const path = usePathname();
-  const still = useReducedMotion();
   const [at, setAt] = useState<{ step: number; who: DemoRole } | null>(null);
-  const [open, setOpen] = useState(false);
-  const box = useRef<HTMLDivElement>(null);
-  const leave = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => {
     const raw = document.cookie.split("; ").find((c) => c.startsWith(`${DEMO_COOKIE}=`))?.split("=")[1];
     const [s, who] = decodeURIComponent(raw ?? "").split(".");
     setAt(raw && DEMO_ROLES.includes(who as DemoRole) ? { step: Number(s) || 1, who: who as DemoRole } : null);
-    setOpen(false);
   }, [path]);
+  return at;
+}
+const step = (n: number) => `/demo?step=${n}`;
+
+/** Back and next in the page's own title row, beside the title, where people look for the way on. */
+export function JudgeNext() {
+  const at = useStop();
+  if (!at) return null;
+  const last = at.step === TOUR.length;
+  return (
+    <nav aria-label="Judges' tour" className="flex items-center gap-1 rounded-full border border-accent/40 bg-paper-raised p-1 shadow-[0_10px_30px_-18px_var(--accent)]">
+      {at.step > 1 && (
+        <a href={step(at.step - 1)} aria-label="Back" className="grid h-8 w-8 place-items-center rounded-full text-ink-soft transition hover:bg-paper hover:text-ink">
+          ‹
+        </a>
+      )}
+      <span className="px-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-accent">
+        Tour {at.step}/{TOUR.length}
+      </span>
+      <a href={last ? "/demo?exit=start" : step(at.step + 1)} className="whitespace-nowrap rounded-full bg-btn px-4 py-1.5 text-sm text-btn-ink transition hover:opacity-90">
+        {last ? "Try it yourself" : `Next: ${TOUR[at.step].title.split(" ").slice(0, 4).join(" ")} ›`}
+      </a>
+    </nav>
+  );
+}
+
+export function JudgeBar() {
+  const path = usePathname();
+  const still = useReducedMotion();
+  const at = useStop();
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const leave = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => setOpen(false), [path]);
   // A button a judge presses that would change the demo is refused by the server (proxy.ts); some screens keep quiet
   // about a failed request, so the bar says it once, for all of them.
   const [refused, setRefused] = useState(false);
@@ -61,24 +91,9 @@ export function JudgeBar() {
   const stop = TOUR[at.step - 1];
   const last = at.step === TOUR.length;
   const here = typeof location === "undefined" ? "/home" : location.pathname + location.search;
-  const step = (n: number) => `/demo?step=${n}`;
 
   return (
     <>
-      {/* back and next at the top too, in the header's empty middle, where people look for the way on */}
-      <nav aria-label="Judges' tour" className="fixed left-1/2 top-3.5 z-[60] hidden -translate-x-1/2 items-center gap-1 rounded-full border border-accent/40 bg-paper-raised/80 p-1 shadow-[0_10px_30px_-16px_var(--accent)] backdrop-blur-xl md:flex">
-        {at.step > 1 && (
-          <a href={step(at.step - 1)} aria-label="Back" className="grid h-7 w-7 place-items-center rounded-full text-ink-soft transition hover:bg-paper/60 hover:text-ink">
-            ‹
-          </a>
-        )}
-        <span className="px-1.5 font-mono text-[10px] uppercase tracking-[0.15em] text-accent">
-          Tour {at.step}/{TOUR.length}
-        </span>
-        <a href={last ? "/demo?exit=start" : step(at.step + 1)} title={last ? undefined : `Next: ${TOUR[at.step].title}`} className="rounded-full bg-btn px-3 py-1 text-sm text-btn-ink transition hover:opacity-90">
-          {last ? "Try it yourself" : "Next ›"}
-        </a>
-      </nav>
     {/* the pill: opens as the pointer reaches it (a tap on a phone), closes a moment after it leaves */}
     <div
       ref={box}

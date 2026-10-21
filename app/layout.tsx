@@ -5,7 +5,7 @@ import "./globals.css";
 import { CookieNotice } from "@/components/CookieNotice";
 import { JudgeBar } from "@/components/demo/JudgeBar";
 import { Intro } from "@/components/landing/Intro";
-import { INSTALL_SCRIPT, THEME_SCRIPT } from "@/components/theme-script";
+import { INSTALL_SCRIPT, RELOAD_SCRIPT, THEME_SCRIPT } from "@/components/theme-script";
 
 // Funnel for headings and text, Martian Mono for labels and numbers (Vicky, 21 Oct).
 const sans = Funnel_Sans({ variable: "--font-body", subsets: ["latin"] });
@@ -37,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: INSTALL_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: RELOAD_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col font-sans">
         {/* the opening, each time Arcon is opened (once a session), whichever page it opens on */}
