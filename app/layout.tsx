@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Funnel_Display, Funnel_Sans, Martian_Mono } from "next/font/google";
 import "./globals.css";
 import { CookieNotice } from "@/components/CookieNotice";
+import { JudgeBar } from "@/components/demo/JudgeBar";
 import { Intro } from "@/components/landing/Intro";
 import { INSTALL_SCRIPT, THEME_SCRIPT } from "@/components/theme-script";
 
@@ -41,6 +43,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Intro />
         {children}
         <CookieNotice />
+        {/* reads the URL, so it streams in after the page */}
+        <Suspense fallback={null}>
+          <JudgeBar />
+        </Suspense>
       </body>
     </html>
   );
