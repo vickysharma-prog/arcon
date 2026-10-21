@@ -9,6 +9,18 @@ One entry per working session, newest at the top. Date, what got done, what brok
   Written up in private/qloo-findings.md.
 - What's left is unchanged (state.md, "Start from here").
 
+## 2026-10-22 (night): 3D quality pass, part 1 (Vicky: "the 3D is the biggest edge")
+
+- The tour's back and next now sit beside the page title (and in the glass pill at the bottom, which opens on hover).
+- A page whose code changed under it during a deploy reloads once instead of hanging (ChunkLoadError guard).
+- 3D fixes: the classic sofa's rolled arms sat up out of the sofa (the "thing above the sofas" and the beige cylinder
+  at the door); outside walls are brick outside only, painted inside; the section-cut wall tops are pale, not black;
+  a TV never stands free in the room (it blocked the front door), the sofa faces it, and a room with no wall for it
+  goes without; one plant per sitting or sleeping room (none across kitchens and halls), in three kinds (snake plant,
+  fiddle-leaf, monstera); eight kinds of print so frames differ; each room's feature wall in its own shade.
+- scripts/shots-3d.ts takes pictures of a project's 3D (walk, every floor, outside from each side) for checking.
+- Not done yet (next session, first): see state.md "3D, still to fix".
+
 ## 2026-10-22: The judges' demo, new type, FAQ and footer (Vicky)
 
 - New type: Funnel Display, Funnel Sans and Martian Mono (Vicky picked from a comparison page).
