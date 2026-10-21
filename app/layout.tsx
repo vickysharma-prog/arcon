@@ -1,25 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
+import { Funnel_Display, Funnel_Sans, Martian_Mono } from "next/font/google";
 import "./globals.css";
 import { CookieNotice } from "@/components/CookieNotice";
 import { Intro } from "@/components/landing/Intro";
 import { INSTALL_SCRIPT, THEME_SCRIPT } from "@/components/theme-script";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
-  subsets: ["latin"],
-  weight: "400",
-});
+// Funnel for headings and text, Martian Mono for labels and numbers (Vicky, 21 Oct).
+const sans = Funnel_Sans({ variable: "--font-body", subsets: ["latin"] });
+const display = Funnel_Display({ variable: "--font-display", subsets: ["latin"] });
+const mono = Martian_Mono({ variable: "--font-code", subsets: ["latin"], axes: ["wdth"] });
 
 export const metadata: Metadata = {
   title: "Arcon",
@@ -41,7 +30,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
+      className={`${sans.variable} ${display.variable} ${mono.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />

@@ -46,7 +46,7 @@ P7 app, the flow-audit items). What remains, in order:
    submit on Devpost before 30 Oct 11:45pm ET.
 
 Apple sign-in button stays as it is (Vicky, 21 Oct). Open: a mail sender for confirmation emails (Gmail SMTP
-suggested)? Also (21 Oct): Vicky wants a more techy font than Geist; options being brainstormed.
+suggested)? Fonts (21 Oct, Vicky): Funnel Display for headings, Funnel Sans for text, Martian Mono for labels.
 
 ## What Arcon is now (16 Oct)
 
