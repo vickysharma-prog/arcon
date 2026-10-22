@@ -86,6 +86,14 @@ export function JudgeBar() {
     document.addEventListener("click", go, true);
     return () => document.removeEventListener("click", go, true);
   }, [at]);
+  // Room under the page for the pill, so nothing at the bottom hides behind it.
+  useEffect(() => {
+    if (!at) return;
+    document.body.style.paddingBottom = "84px";
+    return () => {
+      document.body.style.paddingBottom = "";
+    };
+  }, [at]);
   // On a long page, a soft hint to scroll, gone at the first scroll.
   const [hint, setHint] = useState(false);
   useEffect(() => {

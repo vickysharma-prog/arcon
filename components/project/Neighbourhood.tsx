@@ -14,7 +14,11 @@ export function Neighbourhood({ id }: { id: string }) {
   // a link to #neighbourhood (the judges' tour) lands here once the section is on the page
   useEffect(() => {
     if (location.hash !== "#neighbourhood") return;
-    const t = setTimeout(() => document.getElementById("neighbourhood")?.scrollIntoView({ behavior: "smooth", block: "start" }), 600);
+    // a little above the heading, so it isn't tucked under the top bar
+    const t = setTimeout(() => {
+      const el = document.getElementById("neighbourhood");
+      if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 140, behavior: "smooth" });
+    }, 600);
     return () => clearTimeout(t);
   }, []);
   const [crowd, setCrowd] = useState<Crowd>("all");

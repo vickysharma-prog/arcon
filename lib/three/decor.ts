@@ -11,6 +11,9 @@ const EPS = 1e-4;
 const FEATURE = new Set(["living", "lounge", "bedroom", "guest-room", "dining", "office", "reception", "meeting"]);
 const CURTAINS = new Set(["living", "lounge", "bedroom", "guest-room", "dining", "office"]);
 const ART_SIDE = new Set(["living", "lounge", "dining", "bedroom", "guest-room"]);
+// Rooms whose other walls get panelling below a rail (drawn only for a style that has it, see models.tsx).
+const PANELLED = new Set(["living", "lounge", "dining", "bedroom", "guest-room", "office"]);
+const RAIL = 0.92;
 
 type Vec = [number, number];
 /** A wall of a room as a line: start point, unit direction, length, and the way into the room. */
@@ -124,6 +127,9 @@ export function decorate(layout: Layout): Item[] {
             put(side, { t0: c + dx - 0.25, t1: c + dx + 0.25, y0: 1.35, y1: 1.95, exterior: false }, "art", 0.035, "accent");
         }
       }
+      if (PANELLED.has(kind))
+        for (const side of ["left", "right", "front"] as const)
+          for (const s of walls[side].filter((s) => s.y0 === 0 && s.t1 - s.t0 > 0.3)) put(side, { ...s, y1: Math.min(s.y1, RAIL) }, "wainscot", 0.02, "base");
       if (kind === "kitchen")
         for (const s of walls.back.filter((s) => s.y0 === 0 && s.y1 === WALL_H)) put("back", { ...s, y0: 0.9, y1: 1.48 }, "backsplash", 0.012, "base");
       if (kind === "bath") {

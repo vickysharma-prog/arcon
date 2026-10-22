@@ -376,7 +376,7 @@ const CUT = 1.4;
 // Floor boards lean toward the style: pale oak for Scandinavian, smoky for industrial; boards are 20 cm by 2.7 m.
 // (natural oak for most styles, so the floors read calm and modern rather than red)
 const FLOOR_TONE = { scandi: ["#e6d7bd", 0.6], modern: ["#c9ad86", 0.6], boho: ["#c9a77c", 0.45], industrial: ["#7d7468", 0.45], classic: ["#9a7652", 0.6], midcentury: ["#a87b52", 0.5] } as const;
-const WALL_DRESSING = new Set(["feature wall", "art", "backsplash", "tile", "curtain", "curtain rod"]);
+const WALL_DRESSING = new Set(["feature wall", "art", "backsplash", "tile", "curtain", "curtain rod", "wainscot"]);
 function Floor({ s, colors, look }: { s: Slab; colors: Scheme; look: Look }) {
   const wet = WET.has(s.kind);
   const map = useMemo(

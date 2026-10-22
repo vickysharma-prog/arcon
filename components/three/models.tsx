@@ -64,6 +64,8 @@ const rand = (i: number) => {
 };
 
 export const LookCtx = createContext<Look | null>(null);
+/** The accent on soft furnishings (a throw, cushions), eased toward the fabric so a deep colour doesn't shout. */
+const soft = (k: Scheme) => mix(k.accent, k.textile, 0.35);
 const useStyle = () => useContext(LookCtx)?.style ?? "modern";
 
 type LegArgs = [w: number, d: number, h: number, c: string, inset?: number, r?: number];
@@ -135,7 +137,7 @@ function Sofa({ w, d, h, k }: { w: number; d: number; h: number; k: Scheme }) {
         );
       })}
       {seats > 1 &&
-        [-1, 1].map((sx) => <B key={`p${sx}`} p={[sx * (inner / 2 - 0.25), seatY + 0.27, -d / 2 + 0.42]} s={[0.4, 0.36, 0.12]} c={k.accent} f={{ r: 0.9 }} rot={[-0.2, sx * 0.25, sx * 0.1]} />)}
+        [-1, 1].map((sx) => <B key={`p${sx}`} p={[sx * (inner / 2 - 0.25), seatY + 0.27, -d / 2 + 0.42]} s={[0.4, 0.36, 0.12]} c={soft(k)} f={{ r: 0.9 }} rot={[-0.2, sx * 0.25, sx * 0.1]} />)}
       {L?.cozy && seats > 1 && (
         <>
           <B p={[w / 2 - arm / 2, seatY + 0.1, 0.05]} s={[arm + 0.04, 0.32, 0.5]} c={mix(k.textile, k.accent, 0.5)} f={{ r: 1 }} />
@@ -306,10 +308,10 @@ function Bed({ w, d, k }: { w: number; d: number; k: Scheme }) {
       <B p={[0, 0.22, 0.02]} s={[bw + 0.06, 0.24, d - 0.04]} c={k.wood} />
       <B p={[0, 0.46, 0.04]} s={[bw - 0.02, 0.22, d - 0.12]} c={sheet} f={{ r: 0.95 }} />
       <B p={[0, 0.58, 0.28]} s={[bw + 0.04, 0.07, d - 0.55]} c={k.textile} f={{ r: 0.95 }} />
-      <B p={[0, 0.6, d / 2 - 0.45]} s={[bw + 0.06, 0.06, 0.55]} c={k.accent} f={{ r: 0.95 }} />
+      <B p={[0, 0.6, d / 2 - 0.45]} s={[bw + 0.06, 0.06, 0.55]} c={soft(k)} f={{ r: 0.95 }} />
       <B p={[0, 0.63, -0.08]} s={[bw + 0.04, 0.04, 0.14]} c={sheet} f={{ r: 0.95 }} />
       {[-1, 1].map((sx) => <B key={sx} p={[sx * bw * 0.24, 0.65, back + 0.33]} s={[bw * 0.42, 0.14, 0.38]} c={WHITE} f={{ r: 0.95 }} rot={[-0.25, 0, 0]} />)}
-      <B p={[0.15, 0.67, back + 0.5]} s={[0.4, 0.3, 0.1]} c={k.accent} f={{ r: 0.9 }} rot={[-0.3, 0.1, 0]} />
+      <B p={[0.15, 0.67, back + 0.5]} s={[0.4, 0.3, 0.1]} c={soft(k)} f={{ r: 0.9 }} rot={[-0.3, 0.1, 0]} />
       <B p={[0, 0.6, back + 0.04]} s={[bw + 0.2, 1.1, 0.08]} c={mix(k.textile, "#000000", 0.2)} f={{ r: 0.95 }} />
       {tables &&
         [-1, 1].map((sx) => {
@@ -776,6 +778,24 @@ export function Model({ it, k }: { it: Item; k: Scheme }) {
     case "feature wall":
       body = <FeatureWall w={w} d={d} h={h} kind={it.kind} k={k} />;
       break;
+    case "wainscot": {
+      // panelling below a rail, for a classic room only: a pale board, a cap rail and stiles every 60 cm or so
+      if ((L ?? FALLBACK_LOOK).style !== "classic") return null;
+      const board = mix(k.wall, "#ffffff", 0.45);
+      const line = mix(board, "#000000", 0.08);
+      const n = Math.max(1, Math.round(w / 0.6));
+      body = (
+        <>
+          <B p={[0, h / 2, 0]} s={[w, h, d]} c={board} f={{ r: 0.6 }} />
+          <B p={[0, h - 0.02, 0.012]} s={[w, 0.05, d + 0.025]} c={board} f={{ r: 0.5 }} />
+          {Array.from({ length: n + 1 }, (_, i) => (
+            <B key={i} p={[-w / 2 + (i * w) / n, h / 2 - 0.02, 0.003]} s={[0.06, h - 0.16, d + 0.004]} c={line} f={{ r: 0.6 }} />
+          ))}
+          <B p={[0, 0.24, 0.003]} s={[w, 0.04, d + 0.004]} c={line} f={{ r: 0.6 }} />
+        </>
+      );
+      break;
+    }
     case "art":
       body = <Art w={w} d={d} h={h} seed={Math.round(Math.abs(it.x * 7 + it.z * 13))} />;
       break;
