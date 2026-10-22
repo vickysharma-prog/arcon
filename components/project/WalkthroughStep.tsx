@@ -150,6 +150,13 @@ export function WalkthroughStep({
   const ended = progress >= 1;
   const floors = layout.floors.length;
 
+  // the judges' tour opens the 3D itself (#walk), not the heading above it
+  useEffect(() => {
+    if (window.location.hash !== "#walk") return;
+    const t = setTimeout(() => box.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 900);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <main className="mx-auto w-full max-w-[1400px] px-4 pb-4 pt-2">
       <div className="flex flex-wrap items-center justify-between gap-3">

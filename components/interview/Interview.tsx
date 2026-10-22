@@ -172,8 +172,12 @@ export function Interview() {
       [...text].forEach((_, i) => later(1100 + i * 45, () => setDraft(text.slice(0, i + 1))));
       later(1100 + text.length * 45 + (q.id === "city" ? 1800 : 600), () => answer(q.id, want));
     } else {
-      later(1300, () => setGhost(want));
-      later(2200, () => answer(q.id, want));
+      // the pictures sit below the question: bring them into view so the pick is seen
+      if (q.kind === "taste") later(500, () => document.querySelector("[data-picks]")?.scrollIntoView({ behavior: "smooth", block: "center" }));
+      // a picture pick stays a moment longer, so the chosen picture is seen
+      const pic = q.kind === "taste";
+      later(pic ? 1800 : 1300, () => setGhost(want));
+      later(pic ? 3400 : 2200, () => answer(q.id, want));
     }
     return () => timers.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -636,7 +640,7 @@ function Pictures({ options, chosen, hint, typeOwn, onPick, onOwn }: { options: 
           ))}
         </div>
       ) : (
-        <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <ul data-picks className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
           {options.map((o, i) => (
             <motion.li key={o.key} initial={still ? false : { opacity: 0, y: 14, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: i * 0.04 }}>
               <button

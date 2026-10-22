@@ -152,7 +152,8 @@ function Entrance({ layout, walking }: { layout: Layout; walking: boolean }) {
       {/* canopy and lights */}
       <mesh position={[0, DOOR_H + 0.28, -0.55]} castShadow>
         <boxGeometry args={[w + 1.2, 0.08, 1.0]} />
-        <meshStandardMaterial color="#2b2d31" roughness={0.5} metalness={0.3} />
+        {/* a warm timber soffit, seen from below as you walk in */}
+        <meshStandardMaterial color="#a8835e" roughness={0.6} />
       </mesh>
       {[-1, 1].map((sx) => (
         <mesh key={sx} position={[sx * (w / 2 + 0.35), 1.85, -0.13]}>
