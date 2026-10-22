@@ -250,6 +250,7 @@ export function WalkthroughStep({
       <div ref={box} className={`relative mt-3 overflow-hidden border-line bg-paper-raised ${full ? "h-screen" : "h-[calc(100svh-218px)] min-h-[340px] rounded-2xl border"}`}>
         <HouseScene
           layout={layout}
+          name={title}
           extraPlants={extraPlants}
           onPick={projectId ? pick : undefined}
           brief={brief}

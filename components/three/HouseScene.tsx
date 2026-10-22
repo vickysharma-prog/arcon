@@ -14,7 +14,7 @@ import { blockers, step } from "@/lib/three/explore";
 import { buildSlabs, buildWalls, DOOR_H, EYE, onTour, stairBoxes, STOREY, walkPlan, WALL_H, type Glass, type Slab, type WallBox } from "@/lib/three/geometry";
 import { look as lookOf, luminance, mix, scheme, type Look, type Scheme } from "@/lib/three/materials";
 import { LookCtx, Model } from "./models";
-import { brick, planks, tiled, tiledOnce, tiles } from "./textures";
+import { brick, planks, plate, tiled, tiledOnce, tiles } from "./textures";
 import { exteriorOf, roofShape, type Exterior } from "@/lib/three/exterior";
 import { moodsFor, type Mood } from "@/lib/three/mood";
 import { roomBell, step as playStep } from "@/components/fx/sfx";
@@ -60,6 +60,8 @@ type Props = {
   /** Night: a dark sky, moonlight, the rooms lit and the windows glowing. Never for sketches. */
   night?: boolean;
   onShot?: (png: string) => void;
+  /** The project's name, for the nameplate by the front door. */
+  name?: string | null;
 };
 
 
@@ -131,7 +133,7 @@ function Garden({ W, D, colors, door }: { W: number; D: number; colors: Scheme; 
 
 // The way in: the front door (open, so the walk goes through), a slim canopy over it, a light either side, a step and
 // a stone path out to the street. Doors on the street side face -z; one on the side faces -x.
-function Entrance({ layout, walking }: { layout: Layout; walking: boolean }) {
+function Entrance({ layout, walking, name }: { layout: Layout; walking: boolean; name?: string | null }) {
   const d = layout.floors[0]?.openings.find((o) => o.id === "door-entry");
   if (!d) return null;
   const front = d.axis === "x";
@@ -161,6 +163,18 @@ function Entrance({ layout, walking }: { layout: Layout; walking: boolean }) {
           <meshStandardMaterial color="#fff1d6" emissive="#ffd9a0" emissiveIntensity={1.1} />
         </mesh>
       ))}
+      {/* the nameplate beside the door: a house number from the plan, and the project's name */}
+      {name && (
+        <mesh position={[-(w / 2 + 0.5), 1.45, -0.115]}>
+          <boxGeometry args={[0.36, 0.36, 0.02]} />
+          <meshStandardMaterial attach="material-0" color="#23262b" />
+          <meshStandardMaterial attach="material-1" color="#23262b" />
+          <meshStandardMaterial attach="material-2" color="#23262b" />
+          <meshStandardMaterial attach="material-3" color="#23262b" />
+          <meshStandardMaterial attach="material-4" color="#23262b" />
+          <meshStandardMaterial attach="material-5" map={plate(String(1000 + (Math.round(layout.shell.width * 37 + layout.shell.depth * 11) % 900)), name)} roughness={0.4} metalness={0.2} />
+        </mesh>
+      )}
       {/* a step and the path */}
       <mesh position={[0, 0.06, -0.45]} receiveShadow castShadow>
         <boxGeometry args={[w + 0.8, 0.12, 0.7]} />
@@ -176,7 +190,7 @@ function Entrance({ layout, walking }: { layout: Layout; walking: boolean }) {
   );
 }
 
-function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway = false, upTo = "all", extraPlants, onPick, walking = false }: { layout: Layout; colors: Scheme; look: Look; ex: Exterior; moods?: Record<string, Mood>; night?: boolean; cutaway?: boolean; upTo?: number | "all"; extraPlants?: Record<string, number>; onPick?: (it: Item) => void; walking?: boolean }) {
+function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway = false, upTo = "all", extraPlants, onPick, walking = false, name }: { layout: Layout; colors: Scheme; look: Look; ex: Exterior; moods?: Record<string, Mood>; night?: boolean; cutaway?: boolean; upTo?: number | "all"; extraPlants?: Record<string, number>; onPick?: (it: Item) => void; walking?: boolean; name?: string | null }) {
   const shown = (level: number) => upTo === "all" || level <= upTo;
   // Show inside cuts the top floor's walls at 1.4 m, like an architect's section, so every room reads from above.
   const topShown = upTo === "all" ? (layout.floors.at(-1)?.level ?? 0) : upTo;
@@ -213,7 +227,8 @@ function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway
         <group key={`f-${s.level}-${s.id}`}>
           <mesh position={[s.x + s.w / 2, s.y - 0.06, s.z + s.d / 2]} receiveShadow>
             <boxGeometry args={[s.w, 0.12, s.d]} />
-            <meshStandardMaterial color={mix(colors.floor, "#000000", 0.2)} roughness={0.8} />
+            {/* the slab's edge shows on the outside between floors: render-coloured, not a dark stripe */}
+            <meshStandardMaterial color={render} roughness={0.9} />
           </mesh>
           <Floor s={s} colors={colors} look={look} />
         </group>
@@ -325,7 +340,7 @@ function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway
             <Triangles tris={roof.infill} color={render} map={clad ?? undefined} />
           </>
         ))}
-      {!cutaway && <Entrance layout={layout} walking={walking} />}
+      {!cutaway && <Entrance layout={layout} walking={walking} name={name} />}
       {ex.garden && <Garden W={W} D={D} colors={colors} door={layout.floors[0]?.openings.find((o) => o.id === "door-entry" && o.axis === "x")?.x ?? -99} />}
       {items.map((it, i) =>
         onPick && PIECES[it.name] ? (
@@ -885,6 +900,7 @@ export default function HouseScene(props: Props) {
       extraPlants={props.extraPlants}
       onPick={props.onPick}
       walking={props.mode === "walk" || props.mode === "explore"}
+      name={props.name}
     />
   );
   return (

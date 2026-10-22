@@ -781,8 +781,8 @@ export function Model({ it, k }: { it: Item; k: Scheme }) {
     case "wainscot": {
       // panelling below a rail, for a classic room only: a pale board, a cap rail and stiles every 60 cm or so
       if ((L ?? FALLBACK_LOOK).style !== "classic") return null;
-      const board = mix(k.wall, "#ffffff", 0.45);
-      const line = mix(board, "#000000", 0.08);
+      const board = mix(k.wall, k.wood, 0.1);
+      const line = mix(board, "#000000", 0.16);
       const n = Math.max(1, Math.round(w / 0.6));
       body = (
         <>

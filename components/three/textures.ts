@@ -284,6 +284,28 @@ export const art = (colors: string[], kind: number, seed = 0) =>
     false,
   );
 
+/** A house nameplate: the number large, the name below it, cream letters on a dark plate. */
+export const plate = (number: string, name: string) =>
+  paint(
+    `plate${number}|${name}`,
+    512,
+    (g, s) => {
+      g.fillStyle = "#23262b";
+      g.fillRect(0, 0, s, s);
+      g.strokeStyle = "#c9a46a";
+      g.lineWidth = s * 0.012;
+      g.strokeRect(s * 0.04, s * 0.04, s * 0.92, s * 0.92);
+      g.fillStyle = "#f1ece2";
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.font = `600 ${Math.round(s * 0.34)}px Georgia, serif`;
+      g.fillText(number, s / 2, s * 0.42);
+      g.font = `${Math.round(s * 0.085)}px Georgia, serif`;
+      g.fillText(name.toUpperCase(), s / 2, s * 0.78, s * 0.84);
+    },
+    false,
+  );
+
 /** Rug weaves: a striped kilim for boho, a medallion for classic. */
 export const rug = (ground: string, ink: string, kind: "kilim" | "medallion") =>
   paint(
