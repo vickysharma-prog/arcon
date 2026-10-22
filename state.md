@@ -1,81 +1,101 @@
 # State
 
-Where Arcon stands right now. Updated 17 Oct 2026, late night (IST), at the end of a long session, for the next one to
-pick up with nothing lost. Dated detail is in progress.md (newest first); every decision is in private/plan.md.
+Where Arcon stands right now. Updated 23 Oct 2026 (IST), for the next session to start here with nothing lost.
+Dated detail is in progress.md (newest first); decisions are in private/plan.md (see "Judge demo (decided 21 Oct)").
 
 ## Start here (next session)
 
-1. Read, in order: the local working agreement (loads by itself), this file, the "Start from here" list below, the top entries of `progress.md` (all of 17 Oct),
-   and in `private/plan.md` the sections "Decisions, 16 Oct 2026" and "Decisions (settled 9 Oct 2026)", then the
-   rest of the plan as needed. The memory index (MEMORY.md) loads by itself.
-2. Open the role homes for Vicky, side by side, on the local production build (same code as live):
-   - `npx next build`, then `npx next start -p 3000` in the background (free port 3000 first).
-   - `node --env-file=.env.local --env-file=.env scripts/role-sessions.ts <scratchpad>/sessions.json`
-   - In four tabs of our own tab group (never Vicky's own tab): `localhost:3000` (owner, a house),
-     `127.0.0.1:3000` (owner, "The Brooklyn café"), `[::1]:3000` (architect, Studio), `builder.localhost:3000`
-     (builder, Sites). On each host set `document.cookie = "arcon_user=<value>; path=/; samesite=lax"`, then /home.
-   - The live site is the same code, but the test accounts are never signed into the live site in Vicky's browser
-     (her rule: live checks with test accounts run from the server only). Vicky can sign in on live herself.
-3. Tell Vicky what is left (the list below), then ask: "Anything to change on the home pages (My spaces, Studio,
-   Sites)?" Her changes come first, then the next steps in order.
+**Where we are:** the app, the judges' demo and the 3D are done and live. What's left is the submission: Devpost text,
+a video with voiceover, cleaning the git history, making the repo public, submitting. Deadline: **30 Oct 2026,
+11:45pm ET (31 Oct about 9:15am IST).** Vicky's call (23 Oct): the walk camera is fine as it is, leave it.
+
+Read first: this section, then progress.md entries of 22 and 23 Oct. Then go through the list below, in order.
+
+### What's left, in order
+
+1. **Devpost submission text** (draft it, Vicky edits). Devpost asks for: what it does, how it was built, challenges,
+   what was learned, what's next, and the tech used. Must cover: how Qloo is used (taste graph read from three picks,
+   style words with sources, brands matched by taste, the neighbourhood read for business spaces, the moodboard, art
+   and playlist, the furniture style and exterior from taste); the agentic parts (eve interviewer, design pipeline:
+   brief, room programme, three plans; chat edits); the whole-project story (owner, architect, builder, client: review,
+   quote, fees by phase, site, move-in); the judges' demo link (arcon-ten.vercel.app, "For judges"); the market
+   (Harvard JCHS: almost 26 million US homeowner households improved their homes in 2023, LIRA $518B, Houzz $24K
+   median kitchen; sources linked on the landing page); pricing as on the landing page (Free; Project $149 / $299
+   business; Studio $99 a month; Build $299 a month; 14-day trials; PayPal comes after the hackathon); what's next
+   (PayPal, photoreal renders, more space types, native apps). Plain English, few em dashes, never name another
+   person's project, describe scope not limitations. Write it in a doc or a local file for Vicky to paste.
+2. **Video script + recording.** Devpost wants a video (YouTube/Vimeo link, usually under 3 minutes). Write a script
+   that follows the judges' tour (15 stops, below) with a voiceover; Vicky records her screen and voice. The silent
+   59 s film already exists (scripts/record-video.ts, in Supabase storage "media"); it can be cut in.
+3. **Clean the git history, then make the repo public.** The repo is private: github.com/vickysharma-prog/arcon.
+   - Remove from every commit: the `private/` folder (plan.md, e2e-run.md, flows-audit.md, qloo-findings.md hold Qloo
+     response data and our notes), and any line naming the AI tool (they sit in state.md in some
+     16 to 17 Oct commits). Keep every commit and its date (the day-by-day history matters to Vicky).
+   - How: back up first (`git clone --mirror` to a folder outside the repo). Then
+     `git filter-branch --index-filter "git rm -r --cached --ignore-unmatch private" --tree-filter "<sed on state.md>"
+     -- --all` (or git filter-repo if installed: `--path private --invert-paths` plus `--replace-text`). Then check:
+     the attribution check from the working agreement, run over `git log --all -p`, must find nothing but model id
+     strings in code, and `git log --all -- private` must be empty. Force-push only after
+     Vicky says yes (it rewrites the public history). Keep `private/` locally (add it to .gitignore).
+   - LICENSE (MIT) is already in the repo. Then flip the repo to public on GitHub (Vicky does it, or `gh repo edit
+     --visibility public` with her yes).
+   - The two agent instruction files are in .git/info/exclude: they must stay out of the repo.
+4. **The day before judging (29 or 30 Oct):**
+   - Run `node --env-file=.env.local --env-file=.env scripts/demo-refresh.ts`. The demo sites' dates are set from
+     "today" (Maya's current phase began 3 weeks ago, Ana's last phase ends in 10 days, crew marked on site from 3 weeks
+     back to 6 weeks ahead). As days pass, phases start reading as late. This re-anchors them in 10 seconds.
+   - Gemini: the tour itself never calls a model (all seeded). Only "Try it yourself" does: a judge's own design runs
+     the brief, programme and plans on Gemini. The free quota ran out once (17 Oct) after a few designs. Vicky to add
+     billing or a paid key so judges never see an error. Then run one design on live to be sure.
+   - Run `node --env-file=.env.local --env-file=.env scripts/live-check.ts` (all must pass) and walk the tour once on
+     live from the landing page's "For judges".
+5. **Submit on Devpost** before the deadline: link, repo, video, text. Vicky submits.
+6. Optional if time is left: re-run the eve eval suite (`npm run evals` style, it boots a dev server; it needs Gemini
+   quota), photoreal renders (C2b), README section for judges (the README doesn't mention /demo yet: add a short
+   "For judges" line with the link).
+
+### The judges' tour (live, /demo)
+
+Entry: landing page, "For judges" (first button in the hero, and in the header). 15 stops, view only, Back/Next beside
+each page title and in a glass pill at the bottom (opens on hover: caption, switch person, exit). Between stops a
+screen with Arcon's mark; "Scroll for more" on long pages.
+1 interview replay (Maya's answers play themselves, 1x/2x, skip; moves on by itself) · 2 Qloo reads her taste ·
+3 three plans · 4 3D walk (#walk) · 5 Look around (#inside: the ground floor opened, rooms named; All floors puts the roof back) · 6 budget ·
+7 shopping list · 8 drawings and files · 9 Lena's studio · 10 one thread for everyone · 11 Mike's day on site ·
+12 the building site · 13 Ana's last week (snags, handover) · 14 Sam's café in 3D (#inside) · 15 the neighbourhood
+read (#neighbourhood), then "Try it yourself" (fresh interview, no sign-in, the judge's project opens unlocked).
+
+How it works: app/demo/route.ts signs in as a demo account (lib/demo/ids.ts) and sets the `arcon_demo` cookie; the
+stops are lib/demo/tour.ts; components/demo/JudgeBar.tsx draws the pill, the veil, the hint and JudgeNext. proxy.ts
+refuses every write from the four demo accounts (403 with x-arcon-demo: view-only; the pill shows a note). Leaving with
+"Try it yourself" sets `arcon_judge`, so app/api/interview/route.ts creates their project unlocked.
+
+The demo world (built 22 Oct through the real app by scripts/demo-world.ts): Lena Ortiz (Ortiz Studio, LA, architect)
+with Maya Reyes's house (Silver Lake, 75%, quote $990K accepted, visits, sign-offs), the Parks' house (in review) and
+Ana Silva's apartment (96%, last week); Mike Dawson (Dawson Build Co., builder); Sam Okafor's Brooklyn café. Story
+answers in lib/demo/story.ts. **Don't rerun demo-world.ts unless something is broken:** it deletes and rebuilds the
+demo projects (new ids, about 15 minutes, 4 Gemini designs) and needs a local server started with ARCON_DEMO_SEED=1
+(otherwise the proxy blocks the demo accounts' writes).
+
+### Working notes (save time)
+
+- Local check of a change: `npx next build`, then `npx next start -p 3001` in the background. Port 3000 often stays
+  held by a stale server; if a start fails with EADDRINUSE, stop node processes whose command line has "next start"
+  (PowerShell Get-CimInstance Win32_Process) and start again.
+- 3D pictures for checking by eye: `node --env-file=.env.local --env-file=.env scripts/shots-3d.ts <projectId> <out dir>`
+  (WALK=0 skips the walk). Maya's project id: 53815dca-b4f2-447e-8d78-4e6bffe36c24; Sam's: 129e5b40-56d2-4dd3-bb47-b127cb01c739.
+- Edits by Python script: use raw strings for regex (a plain "\b" becomes a backspace byte).
+- Before every commit: `npm test` (412 pass) and `npx tsc --noEmit`; before push the attribution grep; after push
+  `scripts/live-check.ts`. Commits as vicky sharma <raghunathsharma296@gmail.com>, no AI attribution lines.
+- Decided and done: fonts Funnel Display / Funnel Sans / Martian Mono; Apple sign-in button stays; no PayPal for the
+  hackathon; the walk camera stays as it is.
 
 ## Live
 
 arcon-ten.vercel.app, auto-deploying from GitHub main (vickysharma-prog/arcon, private until submission). Last
-commit 43bd603 is pushed and live; 402 unit tests pass, tsc and the build are clean, every live check passes.
+commit is pushed and live; 412 unit tests pass, tsc and the build are clean, every live check passes.
 
-## 3D, where it stands (23 Oct)
-
-Done (22 to 23 Oct): see progress.md. Maya's house now: warm white render outside (classic taste), slate roof, an
-entrance with a canopy, lights, a step and a stone path, rounded shrubs; look-around opens from the street; labels sit
-on their rooms (drei Html offset fixed); oak floors; brick only outside; one plant per room in three kinds; varied art
-and per-room shades; the walk starts clean (no door leaf in the face).
-Still open, in order:
-1. Brick houses (industrial taste): some brick wall faces rendered pure black. Not the AO (checked 23 Oct with AO off:
-   the black stayed with brick and went with render). Look at the brick texture clones in tiledOnce.
-2. Walk camera brushes furniture in places (it stops 1.2 m inside each door, blind to furniture): make walkPlan
-   pick a view point clear of furniture. Panelling (classic) and softer accents done 23 Oct; more modern pieces next.
-3. Recheck /demo stops 3 and 4 on live after each 3D change (scripts/shots-3d.ts <projectId> <dir>).
-
-## Judges' tour (23 Oct): 15 stops, see progress.md; still to fix
-
-Checked on arcon-ten.vercel.app from the landing page's "For judges" to "Try it yourself": every stop loads, the
-replay moves on to Maya's design by itself, the veil and scroll hint show, Mike's sites have crew on site, Sam's stop
-lands on the neighbourhood read, "Try it yourself" opens a fresh interview with no sign-in.
-Still to fix:
-- J: done 23 Oct (the replay scrolls to the picks and holds each one).
-- K: done 23 Oct (stop 4 opens on the 3D, #walk).
-- B: done 23 Oct (room left under the pill).
-- C: that blank moment is the question's own blur-in animation; left as it is.
-- Sam's stop: done 23 Oct (lands above the heading).
-- A judge's own project after "Try it yourself" is unlocked with no sign-in (checked on live 23 Oct: guest, unlocked_at
-  set). Its design runs on Gemini: check the quota (or a paid key) before judging.
-- Run scripts/demo-refresh.ts before judging (keeps phases, crew and stock current).
-
-## Start from here: what's left (17 Oct, late night)
-
-Built and live: all the planned features (A1 to A5, B1 to B4, C1, C2 video, D1 to D3, E1 site tracking, E2, Q7, Q10,
-P7 app, the flow-audit items). What remains, in order:
-
-1. **Gemini quota (now).** Free quota ran out on 17 Oct; resets at midnight Pacific (about 12:30pm IST). Vicky to
-   decide: wait, or a paid key / AI Gateway credit so the judges never hit it. Then re-run the full eval suite.
-2. **Brainstorm with Vicky (do not build before):** pricing (plans, prices, what's free, the paywall moment) and the
-   judge demo (how a judge gets in, which roles and projects they see, a role switcher).
-3. **US demo world: done (22 Oct)** as the judges' demo world (scripts/demo-world.ts). Was: a family house in Los Angeles in review, a café in New York with the neighbourhood read, an
-   architect's studio in Austin with three clients, a builder's live site; fees in dollars; demo pros with work.
-4. **Judge demo: built and live (22 Oct).** /demo, 11 stops, view only; see progress.md 22 Oct. Next: Vicky's review,
-   then the submission text and video around it.
-5. **Pricing: no PayPal for the hackathon (Vicky, 21 Oct).** Pricing shows on the landing page only; PayPal
-   sandbox is after the hackathon.
-6. **F1 quality, the rest:** adversarial tests of the agents, speed pass, full eval re-run (after item 1).
-7. **C2b photoreal renders,** 28 to 29 Oct, on about $10 of Gemini credit from Vicky.
-8. **F2 submission:** polish, the submission video with voiceover, submission text with the business story
-   (sourced numbers, pricing, roadmap), scrub `private/`, Qloo data and the old tool-name lines in state.md (16 to 17 Oct commits) from
-   the whole history (filter-branch, keep the day-by-day commits), make the repo public with the MIT licence,
-   submit on Devpost before 30 Oct 11:45pm ET.
-
-Apple sign-in button stays as it is (Vicky, 21 Oct). Open: a mail sender for confirmation emails (Gmail SMTP
-suggested)? Fonts (21 Oct, Vicky): Funnel Display for headings, Funnel Sans for text, Martian Mono for labels.
+# History (older notes, kept for reference)
 
 ## What Arcon is now (16 Oct)
 
