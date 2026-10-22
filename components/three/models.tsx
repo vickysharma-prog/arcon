@@ -83,13 +83,8 @@ function Legs({ a: [w, d, h, c, inset = 0.05, r = 0.022] }: { a: LegArgs }) {
             return <C key={key} p={p} r={r * 1.1} h={h} taper={1.8} c={c} rot={[sz * 0.12, 0, -sx * 0.12]} />;
           case "industrial": // square black steel
             return <B key={key} p={[p[0], h / 2, p[2]]} s={[r * 1.6, h, r * 1.6]} c={BLACK} f={{ r: 0.4, m: 0.7 }} />;
-          case "classic": // turned
-            return (
-              <group key={key}>
-                <C p={p} r={r * 0.9} h={h} taper={1.4} c={c} />
-                <S p={[p[0], h * 0.7, p[2]]} s={[r * 3, r * 3, r * 3]} c={c} />
-              </group>
-            );
+          case "classic": // modern classic: slim, tapered toward the floor
+            return <C key={key} p={p} r={r * 0.85} h={h} taper={1.6} c={c} />;
           case "scandi":
             return <C key={key} p={p} r={r * 1.2} h={h} taper={1.15} c={mix(c, "#f1e3c8", 0.45)} />;
           case "boho":
@@ -106,7 +101,7 @@ function Sofa({ w, d, h, k }: { w: number; d: number; h: number; k: Scheme }) {
   const L = useContext(LookCtx);
   const style = L?.style ?? "modern";
   const lift = { midcentury: 0.18, industrial: 0.12, scandi: 0.14, classic: 0.1, boho: 0.03, modern: 0.06 }[style];
-  const arm = style === "midcentury" || style === "scandi" ? 0.12 : 0.2;
+  const arm = style === "midcentury" || style === "scandi" || style === "classic" ? 0.13 : 0.2;
   const seats = w > 1.8 ? 3 : w > 1.1 ? 2 : 1;
   const inner = w - arm * 2;
   const leather = style === "industrial";
@@ -122,7 +117,6 @@ function Sofa({ w, d, h, k }: { w: number; d: number; h: number; k: Scheme }) {
       {[-1, 1].map((sx) => (
         <group key={sx}>
           <B p={[sx * (w / 2 - arm / 2), seatY + 0.06, 0]} s={[arm, 0.3, d]} c={deep} f={f} />
-          {style === "classic" && <mesh geometry={cylGeom(1)} material={mat(deep, f)} position={[sx * (w / 2 - arm / 2), seatY + 0.21, 0]} scale={[arm * 1.1, d - 0.02, arm * 1.1]} rotation={[Math.PI / 2, 0, 0]} castShadow />}
         </group>
       ))}
       {Array.from({ length: seats }, (_, i) => {
@@ -131,8 +125,6 @@ function Sofa({ w, d, h, k }: { w: number; d: number; h: number; k: Scheme }) {
           <group key={i}>
             <B p={[x, seatY + 0.06, 0.08]} s={[inner / seats - 0.02, 0.14, d - 0.3]} c={fabric} f={f} />
             <B p={[x, seatY + 0.27, -d / 2 + 0.3]} s={[inner / seats - 0.03, 0.4, 0.16]} c={fabric} f={f} rot={[-0.15, 0, 0]} />
-            {style === "classic" &&
-              [-0.12, 0, 0.12].map((dx) => <S key={dx} p={[x + dx, seatY + 0.3, -d / 2 + 0.385]} s={[0.025, 0.025, 0.012]} c={mix(fabric, "#000000", 0.4)} />)}
           </group>
         );
       })}
@@ -214,8 +206,8 @@ function Chair({ x = 0, z = 0, turn = 0, k }: { x?: number; z?: number; turn?: n
   return (
     <group position={[x, 0, z]} rotation={[0, turn, 0]}>
       <Legs a={[0.42, 0.42, 0.45, k.wood, 0.03, 0.016]} />
-      <B p={[0, 0.46, 0]} s={[0.44, 0.04, 0.44]} c={k.textile} f={{ r: 0.9 }} />
-      <B p={[0, 0.72, -0.2]} s={[0.42, 0.4, 0.03]} c={k.wood} />
+      <B p={[0, 0.47, 0]} s={[0.44, 0.06, 0.44]} c={k.textile} f={{ r: 0.9 }} />
+      <B p={[0, 0.76, -0.2]} s={[0.42, 0.44, 0.05]} c={k.textile} f={{ r: 0.9 }} rot={[-0.1, 0, 0]} />
     </group>
   );
 }
@@ -484,8 +476,7 @@ const FALLBACK_LOOK = { tile: "#e9e7e2", tileKind: "plain", curtain: "#ece6dc", 
 function Rug({ w, d, k }: { w: number; d: number; k: Scheme }) {
   const style = useStyle();
   const ground = mix(k.accent, k.textile, 0.55);
-  if (style === "boho" || style === "classic")
-    return <T p={[0, 0.007, 0]} s={[w, 0.014, d]} map={rug(ground, mix(k.accent, "#000000", 0.15), style === "boho" ? "kilim" : "medallion")} r={1} />;
+  if (style === "boho") return <T p={[0, 0.007, 0]} s={[w, 0.014, d]} map={rug(ground, mix(k.accent, "#000000", 0.15), "kilim")} r={1} />;
   const light = style === "scandi";
   return (
     <>
@@ -546,8 +537,10 @@ function Art({ w, d, h, seed }: { w: number; d: number; h: number; seed: number 
 }
 
 /** One piece, placed and turned in the world. */
-export function Model({ it, k }: { it: Item; k: Scheme }) {
+export function Model({ it, k: palette }: { it: Item; k: Scheme }) {
   const L = useContext(LookCtx);
+  // a very dark palette wood (walnut, mahogany) is lifted a little toward oak, so a room doesn't go heavy and brown
+  const k = luminance(palette.wood) < 0.3 ? { ...palette, wood: mix(palette.wood, "#b08a62", 0.35) } : palette;
   const { lw: w, ld: d, h } = it;
   let body: ReactNode;
   switch (it.name) {

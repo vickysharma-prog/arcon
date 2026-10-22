@@ -68,8 +68,9 @@ export function WalkthroughStep({
   };
   const [progress, setProgress] = useState(0);
   const [restart, setRestart] = useState(0);
-  const [cutaway, setCutaway] = useState(true);
-  const [upTo, setUpTo] = useState<number | "all">(0);
+  // Look around opens on the whole house with its roof on; "Show inside" then cuts it open at the ground floor.
+  const [cutaway, setCutaway] = useState(false);
+  const [upTo, setUpTo] = useState<number | "all">("all");
   const [finished, setFinished] = useState(false);
   const [guide, setGuide] = useState(false);
   const [fitKey, setFitKey] = useState(0);
@@ -381,13 +382,22 @@ export function WalkthroughStep({
           <>
             {guide && <MouseGuide finished={finished} whole={whole} onClose={() => setGuide(false)} />}
             <div className="absolute left-4 right-4 top-4 z-30 flex flex-wrap items-center gap-2">
-              <button onClick={() => setCutaway((c) => !c)} aria-pressed={cutaway} className={`rounded-full px-4 py-1.5 text-sm ${cutaway ? "bg-btn text-btn-ink" : "bg-paper/85 text-ink backdrop-blur"}`}>
+              <button
+                onClick={() => {
+                  if (!cutaway && upTo === "all") setUpTo(0);
+                  setCutaway((c) => !c);
+                }}
+                aria-pressed={cutaway} className={`rounded-full px-4 py-1.5 text-sm ${cutaway ? "bg-btn text-btn-ink" : "bg-paper/85 text-ink backdrop-blur"}`}>
                 {cutaway ? "Showing inside" : "Show inside"}
               </button>
               {floors > 1 && (
                 <div role="radiogroup" aria-label="Floors" className="flex gap-1 rounded-full bg-paper/85 p-1 backdrop-blur">
                   {[...layout.floors.map((f) => f.level), "all" as const].map((l) => (
-                    <button key={String(l)} role="radio" aria-checked={upTo === l} onClick={() => setUpTo(l)} className={`rounded-full px-3 py-1 text-sm ${upTo === l ? "bg-btn text-btn-ink" : "text-ink-soft"}`}>
+                    <button key={String(l)} role="radio" aria-checked={upTo === l} onClick={() => {
+                      setUpTo(l);
+                      // picking one floor opens it up; All floors puts the roof back
+                      setCutaway(l !== "all");
+                    }} className={`rounded-full px-3 py-1 text-sm ${upTo === l ? "bg-btn text-btn-ink" : "text-ink-soft"}`}>
                       {l === "all" ? "All floors" : l === 0 ? "Ground" : "Upstairs"}
                     </button>
                   ))}
