@@ -1,4 +1,5 @@
 import { tagId, type Entity } from "./api.ts";
+import { isComplaint } from "./words.ts";
 
 // The taste engine has three layers, strongest first:
 //   1. places the user loves (hotels, cafés, restaurants) carry decor and ambience tags directly;
@@ -24,6 +25,7 @@ export type Evidence = { entityId: string; name: string; layer: Layer };
 export type StyleTag = { family: Family; value: string; weight: number; sources: Evidence[] };
 export type Profile = { tags: StyleTag[]; brands: { id: string; name: string; affinity: number; aesthetic: string[]; because: { entityId: string; score: number }[] }[] };
 
+
 function family(id: string): [Family, string] | null {
   for (const [prefix, fam] of Object.entries(FAMILIES)) if (id.startsWith(prefix)) return [fam, id.slice(prefix.length)];
   return null;
@@ -35,7 +37,7 @@ export function buildProfile(liked: { entity: Entity; layer: 1 | 2 }[], matched:
   const add = (e: Entity, layer: Layer, scale: number) => {
     for (const t of e.tags ?? []) {
       const f = family(tagId(t));
-      if (!f) continue;
+      if (!f || isComplaint(f[1])) continue;
       const key = f.join(":");
       const tag = byKey.get(key) ?? { family: f[0], value: f[1], weight: 0, sources: [] };
       tag.weight += LAYER_WEIGHT[layer] * scale * (FAMILY_WEIGHT[f[0]] ?? 1);

@@ -71,3 +71,10 @@ test("budget hotel chains aren't places to borrow a look from", async () => {
   assert.equal(isRoomPlace(at("Best Western Plus Hotel Colbert")), false);
   assert.equal(isRoomPlace(at("Sunset Marquis")), true);
 });
+
+test("a complaint in a place's reviews never becomes a style word", () => {
+  const cafe = { entity_id: "c", name: "Blue Bottle Coffee", types: ["urn:entity:place"], tags: [{ tag_id: "urn:tag:ambience:qloo:stuffy" }, { tag_id: "urn:tag:ambience:qloo:lively" }] } as never;
+  const values = buildProfile([{ entity: cafe, layer: 2 }], []).tags.map((t) => t.value);
+  assert.ok(values.includes("lively"));
+  assert.ok(!values.includes("stuffy"));
+});

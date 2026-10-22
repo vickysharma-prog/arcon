@@ -1,4 +1,5 @@
 import type { Profile, StyleTag } from "../qloo/taste.ts";
+import { isComplaint } from "../qloo/words.ts";
 import type { TasteSignal } from "../project/store.ts";
 import type { Layout } from "../layout/schema.ts";
 import type { Brief } from "./brief.ts";
@@ -39,7 +40,7 @@ const STYLE_FAMILIES = new Set(["decor", "ambience", "aesthetic", "style"]);
  * from. A word backed by something they named comes before one only matched brands carry.
  */
 export function styleWords(p: Taste, n = 6): { word: string; from: Credit[] }[] {
-  const tags = (p.taste?.tags ?? []).filter((t) => STYLE_FAMILIES.has(t.family));
+  const tags = (p.taste?.tags ?? []).filter((t) => STYLE_FAMILIES.has(t.family) && !isComplaint(t.value));
   const loved = (t: StyleTag) => t.sources.some((s) => s.layer !== 3);
   // Take turns between the things they named, strongest word first from each, so one hotel can't fill the list.
   const lead = (t: StyleTag) => t.sources.find((s) => s.layer !== 3)!.entityId;

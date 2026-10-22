@@ -1,5 +1,6 @@
 import type { Entity } from "../qloo/api.ts";
 import { layerOf, type Profile } from "../qloo/taste.ts";
+import { isComplaint } from "../qloo/words.ts";
 import type { Project } from "../project/store.ts";
 import { livingMissing, livingOf } from "./living.ts";
 import { runningMissing, runningOf } from "./running.ts";
@@ -90,7 +91,7 @@ export function profileSummary(profile: Profile, words = 8, brands = 5) {
 export function cardWords(profile: Profile, max = 6) {
   const per = new Map<string | null, number>();
   return profile.tags
-    .filter((t) => t.family === "decor" || t.family === "ambience" || t.family === "aesthetic")
+    .filter((t) => (t.family === "decor" || t.family === "ambience" || t.family === "aesthetic") && !isComplaint(t.value))
     .sort((a, b) => b.weight - a.weight)
     .filter((t, i, all) => all.findIndex((x) => x.value === t.value) === i)
     .map((t) => ({ word: t.value.replaceAll("_", " "), from: t.sources[0]?.name ?? null }))
