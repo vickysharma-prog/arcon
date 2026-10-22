@@ -36,6 +36,20 @@ Still open, in order:
 2. Walk camera brushes furniture in a few places; interior wall designs (panelling, wainscot) and more modern pieces.
 3. Recheck /demo stops 3 and 4 on live after each 3D change (scripts/shots-3d.ts <projectId> <dir>).
 
+## Judges' tour: end-to-end on live (23 Oct), still to fix
+
+Checked on arcon-ten.vercel.app from the landing page's "For judges" to "Try it yourself": every stop loads, the
+replay moves on to Maya's design by itself, the veil and scroll hint show, Mike's sites have crew on site, Sam's stop
+lands on the neighbourhood read, "Try it yourself" opens a fresh interview with no sign-in.
+Still to fix:
+- J: in the replay the three picture picks sit below the fold, so judges don't see Maya choose; scroll them in.
+- K: stop 4 (3D) opens with the 3D below the fold on a laptop; scroll to it.
+- B: on a short window the pill covers the interview's lowest buttons.
+- C: the picks question shows blank for a moment while its pictures load.
+- Sam's stop lands a little past the "Your neighbourhood" heading.
+- A judge's own design after "Try it yourself" runs on Gemini: check the quota (or a paid key) before judging.
+- Run scripts/demo-refresh.ts before judging (keeps phases, crew and stock current).
+
 ## Start from here: what's left (17 Oct, late night)
 
 Built and live: all the planned features (A1 to A5, B1 to B4, C1, C2 video, D1 to D3, E1 site tracking, E2, Q7, Q10,
