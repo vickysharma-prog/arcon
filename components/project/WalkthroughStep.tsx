@@ -153,7 +153,14 @@ export function WalkthroughStep({
 
   // the judges' tour opens the 3D itself (#walk), not the heading above it
   useEffect(() => {
-    if (window.location.hash !== "#walk") return;
+    const h = window.location.hash;
+    if (h === "#look" || h === "#inside") setMode("orbit");
+    // #inside opens the ground floor cut open, rooms named
+    if (h === "#inside") {
+      setCutaway(true);
+      setUpTo(0);
+    }
+    if (h !== "#walk" && h !== "#look" && h !== "#inside") return;
     const t = setTimeout(() => box.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 900);
     return () => clearTimeout(t);
   }, []);

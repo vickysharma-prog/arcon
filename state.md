@@ -37,7 +37,7 @@ Still open, in order:
    pick a view point clear of furniture. Panelling (classic) and softer accents done 23 Oct; more modern pieces next.
 3. Recheck /demo stops 3 and 4 on live after each 3D change (scripts/shots-3d.ts <projectId> <dir>).
 
-## Judges' tour: end-to-end on live (23 Oct), still to fix
+## Judges' tour (23 Oct): 15 stops, see progress.md; still to fix
 
 Checked on arcon-ten.vercel.app from the landing page's "For judges" to "Try it yourself": every stop loads, the
 replay moves on to Maya's design by itself, the veil and scroll hint show, Mike's sites have crew on site, Sam's stop

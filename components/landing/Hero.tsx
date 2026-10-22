@@ -132,6 +132,13 @@ export function Hero() {
             Talk to Arcon about the films, places and things you love. It turns your taste into a floor plan, a 3D walkthrough, a budget in your currency and a shopping list, for a home, café, office, hotel, shop or studio.
           </p>
           <div className="mt-9 flex flex-wrap items-center gap-2.5">
+            <a href="/demo" onClick={() => tick()} className="group flex items-center gap-2.5 rounded-full border border-accent/50 bg-accent/5 px-5 py-3.5 text-base text-accent backdrop-blur transition hover:-translate-y-0.5 hover:bg-accent/10 hover:shadow-[0_12px_36px_-14px_var(--accent)]">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60 motion-reduce:hidden" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent" />
+              </span>
+              For judges
+            </a>
             <Link
               href="/start"
               onClick={() => transition()}
@@ -142,13 +149,6 @@ export function Hero() {
             <Link href="/start/plan" onClick={() => tick()} className="rounded-full border border-line bg-paper-raised/70 px-5 py-3.5 text-base backdrop-blur transition hover:-translate-y-0.5 hover:border-accent hover:text-accent hover:shadow-[0_12px_36px_-14px_var(--accent)]">
               I have a floor plan
             </Link>
-            <a href="/demo" onClick={() => tick()} className="group flex items-center gap-2.5 rounded-full border border-accent/50 bg-accent/5 px-5 py-3.5 text-base text-accent backdrop-blur transition hover:-translate-y-0.5 hover:bg-accent/10 hover:shadow-[0_12px_36px_-14px_var(--accent)]">
-              <span className="relative flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60 motion-reduce:hidden" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-accent" />
-              </span>
-              For judges
-            </a>
           </div>
           <p className="mt-5 text-sm text-ink-soft">
             Type or talk · no account needed to try ·{" "}

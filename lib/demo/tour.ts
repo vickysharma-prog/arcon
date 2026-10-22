@@ -11,6 +11,7 @@ export const TOUR: Stop[] = [
   { as: "maya", path: "/project/{maya}?step=brief", title: "Qloo reads her taste", what: "Chateau Marmont, West Elm and Mad Men become style words, materials and brands. Each choice says which pick it came from." },
   { as: "maya", path: "/project/{maya}?step=plans", title: "Three plans, each with its reasons", what: "Drawn by Arcon's layout engine from her answers and ranked by how well each fits how the family lives, with the trade-offs on every card." },
   { as: "maya", path: "/project/{maya}?step=walkthrough#walk", title: "Walk through it in 3D", what: "Furniture in her style, day and night. Drag to look around, click a room label to fly there." },
+  { as: "maya", path: "/project/{maya}?step=walkthrough#look", title: "Look around the whole house", what: "Outside first, from the street. Pick Ground or Upstairs to open a floor, click a room name to fly there, and switch Day to Night." },
   { as: "maya", path: "/project/{maya}?step=budget", title: "A budget in dollars, room by room", what: "Los Angeles rates, three finish levels, and how long the build takes." },
   { as: "maya", path: "/project/{maya}?step=shop", title: "A shopping list from her taste", what: "Every piece in the 3D, priced, from brands Qloo matched to what Maya loves, each saying which pick it came from." },
   { as: "maya", path: "/project/{maya}?step=drawings", title: "Drawings for the builder", what: "Plans, elevations and schedules, as a PDF and as DXF for CAD, made from the same design as the 3D." },
@@ -19,6 +20,7 @@ export const TOUR: Stop[] = [
   { as: "mike", path: "/home?view=today", title: "Mike's day on site", what: "The builder's side: today's crew, deliveries, and fees ready to bill." },
   { as: "mike", path: "/project/{maya}?tab=site", title: "The building site", what: "Phases on a timeline, crew and materials in sq ft and pounds, each finished stage signed off by Lena." },
   { as: "lena", path: "/project/{ana}?tab=site", title: "The last week before moving in", what: "Ana's apartment: the snag list (one fixed, two to go), the handover pack, and the keys waiting for Ana to accept." },
+  { as: "sam", path: "/project/{sam}?step=walkthrough#inside", title: "Not only homes: a café in 3D", what: "Sam's Brooklyn café, opened up: a service counter, small tables laid out for 24 seats, and the street front. Show inside off puts the roof back." },
   { as: "sam", path: "/project/{sam}?step=brief#neighbourhood", title: "A café, read against its street", what: "Sam's Brooklyn café, designed by Sam alone: Qloo reads who already comes to the cafés nearby, by age, and ranks them against Sam's taste." },
 ];
 

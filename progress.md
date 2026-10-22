@@ -9,6 +9,18 @@ One entry per working session, newest at the top. Date, what got done, what brok
   Written up in private/qloo-findings.md.
 - What's left is unchanged (state.md, "Start from here").
 
+## 2026-10-23 (later): The tour shows every wow moment, modern furniture (Vicky)
+
+- Tour, 15 stops: interview replay, taste, plans, 3D walk, Look around (opens from the street; a floor opens up with
+  labels), budget, shopping list, drawings, Lena's studio and thread, Mike's day and site, Ana's last week, Sam's café
+  in 3D (opens inside) and its neighbourhood. "For judges" is the first button in the hero.
+- Between stops a veil with Arcon's mark; a scroll hint on long pages; Back and Next beside each page title.
+- A judge's own project after "Try it yourself" is unlocked with no sign-in (cookie arcon_judge; checked on live).
+- 3D: modern classic furniture (slim tapered legs, track arms, upholstered dining chairs, plain rug, lighter wood),
+  panelling below a rail in classic rooms, a nameplate by the door, a timber canopy, no dark stripe between floors.
+- Complaint words from reviews ("stuffy") never become style words. scripts/demo-refresh.ts keeps the sites live.
+- Dropped: a "find a pro" stop (Maya already has Lena, and the page is for an owner's own project).
+
 ## 2026-10-23: 3D quality pass, part 2 (Vicky)
 
 - Outside: classic taste is warm white render now (brick only for industrial or when asked), roofs in their material
