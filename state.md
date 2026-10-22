@@ -24,19 +24,17 @@ pick up with nothing lost. Dated detail is in progress.md (newest first); every 
 arcon-ten.vercel.app, auto-deploying from GitHub main (vickysharma-prog/arcon, private until submission). Last
 commit 43bd603 is pushed and live; 402 unit tests pass, tsc and the build are clean, every live check passes.
 
-## 3D, still to fix (22 Oct night, start here tomorrow)
+## 3D, where it stands (23 Oct)
 
-Vicky wants the best possible 3D for the judges. Done tonight: see progress.md 22 Oct (night). Still open:
-1. **Roof colour:** Maya's hipped roof is deep navy (colors.roof is the palette's darkest colour). Give roofs a real
-   material per roof/style (slate grey, clay tile, standing seam) in HouseScene/materials.
-2. **Black outside walls:** some exterior wall faces render pure black in Look around (ground floor on one side,
-   upper floor on another, not tied to direction). N8AO was the first guess, but turning it off in Look around broke
-   the view, so that change was reverted. Find the real cause (try: lighting/shadow on those faces, the wall face
-   index in outerFace, the slab ledge). Check with scripts/shots-3d.ts (WALK=0 to skip the walk).
-3. **Walk camera** brushes through furniture in places (office monitor, dining lamp up close). Keep the path clear.
-4. **Exterior and walls overall:** Vicky asked for nicer outside (not the plain box), different paint and wall
-   designs per room, better photos/art. Part done; review the whole house again with fresh pictures.
-5. Then reseed nothing (the demo world is fine) and check /demo stops 3 and 4 again.
+Done (22 to 23 Oct): see progress.md. Maya's house now: warm white render outside (classic taste), slate roof, an
+entrance with a canopy, lights, a step and a stone path, rounded shrubs; look-around opens from the street; labels sit
+on their rooms (drei Html offset fixed); oak floors; brick only outside; one plant per room in three kinds; varied art
+and per-room shades; the walk starts clean (no door leaf in the face).
+Still open, in order:
+1. Brick houses (industrial taste): some brick wall faces rendered pure black. Not the AO (checked 23 Oct with AO off:
+   the black stayed with brick and went with render). Look at the brick texture clones in tiledOnce.
+2. Walk camera brushes furniture in a few places; interior wall designs (panelling, wainscot) and more modern pieces.
+3. Recheck /demo stops 3 and 4 on live after each 3D change (scripts/shots-3d.ts <projectId> <dir>).
 
 ## Start from here: what's left (17 Oct, late night)
 

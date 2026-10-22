@@ -9,6 +9,15 @@ One entry per working session, newest at the top. Date, what got done, what brok
   Written up in private/qloo-findings.md.
 - What's left is unchanged (state.md, "Start from here").
 
+## 2026-10-23: 3D quality pass, part 2 (Vicky)
+
+- Outside: classic taste is warm white render now (brick only for industrial or when asked), roofs in their material
+  (slate, metal, membrane) not a palette colour, an entrance with a canopy, lights, a step, a stone path and shrubs.
+- Look-around and Whole house open from the street side; room labels fixed (drei's fullscreen Html was offset by the
+  scene origin's screen position).
+- Oak floors; the door leaf is left out on walks; the judges' pill only shows inside the app; the replay lets
+  Arcon's greeting play in full before the answers.
+
 ## 2026-10-22 (night): 3D quality pass, part 1 (Vicky: "the 3D is the biggest edge")
 
 - The tour's back and next now sit beside the page title (and in the glass pill at the bottom, which opens on hover).
