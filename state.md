@@ -33,7 +33,8 @@ and per-room shades; the walk starts clean (no door leaf in the face).
 Still open, in order:
 1. Brick houses (industrial taste): some brick wall faces rendered pure black. Not the AO (checked 23 Oct with AO off:
    the black stayed with brick and went with render). Look at the brick texture clones in tiledOnce.
-2. Walk camera brushes furniture in a few places; interior wall designs (panelling, wainscot) and more modern pieces.
+2. Walk camera brushes furniture in places (it stops 1.2 m inside each door, blind to furniture): make walkPlan
+   pick a view point clear of furniture. Panelling (classic) and softer accents done 23 Oct; more modern pieces next.
 3. Recheck /demo stops 3 and 4 on live after each 3D change (scripts/shots-3d.ts <projectId> <dir>).
 
 ## Judges' tour: end-to-end on live (23 Oct), still to fix
@@ -44,9 +45,9 @@ lands on the neighbourhood read, "Try it yourself" opens a fresh interview with 
 Still to fix:
 - J: done 23 Oct (the replay scrolls to the picks and holds each one).
 - K: done 23 Oct (stop 4 opens on the 3D, #walk).
-- B: on a short window the pill covers the interview's lowest buttons.
-- C: the picks question shows blank for a moment while its pictures load.
-- Sam's stop lands a little past the "Your neighbourhood" heading.
+- B: done 23 Oct (room left under the pill).
+- C: that blank moment is the question's own blur-in animation; left as it is.
+- Sam's stop: done 23 Oct (lands above the heading).
 - A judge's own project after "Try it yourself" is unlocked with no sign-in (checked on live 23 Oct: guest, unlocked_at
   set). Its design runs on Gemini: check the quota (or a paid key) before judging.
 - Run scripts/demo-refresh.ts before judging (keeps phases, crew and stock current).
