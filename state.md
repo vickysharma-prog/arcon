@@ -42,12 +42,13 @@ Checked on arcon-ten.vercel.app from the landing page's "For judges" to "Try it 
 replay moves on to Maya's design by itself, the veil and scroll hint show, Mike's sites have crew on site, Sam's stop
 lands on the neighbourhood read, "Try it yourself" opens a fresh interview with no sign-in.
 Still to fix:
-- J: in the replay the three picture picks sit below the fold, so judges don't see Maya choose; scroll them in.
-- K: stop 4 (3D) opens with the 3D below the fold on a laptop; scroll to it.
+- J: done 23 Oct (the replay scrolls to the picks and holds each one).
+- K: done 23 Oct (stop 4 opens on the 3D, #walk).
 - B: on a short window the pill covers the interview's lowest buttons.
 - C: the picks question shows blank for a moment while its pictures load.
 - Sam's stop lands a little past the "Your neighbourhood" heading.
-- A judge's own design after "Try it yourself" runs on Gemini: check the quota (or a paid key) before judging.
+- A judge's own project after "Try it yourself" is unlocked with no sign-in (checked on live 23 Oct: guest, unlocked_at
+  set). Its design runs on Gemini: check the quota (or a paid key) before judging.
 - Run scripts/demo-refresh.ts before judging (keeps phases, crew and stock current).
 
 ## Start from here: what's left (17 Oct, late night)
