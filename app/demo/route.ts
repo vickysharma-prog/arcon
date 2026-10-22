@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { signUser, USER_COOKIE } from "@/lib/auth/guest";
-import { DEMO_COOKIE, DEMO_IDS } from "@/lib/demo/ids";
+import { DEMO_COOKIE, DEMO_IDS, JUDGE_COOKIE } from "@/lib/demo/ids";
 import { DEMO_ROLES, TITLES, type DemoRole } from "@/lib/demo/story";
 import { pathOf, stopAt, switchTo, TOUR, type ProjectKey } from "@/lib/demo/tour";
 import { supabaseAdmin } from "@/lib/supabase/admin";
@@ -13,9 +13,12 @@ export async function GET(request: NextRequest) {
   const go = (path: string) => NextResponse.redirect(new URL(path, request.url));
 
   if (q.has("exit")) {
-    const res = go(q.get("exit") === "start" ? "/start" : "/?site");
+    const start = q.get("exit") === "start";
+    const res = go(start ? "/start" : "/?site");
     res.cookies.delete(USER_COOKIE);
     res.cookies.delete(DEMO_COOKIE);
+    // A judge trying it for real: what they design here opens in full, with no sign-in in the way.
+    if (start) res.cookies.set(JUDGE_COOKIE, "1", { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 14 });
     return res;
   }
 

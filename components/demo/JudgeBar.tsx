@@ -6,10 +6,12 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { DEMO_COOKIE } from "@/lib/demo/ids";
 import { DEMO_ROLES, PEOPLE, type DemoRole } from "@/lib/demo/story";
 import { TOUR } from "@/lib/demo/tour";
+import { AnimatedMark } from "@/components/AnimatedMark";
 
 // The judges' tour, kept out of the way: a small glass pill at the bottom (which stop, back and next). Pointing at it
 // (or a tap) opens
 // what this stop shows, whose view it is (switch in one click) and the way out. Shown only in a demo session.
+const GO = "arcon-tour-go";
 const IN_APP = /^\/(project|home|start|pros|account)(\/|$)/;
 
 /** Which stop of the tour this is, and whose view, from the /demo route's cookie; null outside the demo. */
@@ -55,6 +57,52 @@ export function JudgeBar() {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const leave = useRef<ReturnType<typeof setTimeout>>(undefined);
+  // Between stops: Arcon's mark over the page while the next one loads, then a fade into it.
+  const [veil, setVeil] = useState<"in" | "out" | null>(null);
+  useEffect(() => {
+    if (!at) return;
+    let arrived = false;
+    try {
+      arrived = sessionStorage.getItem(GO) === "1";
+      sessionStorage.removeItem(GO);
+    } catch {}
+    if (arrived) {
+      setVeil("out");
+      const t = setTimeout(() => setVeil(null), 900);
+      return () => clearTimeout(t);
+    }
+  }, [at]);
+  useEffect(() => {
+    if (!at) return;
+    // any tour link (next, back, a stop, another person's view) shows the veil as it leaves
+    const go = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement).closest?.("a[href^='/demo']");
+      if (!a || e.metaKey || e.ctrlKey) return;
+      try {
+        sessionStorage.setItem(GO, "1");
+      } catch {}
+      setVeil("in");
+    };
+    document.addEventListener("click", go, true);
+    return () => document.removeEventListener("click", go, true);
+  }, [at]);
+  // On a long page, a soft hint to scroll, gone at the first scroll.
+  const [hint, setHint] = useState(false);
+  useEffect(() => {
+    if (!at) return;
+    setHint(false);
+    const show = setTimeout(() => {
+      if (window.scrollY < 40 && document.documentElement.scrollHeight > window.innerHeight * 1.35) setHint(true);
+    }, 1800);
+    const hide = () => setHint(false);
+    window.addEventListener("scroll", hide, { once: true });
+    const stop = setTimeout(hide, 9000);
+    return () => {
+      clearTimeout(show);
+      clearTimeout(stop);
+      window.removeEventListener("scroll", hide);
+    };
+  }, [at, path]);
   useEffect(() => setOpen(false), [path]);
   // A button a judge presses that would change the demo is refused by the server (proxy.ts); some screens keep quiet
   // about a failed request, so the bar says it once, for all of them.
@@ -97,6 +145,39 @@ export function JudgeBar() {
 
   return (
     <>
+      <AnimatePresence>
+        {veil && (
+          <motion.div
+            key="veil"
+            aria-hidden
+            initial={{ opacity: veil === "in" ? 0 : 1 }}
+            animate={{ opacity: veil === "in" ? 1 : 0 }}
+            transition={{ duration: veil === "in" ? 0.25 : 0.7, ease: "easeOut" }}
+            className="pointer-events-none fixed inset-0 z-[70] grid place-items-center bg-paper"
+          >
+            <div className="flex flex-col items-center">
+              <AnimatedMark size={64} />
+              <p className="mt-4 font-serif text-2xl">Arcon</p>
+              <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.3em] text-accent">Taste intelligence by Qloo</p>
+            </div>
+          </motion.div>
+        )}
+        {hint && !veil && (
+          <motion.div
+            key="hint"
+            aria-hidden
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="pointer-events-none fixed bottom-20 left-1/2 z-[60] flex -translate-x-1/2 flex-col items-center gap-1.5 rounded-2xl border border-line/70 bg-paper-raised/90 px-4 py-2.5 text-ink-soft shadow-lg backdrop-blur-md"
+          >
+            <span className="relative h-8 w-5 rounded-full border-2 border-current">
+              <span className="absolute left-1/2 top-1.5 h-1.5 w-1 -translate-x-1/2 animate-bounce rounded-full bg-current motion-reduce:animate-none" />
+            </span>
+            <span className="font-mono text-[10px] uppercase tracking-[0.2em]">Scroll for more</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
     {/* the pill: opens as the pointer reaches it (a tap on a phone), closes a moment after it leaves */}
     <div
       ref={box}

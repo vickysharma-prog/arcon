@@ -11,6 +11,12 @@ import type { Neighbourhood as Read } from "@/lib/neighbourhood/fetch";
 // The neighbourhood read for a business: the same kind of places around the site, ranked by Qloo for the owner's
 // taste and the crowd they pick, what those favourites look like, and how strongly the area shares the taste.
 export function Neighbourhood({ id }: { id: string }) {
+  // a link to #neighbourhood (the judges' tour) lands here once the section is on the page
+  useEffect(() => {
+    if (location.hash !== "#neighbourhood") return;
+    const t = setTimeout(() => document.getElementById("neighbourhood")?.scrollIntoView({ behavior: "smooth", block: "start" }), 600);
+    return () => clearTimeout(t);
+  }, []);
   const [crowd, setCrowd] = useState<Crowd>("all");
   const [read, setRead] = useState<Read | null | undefined>(undefined);
   const [broken, setBroken] = useState<Set<string>>(new Set());

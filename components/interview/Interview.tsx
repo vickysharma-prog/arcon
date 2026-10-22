@@ -259,6 +259,18 @@ export function Interview() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealing, taste?.family]);
+  // The replay, once the style is shown: a moment to read it, then on to Maya's design (the tour's veil covers the move).
+  useEffect(() => {
+    if (!replay || !revealing || !taste?.family) return;
+    const t = setTimeout(() => {
+      try {
+        sessionStorage.setItem("arcon-tour-go", "1");
+      } catch {}
+      location.href = "/demo?step=2";
+    }, 5000 / speed);
+    return () => clearTimeout(t);
+  }, [replay, revealing, taste?.family, speed]);
+
   const designNow = () => {
     tick();
     voice.speak(say("designing"), voiceFor(say("designing"), lang));
@@ -414,7 +426,7 @@ export function Interview() {
 
                   <div className="mt-8">
                     {(q.kind === "choice" || q.kind === "multi") && <Choices q={q} lang={lang} start={q.preset?.(answers) ?? []} shown={typeof ghost === "string" || Array.isArray(ghost) ? ([] as string[]).concat(ghost) : []} onAnswer={(v) => answer(q.id, v)} doneLabel={say("done")} />}
-                    {q.kind === "size" && <SizeInput lang={lang} say={say} onAnswer={(v) => answer(q.id, v)} />}
+                    {q.kind === "size" && <SizeInput lang={lang} say={say} shown={ghost && typeof ghost === "object" && "width" in ghost ? ghost : undefined} onAnswer={(v) => answer(q.id, v)} />}
                     {typing && (
                       <form
                         className="mx-auto flex max-w-lg items-center gap-2"
@@ -701,9 +713,12 @@ function Choices({ q, lang, start, shown = [], onAnswer, doneLabel }: { q: Quest
   );
 }
 
-function SizeInput({ lang, say, onAnswer }: { lang: LangId; say: (k: keyof typeof SAY) => string; onAnswer: (v: Answer) => void }) {
-  const [w, setW] = useState("");
-  const [d, setD] = useState("");
+function SizeInput({ lang, say, shown, onAnswer }: { lang: LangId; say: (k: keyof typeof SAY) => string; shown?: { width: number; depth: number }; onAnswer: (v: Answer) => void }) {
+  const [typedW, setW] = useState("");
+  const [typedD, setD] = useState("");
+  // the replay shows Maya's size in the boxes before it answers
+  const w = shown ? String(shown.width) : typedW;
+  const d = shown ? String(shown.depth) : typedD;
   const [unit, setUnit] = useState<"ft" | "m">(lang === "en" ? "ft" : "ft");
   const ok = Number(w) > 0 && Number(d) > 0;
   const field = "w-24 rounded-xl border border-line bg-paper px-3 py-2 outline-none focus:border-accent";

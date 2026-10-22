@@ -13,6 +13,9 @@ const IDS = new Set(Object.values(DEMO_IDS));
 /** The judge bar's cookie: "step.role". Not a session: the signed user cookie is. */
 export const DEMO_COOKIE = "arcon_demo";
 
+/** Set when a judge leaves the tour to try Arcon themselves: their own projects open in full without signing in. */
+export const JUDGE_COOKIE = "arcon_judge";
+
 export const VIEW_ONLY = "This is the judges' demo, so it's view only. Sign up free to try it on your own project.";
 
 // What a demo session may still send: the interview's live taste card, and signing out.
