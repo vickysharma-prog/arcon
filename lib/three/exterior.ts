@@ -15,7 +15,9 @@ export const PLAIN: Exterior = { roof: "flat", pitch: 0, overhang: 0.3, cladding
 
 const ROOF_OF: Record<Style, Roof> = { scandi: "gable", boho: "gable", classic: "hip", midcentury: "shed", industrial: "flat", modern: "flat" };
 const PITCH: Record<Roof, number> = { flat: 0, gable: 35, hip: 28, shed: 10 };
-const CLAD_OF: Record<Style, Cladding> = { scandi: "timber", midcentury: "timber", industrial: "brick", classic: "brick", boho: "render", modern: "render" };
+// A classic taste gets smooth warm render (an LA Spanish-colonial or Hollywood Regency house, like Chateau Marmont),
+// not brick: brick is for an industrial taste, or when the brief asks for it.
+const CLAD_OF: Record<Style, Cladding> = { scandi: "timber", midcentury: "timber", industrial: "brick", classic: "render", boho: "render", modern: "render" };
 const OVERHANG: Record<Roof, number> = { flat: 0.3, gable: 0.5, hip: 0.5, shed: 0.6 };
 
 /** The exterior for a design, from the look the 3D already reads off the client's taste. */

@@ -10,6 +10,8 @@ import { TOUR } from "@/lib/demo/tour";
 // The judges' tour, kept out of the way: a small glass pill at the bottom (which stop, back and next). Pointing at it
 // (or a tap) opens
 // what this stop shows, whose view it is (switch in one click) and the way out. Shown only in a demo session.
+const IN_APP = /^\/(project|home|start|pros|account)(\/|$)/;
+
 /** Which stop of the tour this is, and whose view, from the /demo route's cookie; null outside the demo. */
 function useStop() {
   const path = usePathname();
@@ -17,7 +19,8 @@ function useStop() {
   useEffect(() => {
     const raw = document.cookie.split("; ").find((c) => c.startsWith(`${DEMO_COOKIE}=`))?.split("=")[1];
     const [s, who] = decodeURIComponent(raw ?? "").split(".");
-    setAt(raw && DEMO_ROLES.includes(who as DemoRole) ? { step: Number(s) || 1, who: who as DemoRole } : null);
+    // only inside the app the tour is showing, never on the landing page or other public pages
+    setAt(raw && IN_APP.test(path) && DEMO_ROLES.includes(who as DemoRole) ? { step: Number(s) || 1, who: who as DemoRole } : null);
   }, [path]);
   return at;
 }

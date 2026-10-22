@@ -15,6 +15,7 @@ const look = (style: "scandi" | "classic" | "midcentury" | "modern" | "boho" | "
 test("the exterior follows the taste: roof, cladding and garden", () => {
   assert.deepEqual(exteriorOf(house, look("scandi", { lush: true }), true), { roof: "gable", pitch: 35, overhang: 0.5, cladding: "timber", garden: true, because: ["Ace Hotel"] });
   assert.equal(exteriorOf(house, look("classic"), true).roof, "hip");
+  assert.equal(exteriorOf(house, look("classic"), true).cladding, "render");
   assert.equal(exteriorOf(house, look("midcentury"), true).roof, "shed");
   assert.equal(exteriorOf(house, look("modern"), true).roof, "flat");
   assert.equal(exteriorOf(house, look("boho", { finish: "brick" }), true).cladding, "brick"); // brick in the brief wins

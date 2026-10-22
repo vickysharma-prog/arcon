@@ -17,7 +17,7 @@ page.on("console", (m) => m.type() === "error" && console.log("CONSOLE", m.text(
 await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: "light" }]);
 await browser.setCookie({ name: "arcon_user", value: await signUser(DEMO_IDS[role as DemoRole], process.env.ARCON_SESSION_SECRET!), domain: new URL(base).hostname, path: "/" });
 const wait = (s: number) => new Promise((r) => setTimeout(r, s * 1000));
-await page.goto(`${base}/project/${id}?step=walkthrough`, { waitUntil: "domcontentloaded" });
+await page.goto(`${base}/project/${id}?step=walkthrough${process.env.EXTRA ?? ""}`, { waitUntil: "domcontentloaded" });
 await page.evaluate(() => {
   try {
     localStorage.setItem("arcon_cookie_notice", "seen");

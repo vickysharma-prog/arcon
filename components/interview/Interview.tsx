@@ -162,7 +162,9 @@ export function Interview() {
     if (!replay || !q || MAYA[q.id] === undefined) return;
     const want = MAYA[q.id];
     const timers: ReturnType<typeof setTimeout>[] = [];
-    const later = (ms: number, f: () => void) => timers.push(setTimeout(f, ms / speed));
+    // the greeting is said in full first ("Hi, I'm Arcon…"), then the answers come quickly
+    const intro = q.lead ? 5200 : 0;
+    const later = (ms: number, f: () => void) => timers.push(setTimeout(f, intro + ms / speed));
     setGhost(null);
     if (q.kind === "text") {
       // the city is typed as people type it, and taken from the map's own list

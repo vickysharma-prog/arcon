@@ -11,7 +11,7 @@ import { decorate } from "@/lib/three/decor";
 import { furnish, type Item } from "@/lib/three/furniture";
 import { PIECES } from "@/lib/shop/list";
 import { blockers, step } from "@/lib/three/explore";
-import { buildSlabs, buildWalls, EYE, onTour, stairBoxes, STOREY, walkPlan, WALL_H, type Glass, type Slab, type WallBox } from "@/lib/three/geometry";
+import { buildSlabs, buildWalls, DOOR_H, EYE, onTour, stairBoxes, STOREY, walkPlan, WALL_H, type Glass, type Slab, type WallBox } from "@/lib/three/geometry";
 import { look as lookOf, luminance, mix, scheme, type Look, type Scheme } from "@/lib/three/materials";
 import { LookCtx, Model } from "./models";
 import { brick, planks, tiled, tiledOnce, tiles } from "./textures";
@@ -96,16 +96,23 @@ function Triangles({ tris, color, map }: { tris: number[][][]; color: string; ma
 }
 
 // A low hedge along the street side and a few trees in the garden, for a planted exterior.
-function Garden({ W, D, colors }: { W: number; D: number; colors: Scheme }) {
+function Garden({ W, D, colors, door }: { W: number; D: number; colors: Scheme; door: number }) {
+  const shrubs = Math.max(4, Math.floor(W / 1.1));
   const trees: [number, number, number][] = [[-2.2, D * 0.25, 1.1], [W + 2.4, D * 0.6, 1.3], [W * 0.8, D + 2.6, 1.2], [-2, D + 1.8, 0.9]];
   return (
     <group>
-      {[[W * 0.2, W * 0.36], [W * 0.78, W * 0.36]].map(([x, len], i) => (
-        <mesh key={i} position={[x, 0.35, -1.6]} castShadow>
-          <boxGeometry args={[len, 0.7, 0.6]} />
-          <meshStandardMaterial color={colors.plant} roughness={1} />
-        </mesh>
-      ))}
+      {/* rounded shrubs along the street side, leaving the path to the door clear */}
+      {Array.from({ length: shrubs }, (_, i) => {
+        const x = 0.4 + (i * (W - 0.8)) / (shrubs - 1);
+        if (Math.abs(x - door) < 1.3) return null;
+        const r = 0.38 + ((i * 37) % 10) / 50;
+        return (
+          <mesh key={i} position={[x, r * 0.8, -1.4]} scale={[1, 0.85, 1]} castShadow>
+            <sphereGeometry args={[r, 14, 10]} />
+            <meshStandardMaterial color={mix(colors.plant, "#2f5d2a", (i % 3) * 0.2)} roughness={1} />
+          </mesh>
+        );
+      })}
       {trees.map(([x, z, r], i) => (
         <group key={i} position={[x, 0, z]}>
           <mesh position={[0, 1, 0]} castShadow>
@@ -122,7 +129,53 @@ function Garden({ W, D, colors }: { W: number; D: number; colors: Scheme }) {
   );
 }
 
-function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway = false, upTo = "all", extraPlants, onPick }: { layout: Layout; colors: Scheme; look: Look; ex: Exterior; moods?: Record<string, Mood>; night?: boolean; cutaway?: boolean; upTo?: number | "all"; extraPlants?: Record<string, number>; onPick?: (it: Item) => void }) {
+// The way in: the front door (open, so the walk goes through), a slim canopy over it, a light either side, a step and
+// a stone path out to the street. Doors on the street side face -z; one on the side faces -x.
+function Entrance({ layout, walking }: { layout: Layout; walking: boolean }) {
+  const d = layout.floors[0]?.openings.find((o) => o.id === "door-entry");
+  if (!d) return null;
+  const front = d.axis === "x";
+  const w = d.width;
+  return (
+    <group position={[d.x, 0, d.y]} rotation={[0, front ? 0 : Math.PI / 2, 0]}>
+      {/* the door leaf, swung open into the hall against the wall (left out on a walk, which passes right by it) */}
+      {!walking && <group position={[-w / 2 + 0.03, 0, 0.06]} rotation={[0, -1.55, 0]}>
+        <mesh position={[(w - 0.08) / 2, DOOR_H / 2, 0]} castShadow>
+          <boxGeometry args={[w - 0.08, DOOR_H - 0.02, 0.04]} />
+          <meshStandardMaterial color="#9c7a58" roughness={0.55} />
+        </mesh>
+        <mesh position={[w - 0.2, 1.0, 0.04]}>
+          <boxGeometry args={[0.03, 0.35, 0.03]} />
+          <meshStandardMaterial color="#c9a46a" roughness={0.3} metalness={0.8} />
+        </mesh>
+      </group>}
+      {/* canopy and lights */}
+      <mesh position={[0, DOOR_H + 0.28, -0.55]} castShadow>
+        <boxGeometry args={[w + 1.2, 0.08, 1.0]} />
+        <meshStandardMaterial color="#2b2d31" roughness={0.5} metalness={0.3} />
+      </mesh>
+      {[-1, 1].map((sx) => (
+        <mesh key={sx} position={[sx * (w / 2 + 0.35), 1.85, -0.13]}>
+          <boxGeometry args={[0.1, 0.28, 0.08]} />
+          <meshStandardMaterial color="#fff1d6" emissive="#ffd9a0" emissiveIntensity={1.1} />
+        </mesh>
+      ))}
+      {/* a step and the path */}
+      <mesh position={[0, 0.06, -0.45]} receiveShadow castShadow>
+        <boxGeometry args={[w + 0.8, 0.12, 0.7]} />
+        <meshStandardMaterial color="#cfc8bb" roughness={0.9} />
+      </mesh>
+      {Array.from({ length: 6 }, (_, i) => (
+        <mesh key={i} position={[0, 0.012, -1.15 - i * 0.75]} receiveShadow>
+          <boxGeometry args={[1.3, 0.025, 0.62]} />
+          <meshStandardMaterial color="#d9d3c7" roughness={0.95} />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway = false, upTo = "all", extraPlants, onPick, walking = false }: { layout: Layout; colors: Scheme; look: Look; ex: Exterior; moods?: Record<string, Mood>; night?: boolean; cutaway?: boolean; upTo?: number | "all"; extraPlants?: Record<string, number>; onPick?: (it: Item) => void; walking?: boolean }) {
   const shown = (level: number) => upTo === "all" || level <= upTo;
   // Show inside cuts the top floor's walls at 1.4 m, like an architect's section, so every room reads from above.
   const topShown = upTo === "all" ? (layout.floors.at(-1)?.level ?? 0) : upTo;
@@ -149,7 +202,9 @@ function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway
   // Outside walls in the cladding the taste chose: brick, timber boards or plain render.
   const clad = useMemo(() => (ex.cladding === "brick" ? brick("#9a5a43") : ex.cladding === "timber" ? planks(mix(colors.wood, "#6b4a32", 0.25)) : null), [ex.cladding, colors.wood]);
   const roof = useMemo(() => roofShape(ex, W, D, top), [ex, W, D, top]);
-  const frame = luminance(colors.exterior) > 0.6 ? "#2b2d31" : "#f1efea";
+  // Render is a warm white, so slim dark window frames read crisply against it.
+  const render = mix(colors.exterior, "#f3efe8", 0.65);
+  const frame = ex.cladding !== "render" && luminance(colors.exterior) <= 0.6 ? "#f1efea" : "#2b2d31";
   return (
     <group>
       {/* floors: wood planks, tile in wet rooms, on a slab */}
@@ -186,7 +241,7 @@ function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway
                   clad ? (
                     <meshStandardMaterial key={f} attach={`material-${f}`} map={tiledOnce(clad, Math.abs(w.to - w.from), w.y1 - w.y0, ex.cladding === "brick" ? 1.2 : 2.4, ex.cladding === "brick" ? 0.6 : 0.8)} roughness={0.92} />
                   ) : (
-                    <meshStandardMaterial key={f} attach={`material-${f}`} color={colors.exterior} roughness={0.92} />
+                    <meshStandardMaterial key={f} attach={`material-${f}`} color={render} roughness={0.92} />
                   )
                 ) : (
                   <meshStandardMaterial key={f} attach={`material-${f}`} color={colors.wall} roughness={0.92} />
@@ -261,15 +316,16 @@ function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway
         (ex.roof === "flat" ? (
           <mesh position={[W / 2, top + 0.15, D / 2]} castShadow>
             <boxGeometry args={[W + 0.6, 0.3, D + 0.6]} />
-            <meshStandardMaterial color={colors.roof} roughness={0.8} />
+            <meshStandardMaterial color={ROOF_COLOR.flat} roughness={0.8} />
           </mesh>
         ) : (
           <>
-            <Triangles tris={roof.roof} color={colors.roof} />
-            <Triangles tris={roof.infill} color={colors.exterior} map={clad ?? undefined} />
+            <Triangles tris={roof.roof} color={ROOF_COLOR[ex.roof]} />
+            <Triangles tris={roof.infill} color={render} map={clad ?? undefined} />
           </>
         ))}
-      {ex.garden && <Garden W={W} D={D} colors={colors} />}
+      {!cutaway && <Entrance layout={layout} walking={walking} />}
+      {ex.garden && <Garden W={W} D={D} colors={colors} door={layout.floors[0]?.openings.find((o) => o.id === "door-entry" && o.axis === "x")?.x ?? -99} />}
       {items.map((it, i) =>
         onPick && PIECES[it.name] ? (
           // A piece you can buy: click it to see the brand it comes from.
@@ -312,9 +368,13 @@ function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway
 }
 
 const WET = new Set(["bath", "laundry"]);
+// What a roof is made of, not a colour from the palette (a navy palette made a navy roof): slate on a pitched roof,
+// standing-seam metal on a single slope, pale membrane on a flat one.
+const ROOF_COLOR = { hip: "#5b6168", gable: "#5b6168", shed: "#6e7277", flat: "#c4c0b8" } as const;
 const CUT = 1.4;
 // Floor boards lean toward the style: pale oak for Scandinavian, smoky for industrial; boards are 20 cm by 2.7 m.
-const FLOOR_TONE = { scandi: ["#e6d7bd", 0.5], modern: ["#cbb79b", 0.3], boho: ["#c9a77c", 0.2], industrial: ["#7d7468", 0.35], classic: ["#5a3a24", 0.15], midcentury: ["#8a5a36", 0.15] } as const;
+// (natural oak for most styles, so the floors read calm and modern rather than red)
+const FLOOR_TONE = { scandi: ["#e6d7bd", 0.6], modern: ["#c9ad86", 0.6], boho: ["#c9a77c", 0.45], industrial: ["#7d7468", 0.45], classic: ["#9a7652", 0.6], midcentury: ["#a87b52", 0.5] } as const;
 const WALL_DRESSING = new Set(["feature wall", "art", "backsplash", "tile", "curtain", "curtain rod"]);
 function Floor({ s, colors, look }: { s: Slab; colors: Scheme; look: Look }) {
   const wet = WET.has(s.kind);
@@ -667,7 +727,8 @@ function Overview({ layout, autoRotate = false, wheelZoom = true }: { layout: La
   const h = layout.floors.length * STOREY;
   useLayoutEffect(() => {
     const span = Math.max(W, D);
-    camera.position.set(W / 2 + span * 1.05, h + span * 0.95, D / 2 + span * 1.25);
+    // from the street side, so the first view is the front of the house: the door, the path, the garden
+    camera.position.set(W / 2 + span * 1.05, h + span * 0.95, D / 2 - span * 1.25);
     if ("fov" in camera) {
       camera.fov = 45;
       camera.updateProjectionMatrix();
@@ -704,7 +765,7 @@ function Recenter({ layout, fitKey }: { layout: Layout; fitKey?: number }) {
     const h = layout.floors.length * STOREY;
     const span = Math.max(W, D);
     const target: [number, number, number] = [W / 2, h / 3, D / 2];
-    const dir = new Vector3(span * 1.05, h + span * 0.95 - h / 3, span * 1.25).normalize();
+    const dir = new Vector3(span * 1.05, h + span * 0.95 - h / 3, -span * 1.25).normalize(); // from the street side, as Overview
     const radius = 0.5 * Math.hypot(W, D, h);
     const fov = "fov" in camera ? (camera.fov * Math.PI) / 180 : Math.PI / 4;
     const dist = (radius / Math.sin(fov / 2)) * 1.08;
@@ -736,7 +797,15 @@ function RoomLabels({ layout, level }: { layout: Layout; level: number }) {
   });
   if (!floor) return null;
   return (
-    <Html fullscreen zIndexRange={[20, 0]} style={{ pointerEvents: "none" }}>
+    // drei moves a fullscreen overlay to wherever this object's origin lands on screen; pin it to the canvas centre
+    // instead (and keep that origin mid-house), so each label sits only where its own room projects
+    <Html
+      fullscreen
+      position={[layout.shell.width / 2, y, layout.shell.depth / 2]}
+      calculatePosition={(_el, _cam, sz) => [sz.width / 2, sz.height / 2]}
+      zIndexRange={[20, 0]}
+      style={{ pointerEvents: "none" }}
+    >
       {spaces.map((s, i) => (
         <button
           key={s.id}
@@ -814,6 +883,7 @@ export default function HouseScene(props: Props) {
       upTo={orbit || showcase || still ? props.upTo : "all"}
       extraPlants={props.extraPlants}
       onPick={props.onPick}
+      walking={props.mode === "walk" || props.mode === "explore"}
     />
   );
   return (
