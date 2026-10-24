@@ -33,6 +33,9 @@ One entry per working session, newest at the top. Date, what got done, what brok
   budget, a chat edit "Add a study", all open). Fixed on the way: the tour opens on "You're seeing it as Maya Reyes, the
   homeowner"; the interview stays quiet while a guide or that screen is up; tour guides come back on each new visit;
   a new design's guide waits for the design; a clearer screen between stops; a lighter scroll hint.
+- Phone (390 px, on live): the tour fits every stop (no sideways scroll; the café's style name was too wide), the
+  walk's controls no longer pile up (one sliding row of room chips; no mood card or drag hint on small screens), no
+  scroll hint, the guide points at the menu button and says tap; the pill's panel opens on a tap and scrolls.
 - Next: the submission list in state.md. A test project from that run ("The Austin house") is in the live database.
 
 ## 2026-10-23 (later): The tour shows every wow moment, modern furniture (Vicky)
