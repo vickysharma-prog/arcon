@@ -923,8 +923,9 @@ function Overview({ layout, autoRotate = false, wheelZoom = true }: { layout: La
   const h = layout.floors.length * STOREY;
   useLayoutEffect(() => {
     const span = Math.max(W, D);
-    // from the street side, so the first view is the front of the house: the door, the path, the garden
-    camera.position.set(W / 2 + span * 1.05, h + span * 0.95, D / 2 - span * 1.25);
+    // from the street side, so the first view is the front of the house: the door, the path, the garden (a long, narrow
+    // building, like a shopfront café, is seen more from the front, so its sign shows)
+    camera.position.set(W / 2 + W * 0.9 + 2, h + span * 0.95, D / 2 - D * 0.9 - 4);
     if ("fov" in camera) {
       camera.fov = 45;
       camera.updateProjectionMatrix();

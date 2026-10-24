@@ -9,6 +9,28 @@ One entry per working session, newest at the top. Date, what got done, what brok
   Written up in private/qloo-findings.md.
 - What's left is unchanged (state.md, "Start from here").
 
+## 2026-10-24: The judges' tour, smoother and shorter; the café by night (Vicky)
+
+- Tour: 12 stops in three chapters (Maya designs her home, her architect and builder, not only homes); the café's
+  neighbourhood read now comes before its 3D; after the last stop a thank-you page (/demo/done) with the story in four
+  lines and Try it yourself. The pill lists every stop by chapter to jump to; arrow keys move through it.
+- One screen between stops (blurred, Arcon and Qloo, the chapter and stop) that stays until the next page is ready,
+  so "Opening the project" no longer shows on its own; when the person changes it says whose view comes next.
+- Quick guide only twice (Vicky): on the interview (the tour pill) and when the app first opens (the folded sidebar,
+  the project's parts, search, back and next, the pill). Try it yourself gets one card on its interview and one on
+  its first design. The replay waits while the guide is open, and now plays at 2x.
+- Sidebar folded to its rail in the demo; scroll hint is a wash over the bottom of the page.
+- Every project open for everyone while judging: OPEN_FOR_JUDGING in lib/project/stage.ts (unlockedFor and the
+  sidebar read it). Set it to false when checkout comes back.
+- Café: counter and back bar on the back wall, tables for two filling the rest (10 tables in Sam's café, was 6);
+  opens at night with coloured glass pendants, opal globes on the counter, a neon cup, an LED cove from rose to teal,
+  bloom; a lit sign over the door; the tour stop shows the whole café first, then opens it.
+- 3D walk: brisker, with a chip per room to jump straight to it. Bug: panelling ran across doorways on walls along
+  the plan's y axis (decor read the 3D's "z" against the plan's "y"); fixed, with a test over every template's plans.
+- Sketches: no garden trees (they read as magnifying glasses), no faint logo behind the drawing (it read as dots),
+  more room around the room close-ups, a nearer-safe camera so thin layers don't flicker.
+- Next: push and live check; then the submission list in state.md.
+
 ## 2026-10-23 (later): The tour shows every wow moment, modern furniture (Vicky)
 
 - Tour, 15 stops: interview replay, taste, plans, 3D walk, Look around (opens from the street; a floor opens up with

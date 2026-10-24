@@ -21,7 +21,7 @@ export const TOUR: Stop[] = [
   { chapter: 1, project: "Maya's house", as: "mike", path: "/project/{maya}?tab=site", title: "Mike runs the building site", what: "Phases on a timeline, today's crew, materials in sq ft and pounds, his quote, and each finished stage signed off by Lena." },
   { chapter: 1, project: "Ana's apartment", as: "lena", path: "/project/{ana}?tab=site", title: "The last week before moving in", what: "Ana's apartment: the snag list (one fixed, two to go), the handover pack, and the keys waiting for Ana to accept." },
   { chapter: 2, project: "Sam's café", as: "sam", path: "/project/{sam}?step=brief#neighbourhood", title: "A café, read against its street", what: "Sam's Brooklyn café: Qloo reads who already comes to the cafés nearby, by age, and ranks them against Sam's taste." },
-  { chapter: 2, project: "Sam's café", as: "sam", path: "/project/{sam}?step=walkthrough#reveal", title: "Sam's café by night", what: "The sign over the door, then inside: the counter and back bar along the back wall, a pendant over every table, a neon cup and strings of coloured bulbs. Day switches the lights off." },
+  { chapter: 2, project: "Sam's café", as: "sam", path: "/project/{sam}?step=walkthrough#reveal", title: "Sam's café by night", what: "The sign over the door, then inside: the counter and back bar along the back wall, a coloured glass pendant over every table, a neon cup and an LED cove from rose to teal. Day switches the lights off." },
 ];
 
 /** A stop's real path, with the seeded project ids filled in. */

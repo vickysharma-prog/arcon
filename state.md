@@ -1,6 +1,6 @@
 # State
 
-Where Arcon stands right now. Updated 23 Oct 2026 (IST), for the next session to start here with nothing lost.
+Where Arcon stands right now. Updated 24 Oct 2026 (IST), for the next session to start here with nothing lost.
 Dated detail is in progress.md (newest first); decisions are in private/plan.md (see "Judge demo (decided 21 Oct)").
 
 ## Start here (next session)
@@ -56,7 +56,10 @@ Read first: this section, then progress.md entries of 22 and 23 Oct. Then go thr
 
 ### The judges' tour (live, /demo)
 
-Entry: landing page, "For judges" (first button in the hero, and in the header). 15 stops, view only, Back/Next beside
+24 Oct: now 12 stops in three chapters, then /demo/done (thank you, Try it yourself). See progress.md 24 Oct. The
+paywall is off for judging (OPEN_FOR_JUDGING in lib/project/stage.ts); turn it back on with checkout.
+
+Entry (before 24 Oct): landing page, "For judges" (first button in the hero, and in the header). 15 stops, view only, Back/Next beside
 each page title and in a glass pill at the bottom (opens on hover: caption, switch person, exit). Between stops a
 screen with Arcon's mark; "Scroll for more" on long pages.
 1 interview replay (Maya's answers play themselves, 1x/2x, skip; moves on by itself) · 2 Qloo reads her taste ·
