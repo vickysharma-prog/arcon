@@ -20,6 +20,15 @@ Built for the **Qloo Agentic Hackathon 2026**. Live at **[arcon-ten.vercel.app](
 - **Then "Try it yourself":** a fresh interview in any language, your own three picks read by Qloo, and a complete design of your own, with every feature open.
 - The tour's world is seeded through the real app, so it is the same for every judge and never waits on a model.
 
+**Five minutes in the code, in this order:**
+
+1. `lib/qloo/taste.ts` and `lib/qloo/profile.ts`: three layers of taste (places, brands, culture) read from Qloo and weighted into one style.
+2. `lib/design/run.ts`: the design agents, from the Qloo taste profile to the brief, the rooms and three plans.
+3. `agents/interviewer/`: the interviewer agent built with eve, its Qloo tools and its 19 evals.
+4. `lib/design/options.ts`: why each plan fits you, ranked from your answers and your Qloo taste.
+5. `lib/neighbourhood/`: a business read against its street with Qloo heatmaps and local places.
+6. `lib/layout/` and `lib/three/`: the layout engine, its validator, and the 3D built from the same plan.
+
 ## How Arcon uses Qloo
 
 Qloo is the taste engine behind every design decision Arcon makes, and every decision shows the Qloo signal it came from. Without Qloo, Arcon would design the same home for everyone.

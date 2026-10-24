@@ -1,6 +1,26 @@
 {
   "name": "arcon",
   "version": "0.1.0",
+  "description": "Arcon: an AI architect with taste. Agents grounded in the Qloo taste graph design a home or business from what its people love, then run the whole project to the keys.",
+  "keywords": [
+    "qloo",
+    "qloo-api",
+    "taste-graph",
+    "agentic",
+    "ai-agent",
+    "eve",
+    "ai-sdk",
+    "ai-architect",
+    "interior-design",
+    "floor-plan",
+    "3d",
+    "threejs",
+    "nextjs",
+    "supabase",
+    "vercel"
+  ],
+  "homepage": "https://arcon-ten.vercel.app",
+  "license": "MIT",
   "private": true,
   "type": "module",
   "scripts": {
