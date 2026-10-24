@@ -282,7 +282,7 @@ export function JudgeBar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] flex h-[26vh] flex-col items-center justify-end gap-1.5 bg-gradient-to-b from-transparent to-paper/85 pb-[5.5rem] text-ink-soft"
+            className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] flex h-[26vh] max-sm:hidden flex-col items-center justify-end gap-1.5 bg-gradient-to-b from-transparent to-paper/85 pb-[5.5rem] text-ink-soft"
           >
             <span className="relative h-11 w-7 rounded-full border-2 border-current">
               <span className="absolute left-1/2 top-2 h-2 w-1 -translate-x-1/2 animate-bounce rounded-full bg-current motion-reduce:animate-none" />

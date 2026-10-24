@@ -522,7 +522,7 @@ function BriefStep({ p, brief: b, whose }: { p: View; brief: Brief; whose: strin
       <motion.p {...stagger(0)} className="text-sm uppercase tracking-widest text-ink-soft">
         {p.title} · {whose ? `${whose}'s style` : "your style"}
       </motion.p>
-      <h1 className="mt-3 font-serif text-6xl sm:text-7xl">
+      <h1 className="mt-3 break-words font-serif text-5xl sm:text-7xl">
         <Decode text={b.name} delay={0.15} speed={34} />
       </h1>
       <motion.p {...stagger(0.4)} className="mt-5 max-w-2xl text-xl leading-relaxed text-ink-soft">

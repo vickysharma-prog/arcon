@@ -332,9 +332,9 @@ export function WalkthroughStep({
                 💬 Discuss this room
               </button>
             )}
-            <MoodPill room={room} mood={mood} className={marks.length > 1 ? "bottom-24 left-4" : "bottom-16 left-4"} />
+            <MoodPill room={room} mood={mood} className={`max-sm:hidden ${marks.length > 1 ? "bottom-24 left-4" : "bottom-16 left-4"}`} />
             <div className="absolute right-4 top-4 flex items-center gap-2">
-              <p className="pointer-events-none rounded-full bg-paper/85 px-4 py-1.5 text-sm text-ink-soft backdrop-blur">Hold and drag to look around</p>
+              <p className="pointer-events-none hidden rounded-full bg-paper/85 px-4 py-1.5 text-sm text-ink-soft backdrop-blur sm:block">Hold and drag to look around</p>
               <FullButton full={full} onClick={toggleFull} />
             </div>
             <div className="absolute inset-x-4 bottom-4 flex items-center gap-3">
@@ -362,7 +362,7 @@ export function WalkthroughStep({
             </div>
             {/* the rooms, to jump the walk straight to one */}
             {marks.length > 1 && (
-              <div className="absolute inset-x-4 bottom-14 flex flex-wrap justify-center gap-1.5">
+              <div className="absolute inset-x-4 bottom-14 flex gap-1.5 overflow-x-auto [scrollbar-width:none] sm:flex-wrap sm:justify-center">
                 {marks.map((m) => {
                   const here = room === m.name;
                   return (
@@ -376,7 +376,7 @@ export function WalkthroughStep({
                         setFinished(false);
                         setPlaying(true);
                       }}
-                      className={`rounded-full px-3 py-1 text-xs shadow-sm backdrop-blur transition ${here ? "bg-btn text-btn-ink" : "bg-paper/85 text-ink-soft hover:text-ink"}`}
+                      className={`shrink-0 rounded-full px-3 py-1 text-xs shadow-sm backdrop-blur transition ${here ? "bg-btn text-btn-ink" : "bg-paper/85 text-ink-soft hover:text-ink"}`}
                     >
                       {m.name}
                     </button>
