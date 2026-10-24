@@ -1,6 +1,6 @@
 // Checks the live site after a deploy, as the test accounts Vicky approved, from here (never in her browser).
 // Run: node --env-file=.env.local --env-file=.env scripts/live-check.ts [base url]
-// Prints one line per check and exits 1 if any fail. Uses the test projects in Supabase (see state.md).
+// Prints one line per check and exits 1 if any fail. Uses the test projects in Supabase.
 import { createClient } from "@supabase/supabase-js";
 import { signUser } from "../lib/auth/guest.ts";
 
