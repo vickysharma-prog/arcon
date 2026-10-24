@@ -91,7 +91,9 @@ export function Guide() {
     const track = () => {
       const settled = !document.documentElement.dataset.veil && !document.querySelector("[data-page-loading]") && Date.now() - begun > (i ? 0 : 1200);
       const el = visible(tip.at);
-      if (settled && (el || !tip.at || Date.now() - begun > 6000)) {
+      // the tour's tips give up waiting for their control after a few seconds; a person's own design waits for it, so
+      // the guide never opens over the screen that's still making the design
+      if (settled && (el || !tip.at || (id?.startsWith("tour-") && Date.now() - begun > 6000))) {
         if (el && !live) el.scrollIntoView({ block: "nearest" });
         setBox(el ? el.getBoundingClientRect() : null);
         setLive(true);
@@ -100,7 +102,7 @@ export function Guide() {
     };
     track();
     return () => clearTimeout(t);
-  }, [tip, live, i]);
+  }, [tip, live, i, id]);
 
   const close = () => {
     try {
