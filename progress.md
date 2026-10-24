@@ -29,7 +29,11 @@ One entry per working session, newest at the top. Date, what got done, what brok
   the plan's y axis (decor read the 3D's "z" against the plan's "y"); fixed, with a test over every template's plans.
 - Sketches: no garden trees (they read as magnifying glasses), no faint logo behind the drawing (it read as dots),
   more room around the room close-ups, a nearer-safe camera so thin layers don't flicker.
-- Next: push and live check; then the submission list in state.md.
+- Walked the whole tour on live as a judge, then Try it yourself to a real design (Gemini worked: Austin house, plans,
+  budget, a chat edit "Add a study", all open). Fixed on the way: the tour opens on "You're seeing it as Maya Reyes, the
+  homeowner"; the interview stays quiet while a guide or that screen is up; tour guides come back on each new visit;
+  a new design's guide waits for the design; a clearer screen between stops; a lighter scroll hint.
+- Next: the submission list in state.md. A test project from that run ("The Austin house") is in the live database.
 
 ## 2026-10-23 (later): The tour shows every wow moment, modern furniture (Vicky)
 
