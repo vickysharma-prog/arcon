@@ -14,7 +14,7 @@ Built for the **Qloo Agentic Hackathon 2026**. Live at **[arcon-ten.vercel.app](
 
 ## For judges
 
-**Open [arcon-ten.vercel.app](https://arcon-ten.vercel.app) and press "For judges".** No sign-in, nothing to install.
+**Open [arcon-ten.vercel.app/demo](https://arcon-ten.vercel.app/demo)** for the guided tour, or press "For judges" on [arcon-ten.vercel.app](https://arcon-ten.vercel.app). No sign-in, nothing to install. On a phone, add it to your home screen and it runs as an app.
 
 - **A guided tour, 12 stops in three chapters** (about three minutes): Maya's interview plays itself and Qloo reads her three picks; her style, three plans, the 3D walk, the budget, the shopping list and the drawings; then her architect's studio, her builder's site and another client's last week before moving in; then a Brooklyn café designed against its own street, by night. Switch between the homeowner, architect, builder and café owner at any stop.
 - **Then "Try it yourself":** a fresh interview in any language, your own three picks read by Qloo, and a complete design of your own, with every feature open.
@@ -29,9 +29,9 @@ Built for the **Qloo Agentic Hackathon 2026**. Live at **[arcon-ten.vercel.app](
 5. `lib/neighbourhood/`: a business read against its street with Qloo heatmaps and local places.
 6. `lib/layout/` and `lib/three/`: the layout engine, its validator, and the 3D built from the same plan.
 
-## Qloo at the core
+## Powered by Qloo: the taste engine behind every decision
 
-Arcon does not run without Qloo. Every design starts from the taste Qloo reads, and every decision in it shows the Qloo signal it came from.
+**Qloo is Arcon's taste engine.** Arcon runs on Qloo from the first question: every design starts from the taste Qloo reads, and every decision in it shows the Qloo signal it came from.
 
 - **17 modules** call Qloo, through **three Qloo APIs**: Insights (`/v2/insights`), Search (`/search`) and heatmaps, with location, radius, popularity, price-level and age signals.
 - **Seven entity types:** places, brands, films, TV shows, artists, albums and destinations.
@@ -71,7 +71,7 @@ The client (`lib/qloo/client.ts`) caches every answer in the project database an
 ## Contents
 
 1. [For judges](#for-judges)
-1. [Qloo at the core](#qloo-at-the-core)
+1. [Powered by Qloo](#powered-by-qloo-the-taste-engine-behind-every-decision)
 1. [Who it's for](#who-its-for)
 2. [Architecture](#architecture)
 3. [The AI: what models do, and what they never do](#the-ai-what-models-do-and-what-they-never-do)
