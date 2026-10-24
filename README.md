@@ -29,7 +29,7 @@ Built for the **Qloo Agentic Hackathon 2026**. Live at **[arcon-ten.vercel.app](
 5. `lib/neighbourhood/`: a business read against its street with Qloo heatmaps and local places.
 6. `lib/layout/` and `lib/three/`: the layout engine, its validator, and the 3D built from the same plan.
 
-## How Arcon uses Qloo
+## Qloo at the core
 
 Qloo is the taste engine behind every design decision Arcon makes, and every decision shows the Qloo signal it came from. Without Qloo, Arcon would design the same home for everyone.
 
@@ -71,7 +71,7 @@ The client (`lib/qloo/client.ts`) caches every answer in the project database an
 ## Contents
 
 1. [For judges](#for-judges)
-1. [How Arcon uses Qloo](#how-arcon-uses-qloo)
+1. [Qloo at the core](#qloo-at-the-core)
 1. [Who it's for](#who-its-for)
 2. [Architecture](#architecture)
 3. [The AI: what models do, and what they never do](#the-ai-what-models-do-and-what-they-never-do)
