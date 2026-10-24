@@ -67,6 +67,9 @@ export function WalkthroughStep({
         .catch(() => {});
   };
   const [progress, setProgress] = useState(0);
+  // the walk's chapters: each room it stops in, to jump straight to
+  const [marks, setMarks] = useState<{ name: string; t: number }[]>([]);
+  const [seek, setSeek] = useState<{ t: number; key: number }>();
   const [restart, setRestart] = useState(0);
   // Look around opens on the whole house with its roof on; "Show inside" then cuts it open at the ground floor.
   const [cutaway, setCutaway] = useState(false);
@@ -81,7 +84,8 @@ export function WalkthroughStep({
   const box = useRef<HTMLDivElement>(null);
   const style = useMemo(() => lookOf(brief, taste), [brief, taste]);
   const ex = useMemo(() => exteriorOf(layout, style, newBuild), [layout, style, newBuild]);
-  const [night, setNight] = useState(false);
+  // a café opens at night, when its lighting is what people remember; a home opens by day
+  const [night, setNight] = useState(() => layout.spaceType === "cafe");
   // The mood and light of the room you're in, from the ambience of the places you love (Q7).
   const moods = useMemo(() => moodsFor(layout, taste?.tags), [layout, taste]);
   const here = layout.floors.flatMap((f) => f.spaces).find((s) => s.name === room);
@@ -111,7 +115,7 @@ export function WalkthroughStep({
       let frame = 0;
       const paint = () => {
         ctx.drawImage(scene, 0, 0, canvas.width, canvas.height);
-        stamp(ctx, canvas.width, canvas.height, { centre: false });
+        stamp(ctx, canvas.width, canvas.height);
         frame = requestAnimationFrame(paint);
       };
       paint();
@@ -160,9 +164,15 @@ export function WalkthroughStep({
       setCutaway(true);
       setUpTo(0);
     }
-    if (h !== "#walk" && h !== "#look" && h !== "#inside") return;
+    // #reveal shows the whole building first (a café's sign and lit windows), then opens it up
+    if (h === "#reveal") setMode("orbit");
+    if (h !== "#walk" && h !== "#look" && h !== "#inside" && h !== "#reveal") return;
     const t = setTimeout(() => box.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 900);
-    return () => clearTimeout(t);
+    const open = h === "#reveal" ? setTimeout(() => (setCutaway(true), setUpTo(0)), 6500) : undefined;
+    return () => {
+      clearTimeout(t);
+      clearTimeout(open);
+    };
   }, []);
 
   return (
@@ -255,7 +265,7 @@ export function WalkthroughStep({
       </div>
 
       {/* Fills the screen below the header and this row; the Next button lives in the row above. */}
-      <div ref={box} className={`relative mt-3 overflow-hidden border-line bg-paper-raised ${full ? "h-screen" : "h-[calc(100svh-218px)] min-h-[340px] rounded-2xl border"}`}>
+      <div ref={box} className={`relative mt-3 overflow-hidden border-line bg-paper-raised ${full ? "h-screen" : "h-[calc(100svh-218px-var(--judge-pad,0px))] min-h-[340px] rounded-2xl border"}`}>
         <HouseScene
           layout={layout}
           name={title}
@@ -269,6 +279,8 @@ export function WalkthroughStep({
           mode={mode}
           playing={playing}
           restartKey={restart}
+          onMarks={setMarks}
+          seek={seek}
           onRoom={setRoom}
           onProgress={(p) => setProgress((old) => (Math.abs(old - p) > 0.004 || p === 1 ? p : old))}
           cutaway={cutaway}
@@ -320,7 +332,7 @@ export function WalkthroughStep({
                 💬 Discuss this room
               </button>
             )}
-            <MoodPill room={room} mood={mood} className="bottom-16 left-4" />
+            <MoodPill room={room} mood={mood} className={marks.length > 1 ? "bottom-24 left-4" : "bottom-16 left-4"} />
             <div className="absolute right-4 top-4 flex items-center gap-2">
               <p className="pointer-events-none rounded-full bg-paper/85 px-4 py-1.5 text-sm text-ink-soft backdrop-blur">Hold and drag to look around</p>
               <FullButton full={full} onClick={toggleFull} />
@@ -338,10 +350,40 @@ export function WalkthroughStep({
               >
                 {ended ? "Walk again" : playing ? "Pause" : "Play"}
               </button>
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-paper/70">
-                <div className="h-full bg-accent transition-[width]" style={{ width: `${progress * 100}%` }} />
+              <div className="relative flex-1">
+                <div className="h-1.5 overflow-hidden rounded-full bg-paper/70">
+                  <div className="h-full bg-accent transition-[width]" style={{ width: `${progress * 100}%` }} />
+                </div>
+                {/* a tick on the bar for each room */}
+                {marks.map((m) => (
+                  <span key={m.name} aria-hidden className="absolute top-1/2 h-3 w-0.5 -translate-y-1/2 rounded-full bg-paper" style={{ left: `${m.t * 100}%` }} />
+                ))}
               </div>
             </div>
+            {/* the rooms, to jump the walk straight to one */}
+            {marks.length > 1 && (
+              <div className="absolute inset-x-4 bottom-14 flex flex-wrap justify-center gap-1.5">
+                {marks.map((m) => {
+                  const here = room === m.name;
+                  return (
+                    <button
+                      key={m.name}
+                      type="button"
+                      onClick={() => {
+                        tick();
+                        setSeek({ t: m.t, key: Date.now() });
+                        setProgress(m.t);
+                        setFinished(false);
+                        setPlaying(true);
+                      }}
+                      className={`rounded-full px-3 py-1 text-xs shadow-sm backdrop-blur transition ${here ? "bg-btn text-btn-ink" : "bg-paper/85 text-ink-soft hover:text-ink"}`}
+                    >
+                      {m.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </>
         )}
         {mode === "explore" && (

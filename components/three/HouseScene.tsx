@@ -2,7 +2,7 @@
 
 import { Bounds, Environment, Html, Lightformer, OrbitControls, PerformanceMonitor, useBounds } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
+import { Bloom, EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
 import { ToneMappingMode } from "postprocessing";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Box3, BufferGeometry, CatmullRomCurve3, DoubleSide, Float32BufferAttribute, Plane, Raycaster, Vector2, Vector3, type Texture } from "three";
@@ -14,7 +14,7 @@ import { blockers, step } from "@/lib/three/explore";
 import { buildSlabs, buildWalls, DOOR_H, EYE, onTour, stairBoxes, STOREY, walkPlan, WALL_H, type Glass, type Slab, type WallBox } from "@/lib/three/geometry";
 import { look as lookOf, luminance, mix, scheme, type Look, type Scheme } from "@/lib/three/materials";
 import { LookCtx, Model } from "./models";
-import { brick, planks, plate, tiled, tiledOnce, tiles } from "./textures";
+import { brick, planks, plate, SIGN, signboard, tiled, tiledOnce, tiles } from "./textures";
 import { exteriorOf, roofShape, type Exterior } from "@/lib/three/exterior";
 import { moodsFor, type Mood } from "@/lib/three/mood";
 import { roomBell, step as playStep } from "@/components/fx/sfx";
@@ -48,6 +48,9 @@ type Props = {
   onProgress?: (p: number) => void;
   onEnd?: () => void;
   restartKey?: number;
+  /** The walk: where along it (0 to 1) each room is seen, and a place to jump the walk to. */
+  onMarks?: (marks: { name: string; t: number }[]) => void;
+  seek?: { t: number; key: number };
   /** Look-around only: turn slowly on its own until someone grabs it, and whether the mouse wheel zooms. */
   autoRotate?: boolean;
   wheelZoom?: boolean;
@@ -131,9 +134,136 @@ function Garden({ W, D, colors, door }: { W: number; D: number; colors: Scheme; 
   );
 }
 
+// A café's lighting, designed rather than one lamp a room: a coloured glass pendant low over every table, opal globes
+// along the counter, a neon cup glowing on the back bar, and an LED cove along the top of the walls that runs from rose
+// through violet to teal, with a wash of the same colours in the corners. By night they light the room (a few real
+// lights, the rest glow); by day they're just fittings.
+const PENDANTS = ["#ffb347", "#ff6f9f", "#4fd8e0", "#b08cff", "#ffd45c"];
+const COVE = ["#ff5fa2", "#a46bff", "#3fd6e6"];
+function Glow({ color, on, power = 3 }: { color: string; on: boolean; power?: number }) {
+  return <meshStandardMaterial color={color} emissive={color} emissiveIntensity={on ? power : 0.25} toneMapped={!on} />;
+}
+/** A colour between the cove's three, from 0 to 1. */
+function coveAt(t: number) {
+  const x = Math.min(0.999, Math.max(0, t)) * (COVE.length - 1);
+  return mix(COVE[Math.floor(x)], COVE[Math.floor(x) + 1], x - Math.floor(x));
+}
+function CafeLights({ items, slabs, night, cutaway }: { items: Item[]; slabs: Slab[]; night: boolean; cutaway: boolean }) {
+  const tables = items.filter((i) => i.name === "cafe table");
+  const counter = items.find((i) => i.name === "service counter");
+  const bar = counter && items.find((i) => i.name === "shelving" && i.room === counter.room);
+  const rooms = slabs.filter((s) => tables.some((t) => t.room === s.id));
+  // The cove: short glowing lengths around each room's walls, just under the ceiling, the colour moving round the room.
+  const cove = rooms.flatMap((s) => {
+    // under the ceiling; with the walls cut open it runs along their cut tops instead, outlining the room
+    const y = s.y + (cutaway ? CUT + 0.02 : WALL_H - 0.08);
+    const edges: [number, number, number, number][] = [
+      [s.x, s.z + 0.08, s.x + s.w, s.z + 0.08],
+      [s.x + s.w - 0.08, s.z, s.x + s.w - 0.08, s.z + s.d],
+      [s.x + s.w, s.z + s.d - 0.08, s.x, s.z + s.d - 0.08],
+      [s.x + 0.08, s.z + s.d, s.x + 0.08, s.z],
+    ];
+    const perimeter = 2 * (s.w + s.d);
+    let run = 0;
+    return edges.flatMap(([x0, z0, x1, z1]) => {
+      const len = Math.hypot(x1 - x0, z1 - z0);
+      const n = Math.max(1, Math.round(len / 0.5));
+      return Array.from({ length: n }, (_, i) => {
+        const f = (i + 0.5) / n;
+        const piece = { x: x0 + (x1 - x0) * f, y, z: z0 + (z1 - z0) * f, along: x0 === x1 ? "z" : "x", len: len / n - 0.02, c: coveAt((run + f * len) / perimeter) };
+        if (i === n - 1) run += len;
+        return piece;
+      });
+    });
+  });
+  const along = (it: Item, f: number): [number, number] => [it.x + Math.cos(it.rot) * f, it.z - Math.sin(it.rot) * f];
+  return (
+    <group>
+      {tables.map((t, i) => {
+        const c = PENDANTS[i % PENDANTS.length];
+        return (
+          <group key={`p-${i}`} position={[t.x, t.y, t.z]}>
+            <mesh position={[0, (WALL_H + 1.9) / 2, 0]}>
+              <cylinderGeometry args={[0.006, 0.006, WALL_H - 1.9, 4]} />
+              <meshStandardMaterial color="#1b1b1b" />
+            </mesh>
+            {/* a glass globe in its own colour, a brass cap above it */}
+            <mesh position={[0, 1.9, 0]}>
+              <cylinderGeometry args={[0.03, 0.05, 0.05, 12]} />
+              <meshStandardMaterial color="#c9a46a" metalness={0.7} roughness={0.3} />
+            </mesh>
+            <mesh position={[0, 1.78, 0]}>
+              <sphereGeometry args={[0.12, 20, 16]} />
+              <Glow color={c} on={night} power={3.2} />
+            </mesh>
+            {night && i % 2 === 0 && <pointLight position={[0, 1.55, 0]} intensity={3} distance={3.6} decay={1.6} color={c} />}
+          </group>
+        );
+      })}
+      {counter &&
+        [-0.33, 0, 0.33].map((f) => {
+          const [x, z] = along(counter, f * counter.lw);
+          return (
+            <group key={`g-${f}`} position={[x, counter.y, z]}>
+              <mesh position={[0, (WALL_H + 2.1) / 2, 0]}>
+                <cylinderGeometry args={[0.006, 0.006, WALL_H - 2.1, 4]} />
+                <meshStandardMaterial color="#1b1b1b" />
+              </mesh>
+              <mesh position={[0, 1.98, 0]}>
+                <sphereGeometry args={[0.13, 20, 16]} />
+                <Glow color="#ffe6bf" on={night} power={2.4} />
+              </mesh>
+            </group>
+          );
+        })}
+      {counter && night && <pointLight position={[counter.x, counter.y + 1.8, counter.z]} intensity={4} distance={4.5} decay={1.5} color="#ffd9a8" />}
+      {/* the neon on the back bar: a cup with steam rising, pink and blue */}
+      {bar && (
+        <group position={[bar.x + Math.sin(bar.rot) * 0.06, bar.y + 2.35, bar.z + Math.cos(bar.rot) * 0.06]} rotation-y={bar.rot}>
+          <mesh rotation-z={Math.PI}>
+            <torusGeometry args={[0.2, 0.022, 8, 32, Math.PI]} />
+            <Glow color="#ff4f9a" on={night} power={6} />
+          </mesh>
+          {[-0.2, 0.2].map((x) => (
+            <mesh key={x} position={[x, 0.04, 0]}>
+              <boxGeometry args={[0.044, 0.08, 0.044]} />
+              <Glow color="#ff4f9a" on={night} power={6} />
+            </mesh>
+          ))}
+          <mesh position={[0.29, -0.06, 0]}>
+            <torusGeometry args={[0.07, 0.018, 8, 20, Math.PI]} />
+            <Glow color="#ff4f9a" on={night} power={6} />
+          </mesh>
+          {[-0.08, 0.06].map((x) => (
+            <mesh key={x} position={[x, 0.26, 0]} rotation-z={Math.PI / 2}>
+              <torusGeometry args={[0.09, 0.015, 8, 20, Math.PI]} />
+              <Glow color="#4fe3ff" on={night} power={6} />
+            </mesh>
+          ))}
+          {night && <pointLight position={[0, 0, 0.5]} intensity={2.5} distance={3.5} decay={1.6} color="#ff6fb0" />}
+        </group>
+      )}
+      {cove.map((c, i) => (
+        <mesh key={`c-${i}`} position={[c.x, c.y, c.z]}>
+          <boxGeometry args={c.along === "x" ? [c.len, 0.035, 0.035] : [0.035, 0.035, c.len]} />
+          <Glow color={c.c} on={night} power={4} />
+        </mesh>
+      ))}
+      {/* the cove's colours washing down the walls from the corners */}
+      {night &&
+        rooms.flatMap((s) =>
+          [
+            [s.x + 0.3, s.z + 0.3, 0],
+            [s.x + s.w - 0.3, s.z + s.d - 0.3, 1],
+          ].map(([x, z, k]) => <pointLight key={`w-${s.id}-${k}`} position={[x, s.y + WALL_H - 0.3, z]} intensity={2.2} distance={4} decay={1.5} color={k ? COVE[2] : COVE[0]} />),
+        )}
+    </group>
+  );
+}
+
 // The way in: the front door (open, so the walk goes through), a slim canopy over it, a light either side, a step and
 // a stone path out to the street. Doors on the street side face -z; one on the side faces -x.
-function Entrance({ layout, walking, name }: { layout: Layout; walking: boolean; name?: string | null }) {
+function Entrance({ layout, walking, name, night = false }: { layout: Layout; walking: boolean; name?: string | null; night?: boolean }) {
   const d = layout.floors[0]?.openings.find((o) => o.id === "door-entry");
   if (!d) return null;
   const front = d.axis === "x";
@@ -163,8 +293,32 @@ function Entrance({ layout, walking, name }: { layout: Layout; walking: boolean;
           <meshStandardMaterial color="#fff1d6" emissive="#ffd9a0" emissiveIntensity={1.1} />
         </mesh>
       ))}
+      {/* a café's sign: a long board over the door with its name, lit from within at night */}
+      {name && layout.spaceType === "cafe" && (
+        <group position={[0, DOOR_H + 0.95, -0.14]}>
+          <mesh>
+            <boxGeometry args={[0.7 * SIGN, 0.7, 0.08]} />
+            <meshStandardMaterial attach="material-0" color="#1f2a24" />
+            <meshStandardMaterial attach="material-1" color="#1f2a24" />
+            <meshStandardMaterial attach="material-2" color="#1f2a24" />
+            <meshStandardMaterial attach="material-3" color="#1f2a24" />
+            <meshStandardMaterial attach="material-4" color="#1f2a24" />
+            <meshStandardMaterial attach="material-5" map={signboard(name)} emissive="#ffffff" emissiveMap={signboard(name)} emissiveIntensity={night ? 0.9 : 0.12} roughness={0.5} />
+          </mesh>
+          {/* two small lamps bending over it */}
+          {[-1, 1].map((sx) => (
+            <group key={sx} position={[sx * 0.7 * SIGN * 0.32, 0.5, -0.25]}>
+              <mesh rotation-x={0.6}>
+                <coneGeometry args={[0.09, 0.14, 16, 1, true]} />
+                <meshStandardMaterial color="#1b1b1b" metalness={0.6} roughness={0.4} side={DoubleSide} />
+              </mesh>
+              {night && <spotLight position={[0, 0, 0]} target-position={[0, -0.8, 0.4]} angle={0.7} penumbra={0.6} intensity={6} distance={3} color="#ffd9a0" />}
+            </group>
+          ))}
+        </group>
+      )}
       {/* the nameplate beside the door: a house number from the plan, and the project's name */}
-      {name && (
+      {name && layout.spaceType !== "cafe" && (
         <mesh position={[-(w / 2 + 0.5), 1.45, -0.115]}>
           <boxGeometry args={[0.36, 0.36, 0.02]} />
           <meshStandardMaterial attach="material-0" color="#23262b" />
@@ -340,7 +494,7 @@ function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway
             <Triangles tris={roof.infill} color={render} map={clad ?? undefined} />
           </>
         ))}
-      {!cutaway && <Entrance layout={layout} walking={walking} name={name} />}
+      {!cutaway && <Entrance layout={layout} walking={walking} name={name} night={night} />}
       {ex.garden && <Garden W={W} D={D} colors={colors} door={layout.floors[0]?.openings.find((o) => o.id === "door-entry" && o.axis === "x")?.x ?? -99} />}
       {items.map((it, i) =>
         onPick && PIECES[it.name] ? (
@@ -363,6 +517,7 @@ function Building({ layout, colors, look, ex, moods = {}, night = false, cutaway
           <Model key={`i-${i}`} it={it} k={colors} />
         ),
       )}
+      {layout.spaceType === "cafe" && <CafeLights items={items} slabs={slabs} night={night} cutaway={cutaway} />}
       {/* a warm light in every room, with its fixture on the ceiling when the roof is on */}
       {slabs
         .filter((s) => s.zone !== "circulation")
@@ -407,7 +562,7 @@ function Floor({ s, colors, look }: { s: Slab; colors: Scheme; look: Look }) {
 }
 
 // Moves the camera along the walk path at walking pace, looking where it's going.
-function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit<Props, "mode" | "brief" | "taste">) {
+function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey, onMarks, seek }: Omit<Props, "mode" | "brief" | "taste">) {
   const { camera } = useThree();
   const curves = useMemo(() => {
     const { path, gaze, stops } = walkPlan(layout);
@@ -451,6 +606,29 @@ function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit
     };
   }, [gl]);
 
+  // Each room the walk stops to look at, and how far along the walk that is: the walk's chapters.
+  useEffect(() => {
+    if (!curves || !onMarks) return;
+    const samples = Array.from({ length: 400 }, (_, i) => curves.path.getPointAt(i / 399));
+    const marks: { name: string; t: number }[] = [];
+    for (const p of curves.stops) {
+      const level = Math.round((p.y - EYE) / STOREY);
+      const room = layout.floors.find((f) => f.level === level)?.spaces.find((s) => s.zone !== "circulation" && p.x >= s.rect.x && p.x <= s.rect.x + s.rect.w && p.z >= s.rect.y && p.z <= s.rect.y + s.rect.h);
+      if (!room || marks.some((m) => m.name === room.name)) continue;
+      let best = 0;
+      samples.forEach((q, i) => q.distanceTo(p) < samples[best].distanceTo(p) && (best = i));
+      // a moment before the stop, so the room is seen arriving
+      marks.push({ name: room.name, t: Math.max(0, best / 399 - 0.02) });
+    }
+    onMarks(marks.sort((a, b) => a.t - b.t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [curves, layout]);
+  useEffect(() => {
+    if (!seek) return;
+    t.current = seek.t;
+    ended.current = false;
+  }, [seek]);
+
   useEffect(() => {
     t.current = 0;
     ended.current = false;
@@ -464,10 +642,11 @@ function Walker({ layout, playing, onRoom, onProgress, onEnd, restartKey }: Omit
     if (!curves) return;
     // A slow frame must not jump the walk ahead: cap the step to a tenth of a second.
     const dt = Math.min(frameDt, 0.1);
-    // Walk at about 1.1 m/s, slowing to a near stop at each doorway view so the room can be taken in.
+    // Walk briskly, slowing at each doorway view so the room can be taken in.
     const here0 = curves.path.getPointAt(t.current);
     const near = Math.min(...curves.stops.map((p) => p.distanceTo(here0)), 99);
-    const pace = 0.75 * Math.min(1, Math.max(0.08, near / 1.6));
+    // brisk, with a short pause at each room (Vicky: the walk felt long)
+    const pace = 1.3 * Math.min(1, Math.max(0.16, near / 1.6));
     const h = head.current;
     // Holding the mouse down pauses the walk so you can look around where you stand.
     const walking = playing && t.current < 1 && !h.dragging;
@@ -695,7 +874,8 @@ function ShotCam({ layout, shot, onShot }: { layout: Layout; shot: Shot; onShot?
     const c = new Vector3((box.x0 + box.x1) / 2, (box.y0 + box.y1) / 2, (box.z0 + box.z1) / 2);
     const radius = 0.5 * Math.hypot(box.x1 - box.x0, box.y1 - box.y0, box.z1 - box.z0);
     const fov = "fov" in camera ? (camera.fov as number) : 32;
-    const dist = (radius / Math.tan(((fov / 2) * Math.PI) / 180)) * 1.08;
+    // a room gets more margin, so it reads as a room in its house rather than a crop
+    const dist = (radius / Math.tan(((fov / 2) * Math.PI) / 180)) * (r ? 1.9 : 1.08);
     const dir = new Vector3(Math.cos(shot.tilt) * Math.cos(shot.turn), Math.sin(shot.tilt), Math.cos(shot.tilt) * Math.sin(shot.turn));
     camera.position.copy(c).addScaledVector(dir, dist);
     camera.lookAt(c);
@@ -874,8 +1054,9 @@ export default function HouseScene(props: Props) {
   // On the landing page the house is an architect's white model: smooth walls, no garden.
   const ex = useMemo(() => {
     const e = exteriorOf(props.layout, look, !!props.newBuild);
-    return props.mode === "showcase" ? { ...e, cladding: "render" as const, garden: false } : e;
-  }, [props.layout, look, props.newBuild, props.mode]);
+    // a sketch leaves out the garden: a tree drawn in outline reads as a magnifying glass
+    return props.mode === "showcase" ? { ...e, cladding: "render" as const, garden: false } : props.sketch ? { ...e, garden: false } : e;
+  }, [props.layout, look, props.newBuild, props.mode, props.sketch]);
   const moods = useMemo(() => moodsFor(props.layout, props.taste?.tags), [props.layout, props.taste]);
   // Sketches and saved pictures are always drawn by day.
   const night = !!props.night && !props.sketch && props.mode !== "shot";
@@ -907,7 +1088,7 @@ export default function HouseScene(props: Props) {
     <Canvas
       shadows
       frameloop={props.paused ? "never" : "always"}
-      camera={{ fov: orbit ? 45 : showcase ? 38 : still ? 32 : props.mode === "explore" ? 72 : 82, near: 0.05, far: 300, position: [W * 1.6, h * 2.2 + 6, D * 1.9] }}
+      camera={{ fov: orbit ? 45 : showcase ? 38 : still ? 32 : props.mode === "explore" ? 72 : 82, near: still ? 0.5 : 0.05, far: 300, position: [W * 1.6, h * 2.2 + 6, D * 1.9] }}
       // A picture to save is drawn at twice the screen's resolution, so it stays sharp in the PDF.
       dpr={still ? 2 : showcase ? filmDpr : [1, 2]}
       gl={{ preserveDrawingBuffer: true }}
@@ -965,6 +1146,8 @@ export default function HouseScene(props: Props) {
       ) : (
         <EffectComposer multisampling={showcase ? 0 : 4}>
           {showcase ? <></> : <N8AO halfRes aoRadius={0.5} distanceFalloff={0.5} intensity={2.2} quality="medium" />}
+          {/* at night, lamps and bulbs glow past their edges */}
+          {night && !showcase ? <Bloom mipmapBlur luminanceThreshold={1} intensity={0.9} radius={0.6} /> : <></>}
           <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
         </EffectComposer>
       )}

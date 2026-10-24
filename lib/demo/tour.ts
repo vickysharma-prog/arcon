@@ -1,27 +1,27 @@
 import type { DemoRole } from "./story.ts";
 
-// The judges' tour: one stop per page, as the person whose view it is. Pure, so the /demo route, the judge bar and
-// the tests agree. Paths name projects by key; the /demo route fills in the seeded ids.
+// The judges' tour: one stop per page, as the person whose view it is, in chapters a judge can jump between. Pure,
+// so the /demo route, the judge bar and the tests agree. Paths name projects by key; the /demo route fills in the
+// seeded ids. After the last stop, /demo/done thanks the judges and hands over to "Try it yourself".
 
 export type ProjectKey = "maya" | "parks" | "ana" | "sam";
-export type Stop = { as: DemoRole; path: string; title: string; what: string };
+export type Stop = { as: DemoRole; path: string; title: string; what: string; chapter: number; project: string };
+
+export const CHAPTERS = ["Maya designs her home", "Her architect and builder", "Not only homes"] as const;
 
 export const TOUR: Stop[] = [
-  { as: "maya", path: "/start?demo=1", title: "Maya tells Arcon how her family lives", what: "The interview plays itself with Maya's answers. Her three picks go to Qloo as she taps them." },
-  { as: "maya", path: "/project/{maya}?step=brief", title: "Qloo reads her taste", what: "Chateau Marmont, West Elm and Mad Men become style words, materials and brands. Each choice says which pick it came from." },
-  { as: "maya", path: "/project/{maya}?step=plans", title: "Three plans, each with its reasons", what: "Drawn by Arcon's layout engine from her answers and ranked by how well each fits how the family lives, with the trade-offs on every card." },
-  { as: "maya", path: "/project/{maya}?step=walkthrough#walk", title: "Walk through it in 3D", what: "Furniture in her style, day and night. Drag to look around, click a room label to fly there." },
-  { as: "maya", path: "/project/{maya}?step=walkthrough#inside", title: "Look around the whole house", what: "The ground floor opened up, every room named: click one to fly there. Upstairs opens the next floor, All floors puts the roof back." },
-  { as: "maya", path: "/project/{maya}?step=budget", title: "A budget in dollars, room by room", what: "Los Angeles rates, three finish levels, and how long the build takes." },
-  { as: "maya", path: "/project/{maya}?step=shop", title: "A shopping list from her taste", what: "Every piece in the 3D, priced, from brands Qloo matched to what Maya loves, each saying which pick it came from." },
-  { as: "maya", path: "/project/{maya}?step=drawings", title: "Drawings for the builder", what: "Plans, elevations and schedules, as a PDF and as DXF for CAD, made from the same design as the 3D." },
-  { as: "lena", path: "/home", title: "Lena's studio", what: "The architect's side: every client by stage, what's waiting on her, and her fees." },
-  { as: "lena", path: "/project/{maya}?tab=thread", title: "One thread for everyone", what: "Maya's approval, Mike's quote, Lena's site visits and every change, in order." },
-  { as: "mike", path: "/home?view=today", title: "Mike's day on site", what: "The builder's side: today's crew, deliveries, and fees ready to bill." },
-  { as: "mike", path: "/project/{maya}?tab=site", title: "The building site", what: "Phases on a timeline, crew and materials in sq ft and pounds, each finished stage signed off by Lena." },
-  { as: "lena", path: "/project/{ana}?tab=site", title: "The last week before moving in", what: "Ana's apartment: the snag list (one fixed, two to go), the handover pack, and the keys waiting for Ana to accept." },
-  { as: "sam", path: "/project/{sam}?step=walkthrough#inside", title: "Not only homes: a café in 3D", what: "Sam's Brooklyn café, opened up: a service counter, small tables laid out for 24 seats, and the street front. Show inside off puts the roof back." },
-  { as: "sam", path: "/project/{sam}?step=brief#neighbourhood", title: "A café, read against its street", what: "Sam's Brooklyn café, designed by Sam alone: Qloo reads who already comes to the cafés nearby, by age, and ranks them against Sam's taste." },
+  { chapter: 0, project: "Maya's house", as: "maya", path: "/start?demo=1", title: "Maya tells Arcon how her family lives", what: "The interview plays itself with Maya's answers. Her three picks go to Qloo as she taps them." },
+  { chapter: 0, project: "Maya's house", as: "maya", path: "/project/{maya}?step=brief", title: "Qloo reads her taste", what: "Chateau Marmont, West Elm and Mad Men become style words, materials and brands. Each choice says which pick it came from." },
+  { chapter: 0, project: "Maya's house", as: "maya", path: "/project/{maya}?step=plans", title: "Three plans, each with its reasons", what: "Drawn by Arcon's layout engine from her answers and ranked by how well each fits how the family lives, with the trade-offs on every card." },
+  { chapter: 0, project: "Maya's house", as: "maya", path: "/project/{maya}?step=walkthrough#walk", title: "Walk through it in 3D", what: "Furniture in her style, day and night. Look around opens the house from above with every room named." },
+  { chapter: 0, project: "Maya's house", as: "maya", path: "/project/{maya}?step=budget", title: "A budget in dollars, room by room", what: "Los Angeles rates, three finish levels, the greenery score and how long the build takes." },
+  { chapter: 0, project: "Maya's house", as: "maya", path: "/project/{maya}?step=shop", title: "A shopping list from her taste", what: "Every piece in the 3D, priced, from brands Qloo matched to what Maya loves, each saying which pick it came from." },
+  { chapter: 0, project: "Maya's house", as: "maya", path: "/project/{maya}?step=drawings", title: "Sketches and drawings for the builder", what: "Hand-drawn sketches, plans, elevations and schedules, as a PDF and as DXF for CAD, made from the same design as the 3D." },
+  { chapter: 1, project: "Ortiz Studio", as: "lena", path: "/home", title: "Lena's studio", what: "The architect's side: every client by stage, what's waiting on her, her fees, and one thread per project for everyone on it." },
+  { chapter: 1, project: "Maya's house", as: "mike", path: "/project/{maya}?tab=site", title: "Mike runs the building site", what: "Phases on a timeline, today's crew, materials in sq ft and pounds, his quote, and each finished stage signed off by Lena." },
+  { chapter: 1, project: "Ana's apartment", as: "lena", path: "/project/{ana}?tab=site", title: "The last week before moving in", what: "Ana's apartment: the snag list (one fixed, two to go), the handover pack, and the keys waiting for Ana to accept." },
+  { chapter: 2, project: "Sam's café", as: "sam", path: "/project/{sam}?step=brief#neighbourhood", title: "A café, read against its street", what: "Sam's Brooklyn café: Qloo reads who already comes to the cafés nearby, by age, and ranks them against Sam's taste." },
+  { chapter: 2, project: "Sam's café", as: "sam", path: "/project/{sam}?step=walkthrough#reveal", title: "Sam's café by night", what: "The sign over the door, then inside: the counter and back bar along the back wall, a pendant over every table, a neon cup and strings of coloured bulbs. Day switches the lights off." },
 ];
 
 /** A stop's real path, with the seeded project ids filled in. */
@@ -29,6 +29,9 @@ export const pathOf = (stop: Stop, ids: Partial<Record<ProjectKey, string>>) => 
 
 /** The stop for a step number from a URL (1-based), kept in range. */
 export const stopAt = (n: number) => Math.min(TOUR.length, Math.max(1, Math.trunc(n) || 1));
+
+/** The first stop (1-based) of each chapter. */
+export const chapterStarts = () => CHAPTERS.map((_, c) => TOUR.findIndex((s) => s.chapter === c) + 1);
 
 // Who is on which project, so switching role keeps the page when that person is on it too.
 const ON: Record<ProjectKey, DemoRole[]> = { maya: ["maya", "lena", "mike"], parks: ["lena"], ana: ["lena", "mike"], sam: ["sam"] };

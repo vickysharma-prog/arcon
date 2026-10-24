@@ -481,7 +481,7 @@ function Rug({ w, d, k }: { w: number; d: number; k: Scheme }) {
   return (
     <>
       <B p={[0, 0.006, 0]} s={[w, 0.012, d]} c={light ? mix(k.textile, "#ffffff", 0.6) : mix(k.accent, "#ffffff", 0.15)} f={{ r: 1 }} />
-      <B p={[0, 0.008, 0]} s={[w - 0.25, 0.012, d - 0.25]} c={light ? mix(k.textile, "#ffffff", 0.75) : ground} f={{ r: 1 }} />
+      <B p={[0, 0.011, 0]} s={[w - 0.25, 0.012, d - 0.25]} c={light ? mix(k.textile, "#ffffff", 0.75) : ground} f={{ r: 1 }} />
     </>
   );
 }

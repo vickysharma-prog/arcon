@@ -363,13 +363,27 @@ function setFor(room: Space, spaceType: string, W: number, D: number): Piece[] {
   if (HOMES.has(spaceType)) return base;
   const noHomeFallback = (p: Piece): Piece => (p.or?.name === "cafe table" ? { ...p, or: undefined } : { ...p, or: p.or && noHomeFallback(p.or) });
   if (room.kind === "kitchen") return base.map(noHomeFallback);
+  // A counter runs along the back of the room with a back bar on the wall behind it, room to work between them, and
+  // the rest of the room is seating; never a counter standing in the middle of the floor.
+  if (room.kind === "counter" && (spaceType === "cafe" || spaceType === "restaurant")) {
+    const bar: Piece[] = [
+      { name: "shelving", fx: 0.5, fz: 0, w: Math.min(2.4, W - 0.8), d: 0.45, h: 2.0, role: "wood" },
+      { name: "service counter", fx: 0.5, fz: 1.55 / D, w: Math.min(3.4, W - 1.2), d: 0.75, h: 1.1, role: "wood" },
+    ];
+    return [...bar, ...tableGrid(W, D, 2.5)];
+  }
   if (room.kind !== "dining") return base;
-  const cols = Math.max(1, Math.floor((W - 0.4) / 1.8));
-  const rows = Math.max(1, Math.floor((D - 0.4) / 1.8));
+  return tableGrid(W, D, 0);
+}
+
+/** Small tables for two in rows, 1.7 m apart, filling the room from `from` metres off its back wall. */
+function tableGrid(W: number, D: number, from: number): Piece[] {
+  const cols = Math.max(1, Math.floor((W - 0.4) / 1.7));
+  const rows = Math.max(from ? 0 : 1, Math.floor((D - from - 0.3) / 1.7));
   const tables: Piece[] = [];
   for (let r = 0; r < rows; r++)
     for (let c = 0; c < cols; c++)
-      tables.push({ name: "cafe table", fx: (c + 0.5) / cols, fz: (r + 0.5) / rows, w: 1.3, d: 1.1, h: 0.95, role: "wood" });
+      tables.push({ name: "cafe table", fx: (c + 0.5) / cols, fz: (from + 0.15 + (r + 0.5) * ((D - from - 0.3) / rows)) / D, w: 1.3, d: 1.1, h: 0.95, role: "wood" });
   return tables;
 }
 
@@ -387,7 +401,7 @@ export const ESSENTIALS: Record<string, string[]> = {
 
 /** A café's seating needs tables to sit at; everything else as for a home. */
 export const essentialsFor = (kind: string, spaceType: string) =>
-  !HOMES.has(spaceType) && kind === "dining" ? ["cafe table"] : (ESSENTIALS[kind] ?? []);
+  !HOMES.has(spaceType) && kind === "dining" ? ["cafe table"] : kind === "counter" && (spaceType === "cafe" || spaceType === "restaurant") ? ["service counter"] : (ESSENTIALS[kind] ?? []);
 
 /** The essentials each room is missing, as "room-id: piece". Empty means every room is usable. */
 export function missingEssentials(layout: Layout, items: Item[] = furnish(layout)): string[] {

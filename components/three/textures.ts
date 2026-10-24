@@ -306,6 +306,34 @@ export const plate = (number: string, name: string) =>
     false,
   );
 
+/** A shopfront sign, SIGN times wider than tall: drawn squeezed into a square, so it reads true on the long board. */
+export const SIGN = 4.5;
+export const signboard = (name: string) =>
+  paint(
+    `sign|${name}`,
+    1024,
+    (g, s) => {
+      g.fillStyle = "#1f2a24";
+      g.fillRect(0, 0, s, s);
+      g.save();
+      g.scale(1 / SIGN, 1);
+      const w = s * SIGN;
+      g.strokeStyle = "#d8b878";
+      g.lineWidth = s * 0.03;
+      g.strokeRect(s * 0.06, s * 0.08, w - s * 0.12, s * 0.84);
+      g.fillStyle = "#f6ecd8";
+      g.textAlign = "center";
+      g.textBaseline = "middle";
+      g.font = `600 ${Math.round(s * 0.46)}px Georgia, serif`;
+      g.fillText(name.toUpperCase(), w / 2, s * 0.47, w * 0.86);
+      g.fillStyle = "#d8b878";
+      g.font = `${Math.round(s * 0.14)}px Georgia, serif`;
+      g.fillText("COFFEE  ·  KITCHEN  ·  OPEN LATE", w / 2, s * 0.8, w * 0.8);
+      g.restore();
+    },
+    false,
+  );
+
 /** Rug weaves: a striped kilim for boho, a medallion for classic. */
 export const rug = (ground: string, ink: string, kind: "kilim" | "medallion") =>
   paint(

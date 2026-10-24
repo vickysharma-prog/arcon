@@ -35,8 +35,9 @@ export function stretches(floor: Floor, layout: Layout, line: Line): Stretch[] {
       return { t0: Math.max(0, a), t1: Math.min(line.len, b), exterior: p.exterior };
     })
     .filter((s) => s.t1 - s.t0 > EPS);
+  // openings name the plan's axes (x and y), wall lines the 3D's (x and z): a "z" wall holds "y" openings
   const holes = floor.openings
-    .filter((o) => o.axis === axis && Math.abs((axis === "x" ? o.y : o.x) - at) < EPS)
+    .filter((o) => o.axis === (axis === "x" ? "x" : "y") && Math.abs((axis === "x" ? o.y : o.x) - at) < EPS)
     .map((o) => {
       const c = along(axis === "x" ? o.x : o.y);
       return { t0: c - o.width / 2, t1: c + o.width / 2, window: o.type === "window" };
@@ -144,7 +145,7 @@ export function decorate(layout: Layout): Item[] {
           const at = axis === "x" ? l.p0[1] : l.p0[0];
           const origin = axis === "x" ? l.p0[0] : l.p0[1];
           const sign = axis === "x" ? l.e[0] : l.e[1];
-          for (const o of floor.openings.filter((o) => o.type === "window" && o.axis === axis && Math.abs((axis === "x" ? o.y : o.x) - at) < EPS)) {
+          for (const o of floor.openings.filter((o) => o.type === "window" && o.axis === (axis === "x" ? "x" : "y") && Math.abs((axis === "x" ? o.y : o.x) - at) < EPS)) {
             const c = ((axis === "x" ? o.x : o.y) - origin) * sign;
             if (c < 0 || c > l.len) continue;
             const ext = true;

@@ -16,6 +16,7 @@ import { sizeFrom } from "@/lib/interview/logic";
 import type { Candidate } from "@/lib/interview/logic";
 import { useListen, useMicLevel, useSpeak } from "./useVoice";
 import { MAYA } from "@/lib/demo/story";
+import { tourGo } from "@/components/demo/JudgeBar";
 import { VoiceMode, type VoiceState } from "./VoiceMode";
 
 const LANG_KEY = "arcon-lang";
@@ -76,9 +77,9 @@ export function Interview() {
     return () => clearTimeout(go);
   }, [projectId, router]);
   const [taste, setTaste] = useState<TasteView | null>(null);
-  // The judges' replay (/start?demo=1): Maya's answers play themselves, at 1x or 2x; nothing is saved.
+  // The judges' replay (/start?demo=1): Maya's answers play themselves, at 2x unless slowed to 1x; nothing is saved.
   const [replay, setReplay] = useState(false);
-  const [speed, setSpeed] = useState(1);
+  const [speed, setSpeed] = useState(2);
   const [ghost, setGhost] = useState<Answer | null>(null);
   const spoken = useRef(new Set<string>());
   // Answering for a project a pro set up ("New client"): its id, and whose it is.
@@ -157,9 +158,21 @@ export function Interview() {
     [],
   );
 
+  // The replay waits while the quick guide is open (it marks the page with data-guide), so nothing is missed.
+  const [held, setHeld] = useState(false);
+  useEffect(() => {
+    if (!replay) return;
+    const html = document.documentElement;
+    const look = () => setHeld(!!html.dataset.guide);
+    look();
+    const watch = new MutationObserver(look);
+    watch.observe(html, { attributes: true, attributeFilter: ["data-guide"] });
+    return () => watch.disconnect();
+  }, [replay]);
+
   // The replay: each answer is shown being picked (or typed), then given, so it reads like Maya doing it.
   useEffect(() => {
-    if (!replay || !q || MAYA[q.id] === undefined) return;
+    if (!replay || held || !q || MAYA[q.id] === undefined) return;
     const want = MAYA[q.id];
     const timers: ReturnType<typeof setTimeout>[] = [];
     // the greeting is said in full first ("Hi, I'm Arcon…"), then the answers come quickly
@@ -181,7 +194,7 @@ export function Interview() {
     }
     return () => timers.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [replay, q?.id, speed]);
+  }, [replay, held, q?.id, speed]);
 
   // A typed or spoken answer: matched to a choice, read as a size, or taken as it is.
   const submit = useCallback(
@@ -267,10 +280,7 @@ export function Interview() {
   useEffect(() => {
     if (!replay || !revealing || !taste?.family) return;
     const t = setTimeout(() => {
-      try {
-        sessionStorage.setItem("arcon-tour-go", "1");
-      } catch {}
-      location.href = "/demo?step=2";
+      tourGo("/demo?step=2");
     }, 5000 / speed);
     return () => clearTimeout(t);
   }, [replay, revealing, taste?.family, speed]);

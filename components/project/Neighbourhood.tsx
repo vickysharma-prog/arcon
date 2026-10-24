@@ -14,12 +14,24 @@ export function Neighbourhood({ id }: { id: string }) {
   // a link to #neighbourhood (the judges' tour) lands here once the section is on the page
   useEffect(() => {
     if (location.hash !== "#neighbourhood") return;
-    // a little above the heading, so it isn't tucked under the top bar
-    const t = setTimeout(() => {
+    // a little above the heading, so it isn't tucked under the top bar; pictures above it still loading push it down,
+    // so it is kept in place for a few seconds, until the visitor scrolls themselves
+    const to = (behavior: ScrollBehavior) => {
       const el = document.getElementById("neighbourhood");
-      if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 140, behavior: "smooth" });
-    }, 600);
-    return () => clearTimeout(t);
+      if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 140, behavior });
+    };
+    let mine = true;
+    const theirs = () => (mine = false);
+    const events = ["wheel", "touchstart", "keydown", "pointerdown"] as const;
+    events.forEach((e) => window.addEventListener(e, theirs, { once: true, passive: true }));
+    const first = setTimeout(() => to("smooth"), 600);
+    const keep = setInterval(() => mine && to("auto"), 500);
+    const stop = setTimeout(() => clearInterval(keep), 6000);
+    return () => {
+      [first, stop].forEach(clearTimeout);
+      clearInterval(keep);
+      events.forEach((e) => window.removeEventListener(e, theirs));
+    };
   }, []);
   const [crowd, setCrowd] = useState<Crowd>("all");
   const [read, setRead] = useState<Read | null | undefined>(undefined);

@@ -2,8 +2,8 @@
 
 import { seeds, SIZE } from "@/lib/brand/seeds";
 
-// The Arcon watermark on everything people download: a faint seed mark behind the picture and a footer with the
-// mark, the name and the tagline. Painted on a 2D canvas, so the same code stamps sketches and video frames.
+// The Arcon watermark on everything people download: a footer with the mark, the name and the tagline. Painted on a
+// 2D canvas, so the same code stamps sketches and video frames.
 
 export const TAGLINE = "Spaces designed around who you are";
 const SEEDS = seeds();
@@ -25,12 +25,8 @@ function mark(ctx: CanvasRenderingContext2D, x: number, y: number, size: number,
   ctx.restore();
 }
 
-/** Stamps a w × h canvas. `centre`: also the large faint mark behind the picture (not on video). */
-export function stamp(ctx: CanvasRenderingContext2D, w: number, h: number, { centre = true } = {}) {
-  if (centre) {
-    const s = Math.min(w, h) * 0.42;
-    mark(ctx, (w - s) / 2, (h - s) / 2, s, 0.06);
-  }
+/** Stamps a w × h canvas with the footer. (No mark behind the picture: its dots read as marks on the drawing.) */
+export function stamp(ctx: CanvasRenderingContext2D, w: number, h: number) {
   // the footer, bottom left, on a soft white band so it reads on any background
   const u = Math.max(12, Math.round(h * 0.03)); // the unit everything in the footer is sized by
   const pad = u * 0.9;

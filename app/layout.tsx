@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Funnel_Display, Funnel_Sans, Martian_Mono } from "next/font/google";
 import "./globals.css";
 import { CookieNotice } from "@/components/CookieNotice";
+import { Guide } from "@/components/demo/Guide";
 import { JudgeBar } from "@/components/demo/JudgeBar";
 import { Intro } from "@/components/landing/Intro";
 import { INSTALL_SCRIPT, RELOAD_SCRIPT, THEME_SCRIPT } from "@/components/theme-script";
@@ -47,6 +48,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {/* reads the URL, so it streams in after the page */}
         <Suspense fallback={null}>
           <JudgeBar />
+          <Guide />
         </Suspense>
       </body>
     </html>

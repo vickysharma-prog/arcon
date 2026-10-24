@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { decorate } from "./decor.ts";
 import { planOptions } from "../layout/place.ts";
+import { planOptionsFor } from "../design/options.ts";
 import { buildingShell } from "../layout/footprint.ts";
 import { DEFAULT_SHELLS, TEMPLATES } from "../layout/templates.ts";
 import { wallPieces } from "../layout/walls.ts";
@@ -61,4 +62,14 @@ test("every piece of art sits within its room's walls", () => {
       const r = layout.floors[it.level].spaces.find((s) => s.id === it.room)!.rect;
       assert.ok(it.x >= r.x - 1e-6 && it.x <= r.x + r.w + 1e-6 && it.z >= r.y - 1e-6 && it.z <= r.y + r.h + 1e-6, `${it.room} art`);
     }
+});
+
+test("panelling and every other wall dressing leave every doorway clear, on walls along both axes", () => {
+  // the concept plans put doors on walls running both ways (a dining room opening off the side, say)
+  const concepts = Object.values(TEMPLATES).flatMap((t) => planOptionsFor(t, buildingShell(t, DEFAULT_SHELLS[t.spaceType]), { space_type: t.spaceType }));
+  for (const layout of [...layouts, ...concepts])
+    for (const f of layout.floors)
+      for (const o of f.openings.filter((o) => o.type === "door"))
+        for (const i of decorate(layout).filter((i) => i.level === f.level && i.y - f.level * STOREY < DOOR_H - 0.01))
+          assert.ok(!(o.axis === "x" ? Math.abs(i.z - o.y) < 0.3 && Math.abs(i.x - o.x) < i.w / 2 - 0.05 : Math.abs(i.x - o.x) < 0.3 && Math.abs(i.z - o.y) < i.d / 2 - 0.05), `${i.name} across ${o.id}`);
 });

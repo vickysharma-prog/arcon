@@ -4,7 +4,7 @@ import { requestsFor } from "../pros/directory.ts";
 import { boardFor } from "../home/board.ts";
 import { sitesRunBy } from "../manage/data.ts";
 import { projectName } from "../home/names.ts";
-import { stageOf } from "../project/stage.ts";
+import { OPEN_FOR_JUDGING, stageOf } from "../project/stage.ts";
 import type { ProjectRole } from "../project/access.ts";
 import type { Role } from "../account/roles.ts";
 
@@ -65,7 +65,7 @@ export async function shellFor(userId: string, day?: string): Promise<Shell | nu
       stage: stageOf(p as Parameters<typeof stageOf>[0]),
       chosen: p.chosen_option !== null,
       toured: !!p.toured_at,
-      unlocked: !!p.unlocked_at,
+      unlocked: OPEN_FOR_JUDGING || !!p.unlocked_at,
       unread: board.unread[p.id] ?? 0,
       owner: p.owner ?? null,
     })),
