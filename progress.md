@@ -14,6 +14,17 @@ room moods and light, art and a playlist from Qloo (16 Oct); a live Qloo strip a
 
 ---
 
+## 25 October: submitted
+
+- **Submitted to the Qloo Agentic Hackathon on Devpost:** the story of the build in five phases, the vision, the
+  problem with its sources, Qloo as the taste engine behind every decision, four diagrams (Qloo at the core, the flow,
+  the agents, one project for every person) and a gallery of 15 screens.
+- **For judges:** the README now links straight to the guided tour at
+  [arcon-ten.vercel.app/demo](https://arcon-ten.vercel.app/demo), and names Qloo as the taste engine at the top of
+  its Qloo section.
+- **Checked as a judge would:** the landing page, the tour's 12 stops end to end on the live site, every link on the
+  submission, and the repo (414 tests passing, a clean type check).
+
 ## 24 October: the judges' tour, the café by night, every device
 
 - **A guided tour for judges:** 12 stops in three chapters (Maya designs her home; her architect and builder; not only
