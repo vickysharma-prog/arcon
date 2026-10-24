@@ -8,10 +8,13 @@ import { tick } from "@/components/fx/sfx";
 
 // A short guide, shown once, at two moments only: on the interview (what's about to happen, and for judges the tour
 // pill) and the first time a design opens (where the controls are). Each tip lights up the control it's about.
-// Seen guides are remembered in this browser, so they never come back.
+// Seen guides are remembered (see `store`), so they never come back within the same visit.
 
 type Tip = { at?: string; title: string; body: string };
 const SEEN = "arcon-guide-";
+// The tour's guides are remembered for this visit to the tour only (leaving it clears them, see JudgeBar), so every
+// judge who starts the tour gets them; a person's own guides are remembered in this browser for good.
+const store = (id: string) => (id.startsWith("tour-") ? sessionStorage : localStorage);
 
 const GUIDES: Record<string, Tip[]> = {
   "tour-start": [
@@ -60,7 +63,7 @@ export function Guide() {
     const g = guideFor(path, location.search, demo);
     let seen = true;
     try {
-      seen = !g || localStorage.getItem(SEEN + g) === "1";
+      seen = !g || store(g).getItem(SEEN + g) === "1";
     } catch {}
     setId(seen ? null : g);
     setI(0);
@@ -101,7 +104,7 @@ export function Guide() {
 
   const close = () => {
     try {
-      if (id) localStorage.setItem(SEEN + id, "1");
+      if (id) store(id).setItem(SEEN + id, "1");
     } catch {}
     setId(null);
   };

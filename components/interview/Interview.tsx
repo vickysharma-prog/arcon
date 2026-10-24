@@ -158,17 +158,17 @@ export function Interview() {
     [],
   );
 
-  // The replay waits while the quick guide is open (it marks the page with data-guide), so nothing is missed.
+  // The interview waits (no replay, no voice) while the quick guide or the tour's screen between stops is up (they mark
+  // the page with data-guide and data-veil), so nothing is missed and nothing talks over them.
   const [held, setHeld] = useState(false);
   useEffect(() => {
-    if (!replay) return;
     const html = document.documentElement;
-    const look = () => setHeld(!!html.dataset.guide);
+    const look = () => setHeld(!!html.dataset.guide || !!html.dataset.veil);
     look();
     const watch = new MutationObserver(look);
-    watch.observe(html, { attributes: true, attributeFilter: ["data-guide"] });
+    watch.observe(html, { attributes: true, attributeFilter: ["data-guide", "data-veil"] });
     return () => watch.disconnect();
-  }, [replay]);
+  }, []);
 
   // The replay: each answer is shown being picked (or typed), then given, so it reads like Maya doing it.
   useEffect(() => {
@@ -227,11 +227,17 @@ export function Interview() {
   // Each question is read aloud once, in the chosen language.
   const askText = q ? [q.lead?.[lang], q.ask[lang]].filter(Boolean).join(" ") : "";
   useEffect(() => {
-    if (!q || spoken.current.has(`${q.id}-${lang}`)) return;
-    spoken.current.add(`${q.id}-${lang}`);
-    if (!voice.speak(askText, voiceFor(askText, lang)) && talking) listen.start();
+    if (!q || held || spoken.current.has(`${q.id}-${lang}`)) return;
+    // a moment's wait, so a guide or the tour's screen that opens with the page is seen first and holds it
+    const t = setTimeout(() => {
+      const html = document.documentElement;
+      if (html.dataset.guide || html.dataset.veil) return;
+      spoken.current.add(`${q.id}-${lang}`);
+      if (!voice.speak(askText, voiceFor(askText, lang)) && talking) listen.start();
+    }, 350);
+    return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [q?.id, lang]);
+  }, [q?.id, lang, held]);
 
   // The live taste card: each new pick is read through Qloo while the next question is already on screen.
   const picks = picksOf(answers);

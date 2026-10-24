@@ -13,6 +13,7 @@ import { AnimatedMark } from "@/components/AnimatedMark";
 // to, and the way out. Between stops one screen covers the page until the next one is ready, and says whose view
 // comes next. Shown only in a demo session.
 const GO = "arcon-tour-go";
+const INTRO = "arcon-tour-intro";
 const IN_APP = /^\/(project|home|start|pros|account)(\/|$)/;
 const DONE = "/demo/done";
 
@@ -31,6 +32,8 @@ export function useStop() {
       delete document.documentElement.dataset.veil;
       try {
         sessionStorage.removeItem(GO);
+        sessionStorage.removeItem(INTRO);
+        ["tour-start", "tour-app"].forEach((g) => sessionStorage.removeItem(`arcon-guide-${g}`));
       } catch {}
     }
   }, [path]);
@@ -56,7 +59,7 @@ function veilFor(href: string, now: { step: number; who: DemoRole }): Veil {
   return {
     chapter: `Chapter ${stop.chapter + 1} · ${CHAPTERS[stop.chapter]}`,
     title: as ? `${PEOPLE[as].name.split(" ")[0]}'s view` : stop.title,
-    who: who !== now.who ? `Now you're seeing it as ${whoIs(who)}${as ? "" : ` · ${stop.project}`}` : null,
+    who: who !== now.who || n === 1 ? `Now you're seeing it as ${whoIs(who)}${as ? "" : ` · ${stop.project}`}` : null,
   };
 }
 
@@ -111,6 +114,16 @@ export function JudgeBar() {
       sessionStorage.removeItem(GO);
     } catch {}
     const html = document.documentElement;
+    // The tour's first stop, coming from the landing page: the same screen opens it, saying whose view it starts in.
+    if (!saved && at.step === 1) {
+      try {
+        if (!sessionStorage.getItem(INTRO)) {
+          sessionStorage.setItem(INTRO, "1");
+          saved = { chapter: `Chapter 1 · ${CHAPTERS[0]}`, title: TOUR[0].title, who: `You're seeing it as ${whoIs(TOUR[0].as)} · ${TOUR[0].project}` };
+          html.dataset.veil = "1";
+        }
+      } catch {}
+    }
     if (!saved) {
       delete html.dataset.veil;
       return;
@@ -119,7 +132,7 @@ export function JudgeBar() {
     setFading(false);
     const begun = Date.now();
     // long enough to read who's next when the person changes; never longer than the page needs, or 7 s at most
-    const least = saved.who ? 1700 : 700;
+    const least = at.step === 1 ? 2600 : saved.who ? 1700 : 700;
     let t: ReturnType<typeof setTimeout>;
     const check = () => {
       const waited = Date.now() - begun;
@@ -246,7 +259,7 @@ export function JudgeBar() {
             initial={{ opacity: 0 }}
             animate={{ opacity: fading ? 0 : 1 }}
             transition={{ duration: fading ? 0.6 : 0.25, ease: "easeOut" }}
-            className="pointer-events-none fixed inset-0 z-[70] grid place-items-center bg-paper/80 px-6 backdrop-blur-2xl"
+            className="pointer-events-none fixed inset-0 z-[70] grid place-items-center bg-paper/[0.93] px-6 backdrop-blur-3xl"
           >
             <div className="flex max-w-xl flex-col items-center text-center">
               <AnimatedMark size={56} />
@@ -269,7 +282,7 @@ export function JudgeBar() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] flex h-[42vh] flex-col items-center justify-end gap-2 bg-gradient-to-b from-transparent via-paper/50 to-paper/90 pb-24 text-ink-soft backdrop-blur-[1px]"
+            className="pointer-events-none fixed inset-x-0 bottom-0 z-[55] flex h-[26vh] flex-col items-center justify-end gap-1.5 bg-gradient-to-b from-transparent to-paper/85 pb-[5.5rem] text-ink-soft"
           >
             <span className="relative h-11 w-7 rounded-full border-2 border-current">
               <span className="absolute left-1/2 top-2 h-2 w-1 -translate-x-1/2 animate-bounce rounded-full bg-current motion-reduce:animate-none" />
