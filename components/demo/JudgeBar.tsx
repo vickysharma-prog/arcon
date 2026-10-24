@@ -184,7 +184,8 @@ export function JudgeBar() {
     if (!at || veil) return;
     setHint(false);
     const show = setTimeout(() => {
-      if (window.scrollY < 40 && document.documentElement.scrollHeight > window.innerHeight * 1.35) setHint(true);
+      // not while the quick guide is up: one thing at a time
+      if (!document.documentElement.dataset.guide && window.scrollY < 40 && document.documentElement.scrollHeight > window.innerHeight * 1.35) setHint(true);
     }, 1500);
     const hide = () => setHint(false);
     window.addEventListener("scroll", hide, { once: true });
