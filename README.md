@@ -31,7 +31,7 @@ Built for the **Qloo Agentic Hackathon 2026**. Live at **[arcon-ten.vercel.app](
 
 ## Qloo at the core
 
-Qloo is the taste engine behind every design decision Arcon makes, and every decision shows the Qloo signal it came from. Without Qloo, Arcon would design the same home for everyone.
+Arcon does not run without Qloo. Every design starts from the taste Qloo reads, and every decision in it shows the Qloo signal it came from.
 
 - **17 modules** call Qloo, through **three Qloo APIs**: Insights (`/v2/insights`), Search (`/search`) and heatmaps, with location, radius, popularity, price-level and age signals.
 - **Seven entity types:** places, brands, films, TV shows, artists, albums and destinations.
