@@ -8,12 +8,61 @@ Built for the **Qloo Agentic Hackathon 2026**. Live at **[arcon-ten.vercel.app](
 
 - **Film:** a one-minute run of the app from every side, on the landing page ("See it in under a minute").
 - **Stack:** Next.js 16 (App Router, Cache Components) · React 19 · TypeScript · AI SDK 7 · eve · Qloo Insights API · three.js (React Three Fiber) · Supabase (Postgres, Auth, Storage) · Vercel (Fluid Compute).
-- **Quality:** 394 unit tests, integration checks against the real services, 17 agent evals, live checks after every deploy, and eight end-to-end journeys run by hand in Chrome.
+- **Quality:** 414 unit tests, integration checks against the real services, 19 agent evals, live checks after every deploy, and end-to-end journeys run in the browser on desktop and phone.
+
+---
+
+## For judges
+
+**Open [arcon-ten.vercel.app](https://arcon-ten.vercel.app) and press "For judges".** No sign-in, nothing to install.
+
+- **A guided tour, 12 stops in three chapters** (about three minutes): Maya's interview plays itself and Qloo reads her three picks; her style, three plans, the 3D walk, the budget, the shopping list and the drawings; then her architect's studio, her builder's site and another client's last week before moving in; then a Brooklyn café designed against its own street, by night. Switch between the homeowner, architect, builder and café owner at any stop.
+- **Then "Try it yourself":** a fresh interview in any language, your own three picks read by Qloo, and a complete design of your own, with every feature open.
+- The tour's world is seeded through the real app, so it is the same for every judge and never waits on a model.
+
+## How Arcon uses Qloo
+
+Qloo is the taste engine behind every design decision Arcon makes, and every decision shows the Qloo signal it came from. Without Qloo, Arcon would design the same home for everyone.
+
+- **17 modules** call Qloo, through **three Qloo APIs**: Insights (`/v2/insights`), Search (`/search`) and heatmaps, with location, radius, popularity, price-level and age signals.
+- **Seven entity types:** places, brands, films, TV shows, artists, albums and destinations.
+- **20+ tag families:** decor, ambience, aesthetic property, emotional tone, style, price level, sustainability, industry, place categories, dining and service options.
+
+| Qloo signal | Design decision it drives | Where it shows | Code |
+|---|---|---|---|
+| Decor and ambience tags of places you love | Style name and words, room moods and light | Your style; "Mood, read by Qloo" in 3D | `lib/qloo/taste.ts`, `lib/qloo/words.ts`, `lib/three/mood.ts` |
+| Aesthetic and emotional tags of brands you love | Materials, palette, furniture style | Style words with their sources; the 3D | `lib/qloo/profile.ts` |
+| Films, TV and music through Insights | Brand discovery, art wall, playlist | Moodboard; Art and sound | `lib/design/moodboard.ts`, `lib/art/` |
+| Price level, hotel class | The finish level the budget opens at | Budget | `lib/budget/tier.ts` |
+| Matched brands, competitors, local stores | Shopping list at each price level | Shopping list | `lib/shop/fetch.ts` |
+| Sustainability tags, plant nurseries nearby | Greenery score and plant sourcing | Budget, greenery | `lib/green/eco.ts` |
+| Interests behind each layout | Ranking of the three plans, "why this fits you" | Plans | `lib/design/options.ts`, `lib/design/trail.ts` |
+| Heatmaps, local places by age | Neighbourhood read for a business | A café's neighbourhood | `lib/neighbourhood/` |
+| Live entity search | Taste picks resolved as you tap them | The interview | `lib/interview/logic.ts`, `app/api/interview/taste/` |
+
+The client (`lib/qloo/client.ts`) caches every answer in the project database and spaces calls under the key's rate, so a question is asked of Qloo once.
+
+### Agentic
+
+- **The interviewer agent**, built with the eve agent framework, with Qloo tools to find and add taste (`agents/interviewer/agent/tools/find_taste.ts`, `add_taste.ts`), its own instructions, and 19 evals (`agents/interviewer/evals/`).
+- **The design agents:** the brief, the room programme and three plans, each step grounded in the Qloo taste profile, checked by code before anything is drawn (`lib/design/run.ts`, `lib/design/brief.ts`, `lib/design/program.ts`).
+- **Changes by chat:** a request in plain words becomes a tool call that edits the design, re-checked and re-priced (`lib/workspace/ask.ts`, `app/api/projects/[id]/edit/route.ts`).
+
+### The databases behind Arcon
+
+| Database | What it holds | What Arcon does with it |
+|---|---|---|
+| Qloo taste database | 250M+ entities across places, brands, film, TV, music and destinations, with their tags and audiences | Style, materials, brands, art, playlist, budget level, plan reasons, the neighbourhood read |
+| Arcon cost database | Building and finishing rates for 8 markets in local currency, four finish levels, each market with its published sources (`lib/budget/rates.ts`) | Budget by room and trade, the timeline, the cost of every change |
+| OpenStreetMap | Cities and streets | The interview's city check; placing a business on its street |
+| Arcon project database (Supabase Postgres) | Projects, versions, the thread, sites, fees, and the cache of every Qloo answer | One record for owner, architect, builder and client |
 
 ---
 
 ## Contents
 
+1. [For judges](#for-judges)
+1. [How Arcon uses Qloo](#how-arcon-uses-qloo)
 1. [Who it's for](#who-its-for)
 2. [Architecture](#architecture)
 3. [The AI: what models do, and what they never do](#the-ai-what-models-do-and-what-they-never-do)
