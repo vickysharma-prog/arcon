@@ -229,7 +229,7 @@ flowchart TB
 - **Known names.** Matched home brands prefer ones people know (popularity ≥ 0.8, falling back to the long tail only when too few match), and must actually make things for a home: magazines, apps, clothing-only labels and services are filtered out from Qloo's own industry and brand-type tags.
 - **Places that share your look** are rooms to learn from: no campsites, parks, resorts or budget chains, and a chain hotel's decor is never read as someone's look.
 - **Business neighbourhood read.** For a café, shop, office or hotel: the local favourites around the site, their crowd and decor, one per chain.
-- **Cache and limits.** Every Qloo response is cached in Supabase by a hash of its path and parameters, so local development and the live app share one cache and a repeated question never spends quota. Calls are spaced just under the key's 5 per second. Qloo data lives in the database, never in this repository.
+- **Cache and limits.** Every Qloo response is cached in Supabase by a hash of its path and parameters, so local development and the live app share one cache and a repeated question never spends quota. Calls are spaced just under the key's 5 per second. The code calls Qloo live; the answers are kept in that database cache.
 
 ---
 
@@ -328,7 +328,7 @@ erDiagram
 - **Sessions:** guests get an HMAC-SHA-256 signed id in an httpOnly cookie from `proxy.ts` on their first page; signed-in people a signed user cookie after Supabase Auth. Signatures are compared in constant time. When a guest signs in, their projects move to the account.
 - **Every route checks access:** who is asking and their role on the project, before any read or write. Clients never see a builder's costs; strangers get 404, not 403.
 - **Agents** only answer requests carrying a valid signed cookie. The interview treats answers as data: an eval checks that instructions hidden in an answer are ignored.
-- **Keys** live only in environment variables (local `.env` files, Vercel). Qloo responses live in the database, and the film (which shows Qloo images) in storage, never in the repository.
+- **Keys** live only in environment variables (local `.env` files, Vercel). Arcon calls Qloo live, and Qloo's answers are cached in the project database; the film lives in storage.
 - **Privacy:** one essential cookie, no tracking, no ads. Delete a project or the whole account at any time (typing DELETE); files go with them.
 - **Sign-up** refuses addresses whose domain can't receive mail.
 
