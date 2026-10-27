@@ -8,7 +8,7 @@ Built for the **Qloo Agentic Hackathon 2026**. Live at **[arcon-ten.vercel.app](
 
 - **Film:** a one-minute run of the app from every side, on the landing page ("See it in under a minute").
 - **Stack:** Next.js 16 (App Router, Cache Components) · React 19 · TypeScript · AI SDK 7 · eve · Qloo Insights API · three.js (React Three Fiber) · Supabase (Postgres, Auth, Storage) · Vercel (Fluid Compute).
-- **Quality:** 414 unit tests, integration checks against the real services, 19 agent evals, live checks after every deploy, and end-to-end journeys run in the browser on desktop and phone.
+- **Quality:** 416 unit tests, integration checks against the real services, 19 agent evals, live checks after every deploy, and end-to-end journeys run in the browser on desktop and phone.
 
 ---
 
