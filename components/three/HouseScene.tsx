@@ -4,7 +4,7 @@ import { Bounds, Environment, Html, Lightformer, OrbitControls, PerformanceMonit
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Bloom, EffectComposer, N8AO, ToneMapping } from "@react-three/postprocessing";
 import { ToneMappingMode } from "postprocessing";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Box3, BufferGeometry, CatmullRomCurve3, DoubleSide, Float32BufferAttribute, Plane, Raycaster, Vector2, Vector3, type Texture } from "three";
 import type { Layout } from "@/lib/layout/schema";
 import { decorate } from "@/lib/three/decor";
@@ -16,6 +16,7 @@ import { look as lookOf, luminance, mix, scheme, type Look, type Scheme } from "
 import { LookCtx, Model } from "./models";
 import { brick, planks, plate, SIGN, signboard, tiled, tiledOnce, tiles } from "./textures";
 import { exteriorOf, roofShape, type Exterior } from "@/lib/three/exterior";
+import { fitMargin } from "@/lib/three/fit";
 import { moodsFor, type Mood } from "@/lib/three/mood";
 import { roomBell, step as playStep } from "@/components/fx/sfx";
 import { SketchFx, SketchMaterial } from "./Sketch";
@@ -948,6 +949,16 @@ function Overview({ layout, autoRotate = false, wheelZoom = true }: { layout: La
   );
 }
 
+// Look around frames the whole building, closer on a wide screen (see fitMargin).
+function FitBounds({ children }: { children: ReactNode }) {
+  const { size } = useThree();
+  return (
+    <Bounds fit clip observe margin={fitMargin(size.width / size.height)} maxDuration={0.9}>
+      {children}
+    </Bounds>
+  );
+}
+
 // Room names over the floor being looked at; clicking one flies the camera to that room.
 // "Whole house": fly back to the starting corner, at a distance that fits the whole building in view.
 // Always mounted inside Bounds, whether or not the inside is showing.
@@ -1110,12 +1121,12 @@ export default function HouseScene(props: Props) {
       )}
       <LookCtx.Provider value={look}>
         {orbit ? (
-          <Bounds fit clip observe margin={1.12} maxDuration={0.9}>
+          <FitBounds>
             <Overview layout={props.layout} autoRotate={props.autoRotate} wheelZoom={props.wheelZoom} />
             {building}
             <Recenter layout={props.layout} fitKey={props.fitKey} />
             {props.cutaway && <RoomLabels layout={props.layout} level={props.upTo === "all" || props.upTo === undefined ? top : props.upTo} />}
-          </Bounds>
+          </FitBounds>
         ) : showcase ? (
           <>
             {building}
