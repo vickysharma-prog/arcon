@@ -14,6 +14,11 @@ room moods and light, art and a playlist from Qloo (16 Oct); a live Qloo strip a
 
 ---
 
+## 27 October: the café fills the frame
+
+- **Look around frames the building closer on a wide screen**, so Sam's long café by night fills the view instead of
+  sitting small in the dark; a phone keeps the full margin. The margin by screen shape has its own tests.
+
 ## 25 October: submitted
 
 - **Submitted to the Qloo Agentic Hackathon on Devpost:** the story of the build in five phases, the vision, the
